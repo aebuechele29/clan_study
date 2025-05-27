@@ -137,3 +137,39 @@ clans <- clans %>%
     # is.na(id1968_spouse) | 
     # id1968_head == id1968_spouse
   # )
+
+# Validation code
+
+# Distribution of number of households in each clan per year
+table(households$numclan)
+
+# Unique clans in clan-year file
+length(unique(clans$id1968))
+
+# Unique clans in household-year file
+length(unique(households$id1968))
+
+
+
+
+# Define Function to Apply Vars with Only Most Recent Wave to All ---------
+fill_columns_with_latest_value <- function(df) {
+  # Identify columns where only the bottom row has a value
+  bottom_row <- df %>% tail(1)
+  cols_to_fill <- df %>%
+    summarise(across(everything(), ~ sum(!is.na(.)))) %>%
+    pivot_longer(everything(), names_to = "column", values_to = "non_na_count") %>%
+    filter(non_na_count == 1) %>%
+    pull(column)
+  
+  filled_df <- df %>%
+    mutate(
+      across(
+        all_of(cols_to_fill),
+        ~ ifelse(is.na(.), bottom_row[[cur_column()]], .)
+      )
+    )
+  
+  return(filled_df)
+}
+

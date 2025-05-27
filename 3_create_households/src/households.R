@@ -1,5 +1,5 @@
 # INPUTS: 2_clean_panel/output/clean.rds
-# OUTPUTS: 3_calculate_households/output/households.rds
+# OUTPUTS: 3_create_households/output/households.rds
 
 # LOAD DATA ------------------------------------------------------------------
 clean <- readRDS(here("2_clean_panel", "output", "clean.rds"))
@@ -75,6 +75,7 @@ ind_wide <- dcast(
   value.var = "value"
 )
 
+# CLEAN HOUSEHOLD FILE
 # Remove unnecessary columns
 ind_wide <- ind_wide %>%
   select(
@@ -160,9 +161,13 @@ households <- households %>%
     matches("_other_([1-9]|1[0-2])$")
   )
 
+households <- households %>%
+  rename_with(~ str_replace(., "_head_1$", "_head"), .cols = ends_with("_head_1")) %>%
+  rename_with(~ str_replace(., "_spouse_1$", "_spouse"), .cols = ends_with("_spouse_1"))
+
 # SAVE ---------------------------------------------------------------------------
-file.remove(list.files(here("3_calculate_households", "output"), pattern = "\\.rds$", full.names = TRUE))
-saveRDS(households, here("3_calculate_households", "output", "households.rds"))
+file.remove(list.files(here("3_create_households", "output"), pattern = "\\.rds$", full.names = TRUE))
+saveRDS(households, here("3_create_households", "output", "households.rds"))
 
 # Clean Up Temporary Files --------------------------------------------------
 rm(clean, data, dt, fam_wide, ind_wide, long_dt)
