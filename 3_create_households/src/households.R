@@ -1,3 +1,15 @@
+# arg <- commandArgs(trailingOnly = TRUE)
+# path <- str_remove(arg[2], "/Makefile")
+
+# if (length(arg) == 0) {
+#   path <- file.path(getwd(), "code")
+# }
+
+# source(file.path(path, "functions", "src", "functions.R"))
+
+# load(file.path(path, "clean_merged", "input", "merged.Rds"))
+
+
 # INPUTS: 2_clean_panel/output/clean.rds
 # OUTPUTS: 3_create_households/output/households.rds
 
@@ -36,14 +48,14 @@ fam_vars <- c(
   "inc_all", "inc_tax_hs", "inc_tax_o", "inc_trans_hs", "inc_trans_o1", "inc_trans_o2",
   "wealth_nohouse", "wealth", "wealth_farmbus", "wealth_checking", "wealth_debt",
   "wealth_re", "wealth_stocks", "wealth_vehicles", "wealth_other", "wealth_home",
-  "student_loans", "race_year", "race", "black", "release", "state", "numfu"
+  "student_loans", "release", "state", "numfu"
 )
 
 ind_vars <- c(
   "id1968", "married_pair", "own_home", "age", "male", "sample", "children", "stratum",
   "cluster", "parent1", "parent2", "grandparent1", "grandparent2", "grandparent3",
   "grandparent4", "yob", "birth_cohort", "yod", "edu_cat2", "edu_cat1", "hs", "ba", 
-  "ma", "last_weight", "last_weight_year"
+  "ma", "last_weight", "last_weight_year", "race_year", "race", "black"
 )
 
 # Create family-level data
@@ -115,7 +127,23 @@ ind_wide <- ind_wide %>%
     -starts_with("own_home_spouse"),
     -starts_with("stratum_child"),
     -starts_with("stratum_other"),
-    -starts_with("stratum_spouse")
+    -starts_with("stratum_spouse"),
+    -starts_with("black_child"),
+    -starts_with("black_other"),
+    -starts_with("race_child"),
+    -starts_with("race_other"),
+    -starts_with("race_year_child"),
+    -starts_with("race_year_other"),
+    -starts_with("edu_cat1_child"),
+    -starts_with("edu_cat1_other"),
+    -starts_with("edu_cat2_child"),
+    -starts_with("edu_cat2_other"),
+    -starts_with("hs_child"),
+    -starts_with("hs_other"),
+    -starts_with("ba_child"),
+    -starts_with("ba_other"),
+    -starts_with("ms_child"),
+    -starts_with("ms_other"),
   ) %>%
   rename(
     id1968 = id1968_head_1,
@@ -126,6 +154,10 @@ ind_wide <- ind_wide %>%
     cluster = cluster_head_1,
     last_weight = last_weight_head_1,
     last_weight_year = last_weight_year_head_1,
+    race_head = race_head_1,
+    race_spouse = race_spouse_1,
+    black_head = black_head_1,
+    black_spouse = black_spouse_1
   )
 
 # Merge family and individual data
@@ -139,7 +171,8 @@ households <- merge(
 households <- households %>%
   select(
     year, fam_id, id1968, id1968_spouse, release, 
-    state, numfu, own_home, married_pair, race, black, race_year, 
+    state, numfu, own_home, married_pair, 
+    race_head, race_spouse, black_head, black_spouse,
     stratum, cluster, last_weight, last_weight_year,
     
     # Income variables

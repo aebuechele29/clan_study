@@ -1,7 +1,18 @@
-# INPUTS: 4_create_clans/output/clans.rds
-# OUTPUTS: 
+# arg <- commandArgs(trailingOnly = TRUE)
+# path <- str_remove(arg[2], "/Makefile")
 
-clans <- readRDS(here("4_create_clans", "output", "clans.rds"))
+# if (length(arg) == 0) {
+#   path <- file.path(getwd(), "code")
+# }
+
+# source(file.path(path, "functions", "src", "functions.R"))
+
+# load(file.path(path, "clean_merged", "input", "merged.Rds"))
+
+# INPUTS: 5_create_clans/output/clans.rds
+# OUTPUTS: 6_clean_clans/output/clean_clans.rds
+
+clans <- readRDS(here("5_create_clans", "output", "clans.rds"))
 
 # CLEAN INCOME AND WEALTH VARIABLES ----------------------------------------------
 income_prefixes <- c(
@@ -59,15 +70,40 @@ clans <- clans %>%
 
 
 # CLEAN RACE VARIABLES ------------------------------------------------------------------------
-# race
+race_prefixes <- c("prop_race_white_", "prop_race_black_", "prop_race_other_")
+numfu_prefix <- "numfu_"
+
+clans <- clans %>%
+  mutate(
+    total_numfu = rowSums(across(starts_with(numfu_prefix)), na.rm = TRUE)
+  )
+
+for (race_var in race_prefixes) {
+  cols <- grep(paste0("^", race_var, "\\d+$"), names(clans), value = TRUE)
+  numfu_cols <- sub(race_var, numfu_prefix, cols)
+
+  mat_props <- as.matrix(clans[cols])
+  mat_numfu <- as.matrix(sapply(clans[numfu_cols], as.numeric))
+
+  weighted_sum <- rowSums(mat_props * mat_numfu, na.rm = TRUE)
+  total_numfu <- rowSums(mat_numfu, na.rm = TRUE)
+  weighted_prop <- weighted_sum / total_numfu
+
+  new_var_name <- race_var  
+  clans[[new_var_name]] <- weighted_prop
+}
+
+cols_to_drop <- unlist(
+  lapply(race_prefixes, function(prefix) {
+    grep(paste0("^", prefix, "\\d+$"), names(clans), value = TRUE)
+  })
+)
+
+clans <- clans %>% select(-all_of(cols_to_drop))
+
 
 # CLEAN EDUCATION VARIABLES -------------------------------------------------------------------
 edu_prefixes <- c("prop_edu_cat1_", "prop_edu_cat2_", "prop_hs_", "prop_ba_", "prop_ma_")
-numfu_prefix <- "numfu_"
-
-# For each education variable, find all columns ending with _1, _2, ..., _numclan
-# Then compute weighted average across these columns by family unit size (numfu_#),
-# dividing the weighted sum by total family units in the clan (numclan).
 
 clans <- clans %>%
   mutate(
@@ -79,7 +115,8 @@ for (edu_var in edu_prefixes) {
   numfu_cols <- sub(edu_var, numfu_prefix, cols)
   
   mat_props <- as.matrix(clans[cols])
-  mat_numfu <- as.matrix(sapply(clans[numfu_cols], as.numeric))
+  mat_numfu <- matrix(2, nrow = nrow(clans), ncol = length(cols))  # Only applied to head and spouse
+
   
   weighted_sum <- rowSums(mat_props * mat_numfu, na.rm = TRUE)
   
@@ -202,21 +239,20 @@ clans <- clans %>% select(-all_of(numfu_cols))
 
 
 # REMOVE UNNECESSARY COLUMNS -----------------------------------------------------------
-married_prefix <- "married_pair_"
-married_cols <- grep(paste0("^", married_prefix, "\\d+$"), names(clans), value = TRUE)
+clans <- clans %>%
+  select(
+    -starts_with("fam_id_"),
+    -starts_with("stratum_"),
+    -starts_with("cluster_"),
+    -starts_with("last_weight_"),
+    -starts_with("last_weight_year_")
+  )
 
-fam_id_prefix <- "fam_id_"
-fam_id_cols <- grep(paste0("^", fam_id_prefix, "\\d+$"), names(clans), value = TRUE)
+# SAVE ---------------------------------------------------------------------------
+file.remove(list.files(here("6_clean_clans", "output"), pattern = "\\.rds$", full.names = TRUE))
+saveRDS(clans, here("6_clean_clans", "output", "clean_clans.rds"))
 
-clans <- clans %>% select(-all_of(c(married_cols, fam_id_cols)))
-
-
-
-
-
-
-
-
+rm(income_summary, mat_numfu, mat_own_home, mat_prop_male, mat_props, mat_states, mat_yob, wealth_summary)
 
 
 
