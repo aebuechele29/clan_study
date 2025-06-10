@@ -230,7 +230,6 @@ clans <- clans %>% select(-all_of(numfu_cols))
 # REMOVE UNNECESSARY COLUMNS -----------------------------------------------------------
 clans <- clans %>%
   select(
-    -starts_with("fam_id_"),
     -starts_with("stratum_"),
     -starts_with("cluster_"),
     -starts_with("last_weight_"),
