@@ -1,12 +1,3 @@
-# arg <- commandArgs(trailingOnly = TRUE)
-# path <- str_remove(arg[2], "/Makefile")
-
-# if (length(arg) == 0) {
-#   path <- file.path(getwd(), "code")
-# }
-
-# load(file.path(path, "build", "build_panel", XXX))
-
 # INPUTS: 0_data/psid.xlsx, 0_data/fims/, 0_data/fam_ind/
 # OUTPUTS: Data frames for family data and indiviudal data, including parent and grandparent IDs from FIMs
 

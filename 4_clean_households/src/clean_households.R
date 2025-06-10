@@ -1,14 +1,3 @@
-# arg <- commandArgs(trailingOnly = TRUE)
-# path <- str_remove(arg[2], "/Makefile")
-
-# if (length(arg) == 0) {
-#   path <- file.path(getwd(), "code")
-# }
-
-# source(file.path(path, "functions", "src", "functions.R"))
-
-# load(file.path(path, "clean_merged", "input", "merged.Rds"))
-
 # INPUTS: 3_calculate_households/output/households.rds
 # OUTPUTS: 4_clean_households/output/clean_hs.rds
 
