@@ -1,15 +1,3 @@
-# arg <- commandArgs(trailingOnly = TRUE)
-# path <- str_remove(arg[2], "/Makefile")
-
-# if (length(arg) == 0) {
-#   path <- file.path(getwd(), "code")
-# }
-
-# source(file.path(path, "functions", "src", "functions.R"))
-
-# load(file.path(path, "clean_merged", "input", "merged.Rds"))
-
-
 # INPUTS: 1_build_panel/output/build.rds, functions/src/functions.R
 # OUTPUTS: 2_clean_panel/output/clean.rds
 
