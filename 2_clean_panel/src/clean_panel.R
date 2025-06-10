@@ -198,7 +198,18 @@ build <- build %>%
 # CLEAN FAMILY DATA -------------------------------------------------------------------------------------------------
 
 # CLEAN INCOME AND WEALTH ------------------------------------------------------------------
-    # Add indicator for top-coded values, then adjust for inflation
+# Adjust NA income and wealth variables
+build <- build %>%
+  mutate(across(
+    .cols = c("inc_all", "inc_tax_hs", "inc_tax_o", 
+              "inc_trans_hs", "inc_trans_o1", "inc_trans_o2"),
+    .fns = ~ case_when(
+      year %in% c(1994, 1995) & . > 9999998 ~ NA_real_,
+      TRUE ~ .
+    )
+  ))
+  
+# Add indicator for top-coded values, then adjust for inflation
 
 topcode_rules <- tribble(
   ~var,                 ~year_start, ~year_end, ~topcode,
@@ -309,7 +320,7 @@ for (var in money_vars) {
   indicator_col <- paste0("ind_top_", var)
 
   build[[indicator_col]] <- as.integer(!is.na(build[[topcode_col]]) & 
-                                        build[[var]] == (build[[topcode_col]] - 1)) # conservative approach
+                                        build[[var]] > (build[[topcode_col]] - 1)) # conservative approach
 }
 
 build <- build %>%
