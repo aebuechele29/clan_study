@@ -125,7 +125,7 @@ ggplot(gini_combined, aes(x = year, y = gini, color = level, linetype = level)) 
   scale_y_continuous(limits = c(.3, 1)) +
   theme_minimal() +
   labs(
-    title = "Smoothed Gini Coefficient Over Time",
+    title = "Gini Coefficient Over Time - All Clans and Households",
     y = "Gini Coefficient",
     x = "year",
     color = "Level",
@@ -242,7 +242,7 @@ ggplot(gini_combined, aes(x = year, y = gini, color = level, linetype = level)) 
   scale_y_continuous(limits = c(.3, 1)) +
   theme_minimal() +
   labs(
-    title = "Smoothed Gini Coefficient Over Time",
+    title = "Gini Coefficient Over Time - Clans with Multiple Households",
     y = "Gini Coefficient",
     x = "year",
     color = "Level",
@@ -305,14 +305,14 @@ gini_race_all <- bind_rows(gini_race_clan, gini_race_hh) %>%
       grepl("^inc_", variable) ~ "Income",
       grepl("^wealth_", variable) ~ "Wealth"
     )
-  )
+  ) %>%
+  filter(!is.na(race_group))  
 
 pdf(here("7_analysis", "output", "gini_race_plot.pdf"), width = 9, height = 5)
 
 ggplot(gini_race_all, aes(x = year, y = gini, linetype = level)) +
   geom_smooth(se = FALSE, method = "loess", span = 0.1) +
   facet_grid(kind ~ race_group, scales = "fixed", space = "fixed") +
-  scale_color_manual(values = custom_colors) +
   scale_y_continuous(limits = c(.25, 1)) +
   theme_minimal(base_size = 12) +
   theme(panel.spacing = unit(1, "lines")) +
@@ -325,7 +325,6 @@ ggplot(gini_race_all, aes(x = year, y = gini, linetype = level)) +
   )
 
 dev.off()
-
 
 
 # FIGURING OUT THE EXTREME INCOME IN 1994 AND 1995
