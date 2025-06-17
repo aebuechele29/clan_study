@@ -20,7 +20,7 @@ data <- data %>%
          role_id = paste0(role_tag, "_", role_num)) %>%
   ungroup() %>%
   filter(relation != 0) %>%
-  select(-role_tag, -role_num, -sequence, -relation) 
+  select(-role_tag, -role_num, -pn, -relation, -sequence) 
 
 # Format as data.table and separate family and individual data
 dt <- as.data.table(data)
