@@ -1,8 +1,8 @@
 The purpose of this file is to update when/if raw data is updated (ie to include new variables, etc)
 
 PSID DATA
-- PSID data downloaded on 20250504
-- Job identifier in "PSID 347157	-	20250504data"
+- PSID data downloaded on 20250617
+- Job identifier in "349064	-	20250617clandata"
 
 FIMS DATA
 - FIMs data downloaded on 20250415
@@ -10,8 +10,8 @@ FIMS DATA
 DATA FOLDER STRUCTURE
 - 0_data
     - fam_ind
-        - J346415.do
-        - J346415.txt
+        - J349064.do
+        - J349064.txt
     - fims
         - 20250415_grandparents.xlsx
         - 20250415_parents.xlsx

@@ -8,6 +8,10 @@ build <- readRDS(here("1_build_panel", "output", "build.rds"))
 
 # CLEAN INDIVIDUAL DATA --------------------------------------------------------------------------------------------------
 
+# LIMIT TO THOSE PRESENT IN THE FU EACH YEAR -------------------------------------------------
+build <- build %>%
+  filter(sequence <= 20 & sequence > 0) 
+
 # CLEAN IDENTIFIERS AND LIMIT SAMPLE -------------------------------------------------------------
   # 1968 1 head 2 wife/ spouse 3, child 4-7 other 8 spouse 9/ 0 NA
   # 1969-1982 8 other 9 spouse 0 NA

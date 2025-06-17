@@ -111,7 +111,7 @@ vars <- list(
   list(name = "ind_relation", varname = "relation", var = "ER30003"), # Individual relation to head [all years]
   list(name = "ind_relation_b", varname = "married_pair", var = "ER30005"), # Married pairs indicator for constructing head_id and spouse_id
   list(name = "fam_interview", varname = "interview", var = "V99"), # 1968 Interview Number [all years]
-  # list(name = "fam_relation", varname = "relation_construct_3", var = "V180"), # Family interview respondent's relation to head [all years]
+  list(name = "ind_sequence", varname = "sequence", var = "ER30021"), # Family interview respondent's relation to head [all years]
 
   # INCOME ------------------------------------------------------------------
   list(name = "fam_income1", varname = "inc_all", var = "V81"), # Total family income [all years]
@@ -223,12 +223,12 @@ psid_data <- psid_data %>%
   rename(
     release = ER30000,
     id1968 = ER30001,
-    sequence = ER30002
+    pn = ER30002
   )
 
 # Add Unique PID to Individual and Family Data -----------------------------------
 psid_data <- psid_data %>%
-  mutate(pid = (id1968 * 1000) + sequence) %>%
+  mutate(pid = (id1968 * 1000) + pn) %>%
   select(year, pid, everything())
 
 # Merge Family Identification Data ------------------------------------------

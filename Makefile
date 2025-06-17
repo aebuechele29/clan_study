@@ -11,10 +11,10 @@ o := output/
 s := src/
 
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST))) # just for script to locate itself
-clan_edu := $(mkfile_path)/../6_clean_clans/output/
+clan_edu := $(abspath $(an)$(o))
 
 # Command to run R scripts
-R = R --no-save --args "" < "$<"
+R = Rscript
 
 
 all: $(clan_edu)
@@ -23,16 +23,17 @@ all: $(clan_edu)
 
 # Step 1: Build panel
 $(bp)$(o)build.rds: $(bp)$(s)build_panel.R $(dt)cpi.xlsx \
-$(dt)fam_ind/J347157.do \
-$(dt)fam_ind/J347157.txt \
-$(dt)fims/20250415_grandparents.xlsx \
-$(dt)fims/20250415_parents.xlsx \
-$(dt)psid.xlsx
-    $(R)
+    $(dt)fam_ind/J347157.do \
+    $(dt)fam_ind/J347157.txt \
+    $(dt)fims/20250415_grandparents.xlsx \
+    $(dt)fims/20250415_parents.xlsx \
+    $(dt)psid.xlsx 
+    $(R) $<
+
 
 # Step 2: Clean panel
-$(cp)$(o)clean.rds: $(cp)(s)clean_panel.R $(bp)$(o)build.rds $(fn)functions.R
-    $(R)
+$(cp)$(o)clean.rds: $(cp)$(s)clean_panel.R $(bp)$(o)build.rds $(fn)functions.R
+    $(R) 
 
 # Step 3: Create households
 $(ch)$(o)households.rds: $(ch)$(s)households.R $(cp)$(o)clean.rds $(fn)functions.R
@@ -56,3 +57,4 @@ $(h)$(o)clean_hs.rds
     $(R)
 
 .PHONY: clean
+

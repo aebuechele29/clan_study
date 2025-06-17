@@ -8,7 +8,11 @@
 
 clans <- readRDS(here("6_clean_clans", "output", "clean_clans.rds"))
 households <- readRDS(here("4_clean_households", "output", "clean_hs.rds"))
+
 library(ineq)
+library(showtext)
+font_add_google(name = "Tinos", family = "Times New Roman")
+showtext_auto()
 
 # Variables to compute Gini for
 clan_vars <- c("inc_all_median_clan", "wealth_nohouse_median_clan", "wealth_home_median_clan")
@@ -124,10 +128,11 @@ ggplot(gini_combined, aes(x = year, y = gini, color = level, linetype = level)) 
   facet_wrap(~ kind, scales = "fixed") +
   scale_y_continuous(limits = c(.3, 1)) +
   theme_minimal() +
+  theme(text = element_text(family = "Times New Roman")) +
   labs(
-    title = "Gini Coefficient Over Time - All Clans and Households",
+    title = "Figure 1: Comparing Inequality Over Time (All Clans and Households)",
     y = "Gini Coefficient",
-    x = "year",
+    x = "Year",
     color = "Level",
     linetype = "Level"
   )
@@ -241,10 +246,11 @@ ggplot(gini_combined, aes(x = year, y = gini, color = level, linetype = level)) 
   facet_wrap(~ kind, scales = "fixed") +
   scale_y_continuous(limits = c(.3, 1)) +
   theme_minimal() +
+  theme(text = element_text(family = "Times New Roman")) +
   labs(
-    title = "Gini Coefficient Over Time - Clans with Multiple Households",
+    title = "Figure 2: Comparing Inequality Over Time (Clans with Multiple Households)",
     y = "Gini Coefficient",
-    x = "year",
+    x = "Year",
     color = "Level",
     linetype = "Level"
   )
@@ -316,8 +322,9 @@ ggplot(gini_race_all, aes(x = year, y = gini, linetype = level)) +
   scale_y_continuous(limits = c(.25, 1)) +
   theme_minimal(base_size = 12) +
   theme(panel.spacing = unit(1, "lines")) +
+  theme(text = element_text(family = "Times New Roman")) +
   labs(
-    title = "Gini Coefficient Over Time: Black Households vs. Non-Black Households",
+    title = "Inequality in Black Households vs. Non-Black Households",
     y = "Gini Coefficient",
     x = "Year",
     color = "Measure & Race",
@@ -327,35 +334,3 @@ ggplot(gini_race_all, aes(x = year, y = gini, linetype = level)) +
 dev.off()
 
 
-# FIGURING OUT THE EXTREME INCOME IN 1994 AND 1995
-
-# Filter to relevant years
-clans_filtered <- clans %>% filter(year %in% 1990:1998)
-households_filtered <- households %>% filter(year %in% 1990:1998)
-
-# Summary function
-summary_stats <- function(data, var) {
-  data %>%
-    group_by(year) %>%
-    summarise(
-      n = sum(!is.na(.data[[var]])),
-      mean = mean(.data[[var]], na.rm = TRUE),
-      median = median(.data[[var]], na.rm = TRUE),
-      sd = sd(.data[[var]], na.rm = TRUE),
-      min = min(.data[[var]], na.rm = TRUE),
-      max = max(.data[[var]], na.rm = TRUE),
-      gini = ineq::Gini(.data[[var]][!is.na(.data[[var]])])
-    ) %>%
-    mutate(variable = var)
-}
-
-# Run summaries
-clan_income_summary <- summary_stats(clans_filtered, "inc_all_median_clan")
-hh_income_summary   <- summary_stats(households_filtered, "inc_all")
-build_income_summary   <- summary_stats(build, "inc_all")
-
-# Combine for inspection
-income_summaries <- bind_rows(clan_income_summary, hh_income_summary)
-
-# View
-print(income_summaries)
