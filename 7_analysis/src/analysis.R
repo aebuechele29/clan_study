@@ -324,11 +324,12 @@ ggplot(gini_race_all, aes(x = year, y = gini, linetype = level)) +
   theme(panel.spacing = unit(1, "lines")) +
   theme(text = element_text(family = "Times New Roman")) +
   labs(
-    title = "Inequality in Black Households vs. Non-Black Households",
+    title = "Figure 3: Inequality in Black Households vs. Non-Black Households",
     y = "Gini Coefficient",
     x = "Year",
     color = "Measure & Race",
-    linetype = "Level"
+    linetype = "Level",
+    caption = "Note: Full sample"
   )
 
 dev.off()
