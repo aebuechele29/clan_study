@@ -16,7 +16,17 @@ pacman::p_load(
   readxl,
   data.table, 
   gridExtra,
-  ggplot2
+  ggplot2,
+  scales,
+  lme4,
+  performance,
+  knitr,
+  kableExtra,
+  patchwork,
+  ineq,
+  showtext,
+  tibble,
+  tidyr
 )
 
 here::i_am("1_build_panel/src/build_panel.R")
