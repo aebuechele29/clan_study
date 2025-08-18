@@ -1,3 +1,11 @@
 0_data/fam_ind
+1_build_panel/output
+2_clean_panel/output
+3_households/output
+4_clans/output
+5_calculate_gini/output
+6_lorenz/output
+7_summary/output
+8_variation/output
 .DS_Store
 .vscode
