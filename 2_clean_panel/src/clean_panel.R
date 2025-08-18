@@ -5,12 +5,11 @@
 # Each row represents a person-year, data is collected for the individual or the family
 build <- readRDS(here("1_build_panel", "output", "build.rds"))
 
-
-# CLEAN INDIVIDUAL DATA --------------------------------------------------------------------------------------------------
-
 # LIMIT TO THOSE PRESENT IN THE FU EACH YEAR -------------------------------------------------
 build <- build %>%
-  filter(sequence <= 20 & sequence > 0) 
+  filter(
+    sequence <= 20 & sequence > 0,  # Remove people who are not in FU at that year
+    id1968 < 7001)                   # Exclude Latino sample only
 
 # CLEAN IDENTIFIERS AND LIMIT SAMPLE -------------------------------------------------------------
   # 1968 1 head 2 wife/ spouse 3, child 4-7 other 8 spouse 9/ 0 NA
@@ -48,156 +47,6 @@ build <- build %>%
         TRUE ~ relation
       ) 
     )
-
-
-# CLEAN INDIVIDUAL DEMOGRAPHICS -------------------------------------------------
-# CREATE BIRTH COHORTS --------------------------------------------------------
-max_year <- efficient_max(build$year)
-
-build <- build %>%
-  mutate(
-    age = if_else(age > 998, NA_real_, age),
-    yob = round(year - age)
-  ) 
-
-# Create birth cohorts from 1890 to 1990
-build <- build %>%
-  mutate(
-    birth_cohort = case_when(
-      yob < 1900 ~ 1,
-      yob < 1910 ~ 2,
-      yob < 1920 ~ 3,
-      yob < 1930 ~ 4,
-      yob < 1940 ~ 5,
-      yob < 1950 ~ 6,
-      yob < 1960 ~ 7,
-      yob < 1970 ~ 8,
-      yob < 1980 ~ 9,
-      yob < 1990 ~ 10,
-      yob < 2000 ~ 11,
-      TRUE ~ NA_real_
-    )
-  )
-
-# YEAR OF DEATH -----------------------------------------------------------------
-  # When available, the exact year of death is recorded.
-  # When a range of years was reported, this variable contains
-  # a four digit code in which the first two digits represent the first
-  # possible year of death, and the last two digits represent the last
-  # possible year.
-build <- build %>%
-  mutate(
-    start_year = str_sub(as.character(yod), 1, 2),
-    end_year   = str_sub(as.character(yod), 3, 4),
-    dbl_start  = as.double(start_year),
-    dbl_end    = as.double(end_year),
-    ave_year   = round((dbl_start + dbl_end) / 2),
-    ave_char   = case_when(
-      ave_year < 10 ~ str_c("200", ave_year),
-      ave_year < 20 ~ str_c("20",  ave_year),
-      ave_year >= 20 ~ str_c("19", ave_year),
-      TRUE ~ NA_character_
-    ),
-    final_year = case_when(
-      yod == 9999 ~ NA_real_,
-      !dbl_start %in% c(19, 20) &
-        as.double(ave_char) > 1900 &
-        as.double(ave_char) < 2200 ~ as.double(ave_char),
-      TRUE ~ as.double(yod)
-    )
-  ) %>%
-  select(-c(start_year, end_year, dbl_start, dbl_end, ave_year, ave_char, yod)) %>%
-  rename(yod = final_year)
-
-# GENDER ----------------------------------------------------------------
-build <- build %>%
-  mutate(
-    male =
-      case_when(
-        male == 9 ~ NA_real_,
-        male == 2 ~ 0,
-        TRUE ~ male
-      )
-  )
-
-# CLEAN INDIVIDUAL EDUCATION ----------------------------------------------------
-  # After cleaning:
-    # edu_cat1: Education categories: 0 = High school, 1 = Post-high school education
-    # edu_cat2: Education categories: 0 = High school, 1 = Some post-high school, 2 = Bachelor's or higher.
-    # hs, ba, ma: Binary variables for high school, bachelor's, and master's degrees
-
-build <- build %>%
-  mutate(
-    edu = if_else(edu %in% c(97, 98, 99), NA_real_, as.double(edu))
-  )
-
-  build <- build %>%
-  mutate(
-    edu2 =
-      case_when(
-        edu <= 12 ~ 0,
-        edu <= 15 ~ 1,
-        (edu > 15 & edu < 99) ~ 2,
-        edu == 99 ~ NA_real_
-      ),
-    edu3 =
-      case_when(
-        edu <= 12 ~ 0,
-        (edu >= 13 & edu < 99) ~ 1,
-        edu == 99 ~ NA_real_
-      ),
-    hs =
-      case_when(
-        edu < 12 ~ 0,
-        (edu >= 12 & edu < 99) ~ 1,
-        edu == 99 ~ NA_real_
-      ),
-    ba =
-      case_when(
-        edu < 16 ~ 0,
-        (edu >= 16 & edu < 99) ~ 1,
-        edu == 99 ~ NA_real_
-      ),
-    ma =
-      case_when(
-        edu < 17 ~ 0,
-        (edu >= 17 & edu < 99) ~ 1,
-        edu == 99 ~ NA_real_
-      )
-  ) %>%
-  rename(edu_cat1 = edu2, edu_cat2 = edu3)
-
-
-# CLEAN INDIVIDUAL FAMILY CHARACTERISTICS ---------------------------------------
-# Clean Number of Children (# Live Births)   ----------------------------
-  # Children: 98 NA/ DK 99 No birth history collected
-build <- build %>%
-  mutate(
-    children = if_else(children %in% c(98, 99), NA_real_, as.double(children))
-  )
-
-# SELECT WEIGHTS-------  ---------------------------------------------------------
-build <- build %>%
-  arrange(pid, year) %>%
-  group_by(pid) %>%
-  mutate(last_weight = last(ind_weight2)) %>%
-  ungroup() %>%
-  mutate(
-    tmp_year =
-      case_when(
-        last_weight == ind_weight2 ~ year,
-        TRUE ~ NA_integer_
-      ),
-    weight_in_2021 =
-      case_when(
-        year == 2021 ~ ind_cross_weight2,
-        TRUE ~ NA_integer_
-      )
-  ) %>%
-  group_by(pid) %>%
-  mutate(last_weight_year = last(tmp_year)) %>%
-  ungroup() %>%
-  select(-c(ind_weight2, ind_cross_weight2, tmp_year, weight_in_2021))
 
 # CLEAN FAMILY DATA -------------------------------------------------------------------------------------------------
 
@@ -345,40 +194,6 @@ build <- build %>%
   rename_with(~ gsub("^infl_", "", .x), starts_with("infl_"))
 
 
-# CLEAN FAMILY CHARACTERISTICS --------------------------------------------------
-  
-# Clean homeownership -----------------------------------------------------
-  # Homeownership: 1 = own; 5 = rents; 8 = neither;
-  # from 1994 9 = DK/ NA/ refused, 0 = inappropriate
-  # From 2007 9 = "wild code"
-
-build <- build %>%
-  rename(own_home = house_status) %>%
-  mutate(
-    own_home =
-      case_when(
-        (own_home == 9 | own_home == 0 |
-           is.na(own_home) ~ NA_real_),
-        (own_home == 5 | own_home == 8) ~ 0,
-        TRUE ~ own_home
-      )
-  )
-
-# Clean State -------------------------------------------------------------
-  # 1-51 PSID state code
-  # 0 Inap. outside U.S. proper (from 1970)
-  # 99 DK, NA (from 1972)
-
-build <- build %>%
-  mutate(
-    state =
-      case_when(
-        state == 0 ~ "52",
-        state == 99 ~ NA_character_,
-        TRUE ~ as.character(state)
-      )
-  )
-
 # CLEAN FAMILY RACE -------------------------------------------------------------
   # Recode Race
   # 1 white 2 black 3 4 7 other 8 9 0 NA
@@ -492,9 +307,28 @@ build <- build %>%
     -race_pid
   )
 
+# CLEAN FAMILY WEIGHTS -------------------------------------------------------------
+# Longitudinal family weights are to be used for cross-sectional family-level analyses
+# Stratum and cluster variables are available at the individual level only, however these values are the same for all family members in a given year
+build <- build %>%
+  mutate(
+    fam_weight = case_when(
+      year >= 1968 & year <= 1992 ~ fam_longweight_68_92,
+      year >= 1993 & year <= 1996 ~ fam_longweight_93_96,
+      year >= 1997 & year <= 2021 ~ fam_longweight_97_21,
+      TRUE ~ NA_real_
+    ) 
+  )
+    
+# Remove old family weights
+  build <- build %>%
+    select(-starts_with("fam_longweight_")) 
+
+
 # SAVE CLEAN DATA -------------------------------------------------------------
 file.remove(list.files(here("2_clean_panel", "output"), pattern = "\\.rds$", full.names = TRUE))
 saveRDS(build, here("2_clean_panel", "output", "clean.rds"))
 
 # Clean Up Temporary Files --------------------------------------------------
-rm(cpi, pid_lookup, sample_fast)
+rm(list = ls())
+

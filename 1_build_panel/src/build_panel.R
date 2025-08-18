@@ -26,7 +26,10 @@ pacman::p_load(
   ineq,
   showtext,
   tibble,
-  tidyr
+  tidyr,
+  survey,
+  acid,
+  convey
 )
 
 here::i_am("1_build_panel/src/build_panel.R")
@@ -74,9 +77,8 @@ extract_psid_vartables <- function(var_object) {
           )
       )
   }
-  
-  if (grepl("male|first|yod", var_object[["varname"]])) {
-    # Time-invariant so should appear every year
+  # Add time-invariant varibles here 
+  if (grepl("sample|stratum|cluster", var_object[["varname"]])) {
     tmp <-
       tmp %>%
       fill(variable, .direction = "up")
@@ -119,9 +121,25 @@ vars <- list(
   # IDENTIFIERS -------------------------------------------------------------
   list(name = "ind_sample", varname = "sample", var = "ER32006"), # Sample
   list(name = "ind_relation", varname = "relation", var = "ER30003"), # Individual relation to head [all years]
-  list(name = "ind_relation_b", varname = "married_pair", var = "ER30005"), # Married pairs indicator for constructing head_id and spouse_id
-  list(name = "fam_interview", varname = "interview", var = "V99"), # 1968 Interview Number [all years]
+  # list(name = "ind_relation_b", varname = "married_pair", var = "ER30005"), # Married pairs indicator for constructing head_id and spouse_id
+  # list(name = "fam_interview", varname = "interview", var = "V99"), # 1968 Interview Number [all years]
   list(name = "ind_sequence", varname = "sequence", var = "ER30021"), # Family interview respondent's relation to head [all years]
+
+    # INDIVIDUAL DEMOGRAPHICS -------------------------------------------------
+  # list(name = "ind_age", varname = "age", var = "ER30004"), # Age of individual [all years]
+  # list(name = "ind_death", varname = "yod", var = "ER32050"), # Year of death [all years]
+  # list(name = "ind_male", varname = "male", var = "ER32000"), # Time invariant - gender [all years]
+  # list(name = "ind_edu", varname = "edu", var = "ER30010"), # Years of education [1968-2021]
+  # list(name = "ind_children", varname = "children", var = "ER32022"), # Number of children [all years]
+
+    # INDIVIDUAL WEIGHTS ------------------------------------------------------
+  # list(name = "ind_cross_weight", varname = "ind_cross_weight", var = "ER12224"), # Cross-sectional weight [1997-2019]
+  # list(name = "ind_weight", varname = "ind_weight", var = "ER12084"), # Longitudinal Combined Core [1997-2021]
+  # list(name = "ind_cross_weight2", varname = "ind_cross_weight2", var = "ER33438"), # Individual Cross-Sectional Weight [1997-2021]
+  # list(name = "ind_weight2", varname = "ind_weight2", var = "ER33430"), # Individual Weight [1997-2021]
+  list(name = "ind_stratum", varname = "stratum", var = "ER31996"), # Sampling Strata [all years]
+  list(name = "ind_cluster", varname = "cluster", var = "ER31997"), # Sampling cluster [all years]
+
 
   # INCOME ------------------------------------------------------------------
   list(name = "fam_income1", varname = "inc_all", var = "V81"), # Total family income [all years]
@@ -146,12 +164,12 @@ vars <- list(
 
   
   # FAMILY CHARACTERISTICS --------------------------------------------------
-  list(name = "fam_sex", varname = "head_sex", var = "V119"), # Sex of Household Head [all years]
+  # list(name = "fam_sex", varname = "head_sex", var = "V119"), # Sex of Household Head [all years]
   list(name = "fam_numfu", varname = "numfu", var = "V115"), # Number of People in Family Unit [all years]
   list(name = "fam_num", varname = "fam_id", var = "V3"), # Family Number [all years]
-  list(name = "fam_house", varname = "house_status", var = "V103"), # Housing Status [all years]
+  # list(name = "fam_house", varname = "house_status", var = "V103"), # Housing Status [all years]
   # list(name = "fam_homevalue", varname = "home_value", var = "V5"), # Home Value [all years]
-  list(name = "fam_state", varname = "state", var = "V93"), # State of Residence [all years]
+  # list(name = "fam_state", varname = "state", var = "V93"), # State of Residence [all years]
   
   # FAMILY RACE -------------------------------------------------------------
   list(name = "fam_headrace", varname = "race1_head", var = "V181"), # Race of household head [1968-2021]
@@ -163,26 +181,10 @@ vars <- list(
   list(name = "fam_wife3race", varname = "race3_wife", var = "ER3885"), # Race of household "wife" 3 [1994-2021]
   list(name = "fam_wife4race", varname = "race4_wife", var = "ER11763"), # Race of household "wife" 4 [1997-2021]
   
-  # INDIVIDUAL DEMOGRAPHICS -------------------------------------------------
-  list(name = "ind_age", varname = "age", var = "ER30004"), # Age of individual [all years]
-  list(name = "ind_death", varname = "yod", var = "ER32050"), # Year of death [all years]
-  list(name = "ind_male", varname = "male", var = "ER32000"), # Time invariant - gender [all years]
-  
-  # INDIVIDUAL EDUCATION ----------------------------------------------------
-  list(name = "ind_edu", varname = "edu", var = "ER30010"), # Years of education [1968-2021]
-  
-  # INDIVIDUAL FAMILY CHARACTERISTICS ---------------------------------------
-  list(name = "ind_children", varname = "children", var = "ER32022"), # Number of children [all years]
-  
-  # INDIVIDUAL WEIGHTS ------------------------------------------------------
-  # list(name = "ind_cross_weight", varname = "ind_cross_weight", var = "ER12224"), # Cross-sectional weight [1997-2019]
-  # list(name = "ind_weight", varname = "ind_weight", var = "ER12084"), # Longitudinal Combined Core [1997-2021]
-  list(name = "ind_cross_weight2", varname = "ind_cross_weight2", var = "ER33438"), # Individual Cross-Sectional Weight [1997-2021]
-  list(name = "ind_weight2", varname = "ind_weight2", var = "ER33430"), # Individual Weight [1997-2021]
-  list(name = "ind_stratum", varname = "stratum", var = "ER31996"), # Sampling Strata [all years]
-  list(name = "ind_cluster", varname = "cluster", var = "ER31997") # Sampling cluster [all years]
-
-  
+ # FAMILY WEIGHTS -----------------------------------------------------------
+  list(name = "fam_longweight1", varname = "fam_longweight_68_92", var = "V439"), # Longitudinal family weight [1968-1989]
+  list(name = "fam_longweight2", varname = "fam_longweight_93_96", var = "V23361"), # Longitudinal family weight [1993-1996]
+  list(name = "fam_longweight3", varname = "fam_longweight_97_21", var = "ER12084") # Longitudinal family weight [1997-2021]
 )
 
 # Process Variables Using the CWF File ------------------------------------------
@@ -227,7 +229,6 @@ extract_psid_data <- function(psid_data, mapping, id_vars = c("ER30000", "ER3000
 
 psid_data <- extract_psid_data(psid_data, all_vars)
 
-
 # Clean Individual_data and Family_data -------------------------------------------
 psid_data <- psid_data %>%
   rename(
@@ -241,75 +242,12 @@ psid_data <- psid_data %>%
   mutate(pid = (id1968 * 1000) + pn) %>%
   select(year, pid, everything())
 
-# Merge Family Identification Data ------------------------------------------
-# Load FIMS data 
-parents <- openxlsx::read.xlsx(here("0_data", "fims", "20250415_parents.xlsx"))
-grandparents <- openxlsx::read.xlsx(here("0_data", "fims", "20250415_grandparents.xlsx"))
-
-# Parent FIMS
-p_fims <- parents %>%
-  mutate(
-    pid = (ID68 * 1000) + PN,
-    parent_pid = (ID68P * 1000) + PNP
-  ) %>%
-  select(pid, parent_pid)
-
-# Grandparent FIMS
-g_fims <- grandparents %>%
-  mutate(
-    pid = (ID68 * 1000) + PN,
-    grandparent_pid = (ID68GP * 1000) + PNGP
-  ) %>%
-  select(pid, grandparent_pid)
-
-# Merge FIMS 
-p_fims <- p_fims %>%
-  group_by(pid) %>%
-  mutate(parent_num = row_number()) %>%
-  ungroup()
-
-p_fims_wide <- p_fims %>%
-  pivot_wider(
-    names_from = parent_num,
-    names_prefix = "parent",
-    values_from = parent_pid   
-  )
-
-g_fims <- g_fims %>%
-  group_by(pid) %>%
-  mutate(grandparent_num = row_number()) %>%
-  ungroup()
-
-g_fims_wide <- g_fims %>%
-  pivot_wider(
-    names_from = grandparent_num,
-    names_prefix = "grandparent",
-    values_from = grandparent_pid   
-  )
-
-psid_data <- psid_data %>%
-  left_join(p_fims_wide, by = "pid") %>%
-  left_join(g_fims_wide, by = "pid")
-
-# Transform FIMs IDs to Character Type
-psid_data <- psid_data %>%
-  mutate(
-    across(
-      starts_with("parent"),
-      ~ ifelse(. == 0, NA, as.character(.))
-    ),
-    across(
-      starts_with("grandparent"),
-      ~ ifelse(. == 0, NA, as.character(.))
-    )
-  )
-
 # SAVE ---------------------------------------------------------------------------
 file.remove(list.files(here("1_build_panel", "output"), pattern = "\\.rds$", full.names = TRUE))
 saveRDS(psid_data, here("1_build_panel", "output", "build.rds"))
 
 # Clean Up Temporary Files --------------------------------------------------
 rm(cwf, all_vars, vars, vartable_list)
-rm(p_fims, g_fims, parents, grandparents, g_fims_wide, p_fims_wide)
+
 
 
