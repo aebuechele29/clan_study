@@ -27,7 +27,8 @@ clans_wealth <- clans %>%
 r_clans_wealth <- r_clans %>%
   filter(year %in% c(1984, 1989, 1994, seq(1999, 2021, by = 2))) 
 
-
+# Adjust weighted designs for lonely PSUs
+options(survey.lonely.psu = "adjust")
 
 # GINI CALCULATION FUNCTION ------------------------------------------
 gini_by_year_svy <- function(df, value_var, weight_var = NULL, simple_design = FALSE, with_se = FALSE) {

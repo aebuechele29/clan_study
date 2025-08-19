@@ -62,7 +62,7 @@ clans <- clans %>%
     inc_all = inc_all / numclan,  # Average income per household in clan
     wealth_nohouse = wealth_nohouse / numclan  # Average wealth per household in clan
   )
-  
+
 
 # CREATE ROBUST CLANS - CLANS WITH MORE THAN ONE HOUSEHOLD ---------------------------------
 # Filter clans with more than one household
@@ -90,4 +90,4 @@ saveRDS(clans, here("4_clans", "output", "clans.rds"))
 saveRDS(robust_clans, here("4_clans", "output", "robust_clans.rds"))
 saveRDS(robust_households, here("3_households", "output", "robust_households.rds"))
 
-rm(list = ls())
+rm(remove, robust_clans, robust_households, clans, households)

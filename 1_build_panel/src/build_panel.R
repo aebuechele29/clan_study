@@ -29,7 +29,9 @@ pacman::p_load(
   tidyr,
   survey,
   acid,
-  convey
+  convey,
+  rlang,
+  gt
 )
 
 here::i_am("1_build_panel/src/build_panel.R")
