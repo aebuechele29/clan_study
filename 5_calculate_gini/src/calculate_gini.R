@@ -131,7 +131,12 @@ inc_dfs <- list(
   # Clans - means
   # run_gini(clans,   "inc_all_mean",   NULL,         TRUE,  FALSE, "cl_u_inc_mean"),
   run_gini(r_clans, "inc_all_mean",   NULL,         TRUE,  FALSE, "r_cl_u_inc_mean"),
-  run_gini(r_clans, "inc_all",   "clan_weight",         FALSE,  TRUE, "r_cl_w_inc_mean")
+  run_gini(r_clans, "inc_all_mean",   "clan_weight",         FALSE,  TRUE, "r_cl_w_inc_mean"),
+
+    # Clans - totals
+  # run_gini(clans,   "inc_all",   NULL,         TRUE,  FALSE, "cl_u_inc"),
+  run_gini(r_clans, "inc_all",   NULL,         TRUE,  FALSE, "r_cl_u_inc"),
+  run_gini(r_clans, "inc_all",   "clan_weight",         FALSE,  TRUE, "r_cl_w_inc")
 )
 
 inc_by_year <- reduce(inc_dfs, full_join, by = "year") %>% arrange(year)
@@ -155,7 +160,12 @@ wealth_dfs <- list(
   # Clans - means
   # run_gini(clans_wealth,   "wealth_nohouse_mean",   NULL,         TRUE,  FALSE, "cl_u_wealth_mean"),
   run_gini(r_clans_wealth, "wealth_nohouse_mean",   NULL,         TRUE,  FALSE, "r_cl_u_wealth_mean"),
-  run_gini(r_clans_wealth, "wealth_nohouse",   "clan_weight",         FALSE,  TRUE, "r_cl_w_wealth_mean")
+  run_gini(r_clans_wealth, "wealth_nohouse_mean",   "clan_weight",         FALSE,  TRUE, "r_cl_w_wealth_mean"),
+
+  # Clans - totals
+  # run_gini(clans_wealth,   "wealth_nohouse",   NULL,         TRUE,  FALSE, "cl_u_wealth"),
+  run_gini(r_clans_wealth, "wealth_nohouse",   NULL,         TRUE,  FALSE, "r_cl_u_wealth"),
+  run_gini(r_clans_wealth, "wealth_nohouse",   "clan_weight",         FALSE,  TRUE, "r_cl_w_wealth")
 )
 
 wealth_by_year <- reduce(wealth_dfs, full_join, by = "year") %>% arrange(year)
@@ -205,7 +215,20 @@ cl_inc_mean_w   <- run_gini_race(
   "inc_all_mean", "clan_weight", FALSE, TRUE, "r_cl_w_inc_mean"
 )
 
-inc_by_year_race <- list(hh_u_inc, hh_w_inc, cl_inc_median, cl_inc_mean, cl_inc_mean_w) %>%
+# Clans - total
+cl_inc   <- run_gini_race(
+  r_clans %>% filter(black_clan == 1),
+  r_clans %>% filter(black_clan != 1 & !is.na(black_clan)),
+  "inc_all", NULL, TRUE, FALSE, "r_cl_u_inc"
+)
+
+cl_inc_w   <- run_gini_race(
+  r_clans %>% filter(black_clan == 1),
+  r_clans %>% filter(black_clan != 1 & !is.na(black_clan)),
+  "inc_all", "clan_weight", FALSE, TRUE, "r_cl_w_inc"
+)
+
+inc_by_year_race <- list(hh_u_inc, hh_w_inc, cl_inc_mean, cl_inc_mean_w, cl_inc, cl_inc_w) %>%
   reduce(full_join, by = "year") %>%
   arrange(year)
 inc_by_year_race <- append_mean_row(inc_by_year_race)
@@ -244,7 +267,20 @@ cl_wealth_mean_w   <- run_gini_race(
   "wealth_nohouse_mean", "clan_weight", FALSE, TRUE, "r_cl_w_wealth_mean"
 )
 
-wealth_by_year_race <- list(hh_u_wealth, hh_w_wealth, cl_wealth_median, cl_wealth_mean, cl_wealth_mean_w) %>%
+# Clans - total
+cl_wealth   <- run_gini_race(
+  r_clans_wealth %>% filter(black_clan == 1),
+  r_clans_wealth %>% filter(black_clan != 1 & !is.na(black_clan)),
+  "wealth_nohouse", NULL, TRUE, FALSE, "r_cl_u_wealth"
+)
+
+cl_wealth_w   <- run_gini_race(
+  r_clans_wealth %>% filter(black_clan == 1),
+  r_clans_wealth %>% filter(black_clan != 1 & !is.na(black_clan)),
+  "wealth_nohouse", "clan_weight", FALSE, TRUE, "r_cl_w_wealth"
+)
+
+wealth_by_year_race <- list(hh_u_wealth, hh_w_wealth, cl_wealth_mean, cl_wealth_mean_w, cl_wealth, cl_wealth_w) %>%
   reduce(full_join, by = "year") %>%
   arrange(year)
 wealth_by_year_race <- append_mean_row(wealth_by_year_race)
