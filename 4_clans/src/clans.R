@@ -4,25 +4,23 @@
 households <- readRDS(here("3_households", "output", "households.rds"))
 
 # CREATE CLAN-LEVEL DATAFRAME ---------------------------------------------------
-  # This will summarize household data into clan-level data 
 clans <- households %>%
   group_by(year, id1968) %>%
   summarise(
     numclan = n(),
 
     # Keep variables that are the same for all households within a clan
-    sum_all_weights = first(sum_all_weights), # Sum of all survey weights 
-    fam_id          = first(fam_id),          # To remove single-household clans later
+    sum_all_weights = first(sum_all_weights), 
+    fam_id          = first(fam_id),          
     num_clan_people = first(num_clan_people), 
     stratum         = first(stratum),
     cluster         = first(cluster),
 
-    # Income & wealth (unweighted): sum / mean / median / sd
+    # Income & wealth (unweighted): sum / median / count
     across(
       .cols = c(inc_all, wealth_nohouse),
       .fns  = list(
-        clan   = ~ sum(.x, na.rm = TRUE),
-        mean   = ~ sum(.x, na.rm = TRUE) / numclan,
+        clan   = ~ sum(.x, na.rm = TRUE),   # total (will be renamed)
         median = ~ median(.x, na.rm = TRUE),
         n      = ~ sum(!is.na(.x))
       ),
@@ -39,30 +37,25 @@ clans <- households %>%
     .groups = "drop"
   )
 
-# Rename columns for clarity
 clans <- clans %>%
-  rename(inc_all = inc_all_clan,
-         wealth_nohouse = wealth_nohouse_clan)
+  rename(
+    inc_all       = inc_all_clan,
+    wealth_nohouse = wealth_nohouse_clan
+  )
 
+clans <- clans %>%
+  mutate(
+    inc_all_mean = inc_all / numclan,
+    wealth_nohouse_mean = wealth_nohouse / numclan
+  )
 
 # VALIDATE CLAN IDENTIFIERS ---------------------------------------------------
-# id1968: Individual identifier anchored in 1968
 if (nrow(distinct(households, id1968, year)) != nrow(clans)) {
   stop("Different number of distinct clans in household and clan file. Check merge.")
 }
-
-# year: Year of observation
 if (nrow(clans) != nrow(distinct(clans, id1968, year))) {
   stop("Duplicate (id1968, year) combinations found in clans. Check merge.")
 }
-
-# ADJUST KEY OUTCOMES FOR CLAN SIZE ---------------------------------------------------
-clans <- clans %>%
-  mutate(
-    inc_all = inc_all / numclan,  # Average income per household in clan
-    wealth_nohouse = wealth_nohouse / numclan  # Average wealth per household in clan
-  )
-
 
 # CREATE ROBUST CLANS - CLANS WITH MORE THAN ONE HOUSEHOLD ---------------------------------
 # Filter clans with more than one household
