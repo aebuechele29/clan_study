@@ -22,8 +22,8 @@ r_clans_wealth <- r_clans %>%
   filter(year %in% c(1984, 1989, 1994, seq(1999, 2021, by = 2))) 
 
 # Choose years to plot Lorenz curves for
-years_income <- c(1979, 1999, 2019) 
-years_wealth <- c(1989, 2019)
+years_income <- c(2019) 
+years_wealth <- c(2019)
 
 # LORENZ FUNCTIONS ------------------------------------------------------------------------------------
 # Calculate Lorenz curve

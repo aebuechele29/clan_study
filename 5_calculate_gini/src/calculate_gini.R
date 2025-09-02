@@ -57,10 +57,10 @@ gini_by_year_svy <- function(df, value_var, weight_var = NULL, simple_design = F
   }
 
   out <- svyby(
-    as.formula(paste0("~", v)),
-    ~year,
-    design = des,
-    FUN = svygini,
+    as.formula(paste0("~", v)), # Variable to call Gini on
+    ~year, # Group Gini by year
+    design = des, # Survey design object (for weights)
+    FUN = svygini, # Calls Gini calculation
     na.rm = TRUE,
     vartype = vt,
     keep.names = FALSE
