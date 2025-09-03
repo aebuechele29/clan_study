@@ -197,13 +197,23 @@ results_from_sims <- function(sims) {
     )
 }
 
-# ---------- Extremes ----------
+# ---------- Extremes (NA-safe) ----------
 extreme_indices <- function(df_res) {
+  get_idx_min <- function(x) {
+    oks <- which(is.finite(x))
+    if (length(oks) == 0L) stop("No finite values to find minimum.")
+    oks[ which.min(x[oks]) ]
+  }
+  get_idx_max <- function(x) {
+    oks <- which(is.finite(x))
+    if (length(oks) == 0L) stop("No finite values to find maximum.")
+    oks[ which.max(x[oks]) ]
+  }
   list(
-    idx_min_means = which.min(df_res$diff_means),
-    idx_max_means = which.max(df_res$diff_means),
-    idx_min_sums  = which.min(df_res$diff_sums),
-    idx_max_sums  = which.max(df_res$diff_sums)
+    idx_min_means = get_idx_min(df_res$diff_means),
+    idx_max_means = get_idx_max(df_res$diff_means),
+    idx_min_sums  = get_idx_min(df_res$diff_sums),
+    idx_max_sums  = get_idx_max(df_res$diff_sums)
   )
 }
 
@@ -390,11 +400,17 @@ sims <- run_many_sims(
   n_sims = 100,
   n_clans = 5,
   hh_per_clan = 10,
-  dist = "lognormal",
+  dist = "lognormal", # 'lognormal', 'normal', or 'two_sided_lognormal'
   dist_params = list(meanlog = 0, sdlog = 1),
   clan_size_scenario = "rich_big"   # try "equal", "random", "rich_small"
   # , debug_every = 10               # uncomment to print clan sizes every 10 sims
 )
+
+# Build results and locate extremes
+df_res <- results_from_sims(sims)
+print(summary(df_res))
+
+ext <- extreme_indices(df_res)  # <-- you were missing this
 
 # Lorenz curves (four extreme cases)
 p_means_min <- plot_lorenz_for_sim(
@@ -422,9 +438,9 @@ p_mekko_four <- make_four_mekko(
   ext$idx_min_means, ext$idx_max_means,
   ext$idx_min_sums,  ext$idx_max_sums
 )
-print(p_mekko_four)
+print(p_mekko_four) # <-- This is what you look at for understanding which variables create extreme values!
 
-# ---- Example B: Wealth with negatives (optional) ----
+# ---- Example B: Wealth with negatives ----
 sims_w <- run_many_sims(
   n_sims = 100,
   n_clans = 5,
@@ -466,6 +482,6 @@ p_mekko_four_w <- make_four_mekko(
   ext$idx_min_means, ext$idx_max_means,
   ext$idx_min_sums,  ext$idx_max_sums
 )
-print(p_mekko_four_w)
+print(p_mekko_four_w) # <-- This is what you look at for understanding which variables create extreme values!
 
 
