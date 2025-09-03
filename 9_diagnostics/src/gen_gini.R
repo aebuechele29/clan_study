@@ -1,6 +1,6 @@
 # INPUTS: 3_households/output/households.rds, 3_robust_households/output/robust_households.rds
 # INPUTS: 4_clans/output/clans.rds, 4_robust_clans/output/robust_clans.rds
-# OUTPUTS: 5_calculate_gini/output/inc_by_year_sgini.csv, 5_calculate_gini/output/wealth_by_year_sgini.csv
+# OUTPUTS: 9_diagnostics/output/inc_by_year_sgini.csv, 9_diagnostics/output/wealth_by_year_sgini.csv
 
 
 # LOAD DATA ------------------------------------------------------------------
@@ -56,7 +56,7 @@ inc_dfs <- list(
 
 inc_by_year_sgini <- reduce(inc_dfs, full_join, by = "year") %>% arrange(year)
 inc_by_year_sgini <- append_mean_row(inc_by_year_sgini)
-write.csv(inc_by_year_sgini, here("5_calculate_gini", "output", "inc_by_year_sgini.csv"), row.names = FALSE)
+write.csv(inc_by_year_sgini, here("9_diagnostics", "output", "inc_by_year_sgini.csv"), row.names = FALSE)
 
 # WEALTH ---------------------------------------------------------------------
 wealth_dfs <- list(
@@ -67,7 +67,7 @@ wealth_dfs <- list(
 
 wealth_by_year_sgini <- reduce(wealth_dfs, full_join, by = "year") %>% arrange(year)
 wealth_by_year_sgini <- append_mean_row(wealth_by_year_sgini)
-write.csv(wealth_by_year_sgini, here("5_calculate_gini", "output", "wealth_by_year_sgini.csv"), row.names = FALSE)
+write.csv(wealth_by_year_sgini, here("9_diagnostics", "output", "wealth_by_year_sgini.csv"), row.names = FALSE)
 
 # CLEANUP --------------------------------------------------------------------
 rm(list = ls())
