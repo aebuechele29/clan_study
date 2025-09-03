@@ -3,7 +3,6 @@
 
 # SET UP ----------------------------------------------------------------------------------------------
 # Data
-# DATA ---------------------------------------------------------------------
 r_hh     <- readRDS(here("3_households", "output", "robust_households.rds"))
 r_clans  <- readRDS(here("4_clans", "output", "robust_clans.rds"))
 
@@ -72,9 +71,8 @@ summary_tbl <- tribble(
               sprintf("%.3f\n(SE = %.3f)", wealth_by_year$r_cl_w_wealth[1], wealth_by_year$r_cl_w_wealth_se[1])
 )
 
-# Prep for export
 ft <- flextable(summary_tbl) |>
-  set_caption("Figure 1. Comparison of Income and Wealth Inequality for Households and Clans") |>
+  set_caption("Figure 1. Average Gini Coefficients for Households and Clans, 1969–2021") |>
   autofit() |>
   theme_vanilla() |>
   fontsize(size = 12, part = "all") |>
@@ -88,7 +86,11 @@ doc <- read_docx() |>
   body_add_flextable(ft) |>
   body_add_fpar(
     fpar(
-      ftext("Note: Standard errors in parentheses.", prop = note_style),
+      ftext("Note: Gini coefficients reported are averages across all years. 
+      Income data were collected annually until 1997, and biennially thereafter. 
+      Wealth data were collected every five years from 1984 to 1999, and every other year thereafter. 
+      Both income and wealth are adjusted for inflation to constant YEAR dollars. Wealth is measured excluding home equity.
+      Standard errors are shown in parentheses.", prop = note_style),
       fp_p = fp_par(text.align = "center")  
     )
   )
@@ -118,7 +120,7 @@ table <- summary %>%
   )
 
 ft <- flextable(table) |>
-  set_caption("Figure 2A. Income Table") |>
+  set_caption("Figure 2A. Income Summary Statistics") |>
   autofit() |>
   theme_vanilla() |>
   fontsize(size = 12, part = "all") |>
@@ -128,7 +130,7 @@ ft <- flextable(table) |>
 doc <- read_docx() |>
   body_add_flextable(ft) |>
   body_add_fpar(
-    fpar(ftext("Note: Estimates weighted using PSID family and clan weights.", prop = note_style),
+    fpar(ftext("Note: Gini coefficients and distributions based on weighted data using PSID family and clan weights.", prop = note_style),
          fp_p = fp_par(text.align = "center"))
   )
 
@@ -151,13 +153,11 @@ all_vals <- inc_data %>%
                       names_to = "Unit",
                       values_to = "Gini") %>%
   mutate(
-    Label = case_when(
-      Unit == "r_hh_w_inc" ~ sprintf("HH Avg. = %.2f", Gini),
-      Unit == "r_cl_w_inc" ~ sprintf("Clan Avg. = %.2f", Gini)
-    ),
+    Label = sprintf("%.2f", Gini),   
     x = max(yearly_plot$year) + 1,
     y = Gini
   )
+
 
 # Position the average labels
 all_vals <- all_vals %>%
@@ -185,22 +185,19 @@ plot <- ggplot(yearly_plot, aes(x = year)) +
     ) +
   scale_linetype_manual(values = c("Household" = "solid", "Clan" = "dotted")) +
   labs(
-    title = "Figure 2B. Gini Coefficient by Year",
+    title = "Figure 2B. Income Inequality 1969 - 2021",
     x = "Year", y = "Gini Coefficient", linetype = "Unit"
     ) +
   theme_minimal(base_size = 12, base_family = "serif") +
   theme(legend.position = "bottom")
 
-plot <- plot_grid(
-  plot,
-  ggdraw() + draw_label("Note: Estimates weighted using PSID family and clan weights.",
-                        fontfamily = "serif", fontface = "italic", size = 10,
-                        x = 0.5, hjust = 0.5),
-  ncol = 1, rel_heights = c(1, 0.05)
-)
-
-ggsave(here("7_figures", "output", "figure2", "Figure2B.pdf"),
-       plot = plot, width = 9, height = 7)
+# plot <- plot_grid(
+#   plot,
+#   ggdraw() + draw_label("Note: Estimates weighted using PSID family and clan weights.",
+#                         fontfamily = "serif", fontface = "italic", size = 10,
+#                         x = 0.5, hjust = 0.5),
+#   ncol = 1, rel_heights = c(1, 0.05)
+# )
 
 
 # ---- 2C. Lorenz Curve (orange, combined panel) ----
@@ -221,7 +218,7 @@ lorenz <- ggplot(
   scale_color_manual(values = c("1979" = "#4a71c7", "2019" = "#E66101")) +  # orange shades
   scale_linetype_manual(values = c("Household" = "solid", "Clan" = "dotted")) +
   labs(
-    title = paste0("Figure 2C. Lorenz Curves — Income (", paste(years_income, collapse = ", "), ")"),
+    title = paste0("Figure 2C. Distribution of Income in ", paste(years_income, collapse = ", ")),
     x = "Cumulative Proportion of Units",
     y = "Cumulative Proportion of Income",
     color = "Year", linetype = "Unit"
@@ -229,16 +226,19 @@ lorenz <- ggplot(
   theme_minimal(base_size = 12, base_family = "serif") +
   theme(legend.position = "bottom")
 
-lorenz <- plot_grid(
-  lorenz,
-  ggdraw() + draw_label("Note: Estimates weighted using PSID family and clan weights.",
-                        fontfamily = "serif", fontface = "italic", size = 10,
-                        x = 0.5, hjust = 0.5),
-  ncol = 1, rel_heights = c(1, 0.05)
+# Combine plots side by side
+combined <- plot_grid(
+  plot, lorenz,
+  ncol = 2,               # side by side
+  rel_widths = c(1, 1)    # adjust widths if needed
 )
 
-ggsave(here("7_figures", "output", "figure2", "Figure2C.pdf"),
-       plot = lorenz, width = 8, height = 6)
+# Save combined PDF
+ggsave(
+  here("7_figures", "output", "figure2", "Figure2B_C_combined.pdf"),
+  plot = combined, width = 14, height = 7
+)
+
 
 
 
@@ -262,7 +262,7 @@ table <- summary %>%
   )
 
 ft <- flextable(table) |>
-  set_caption("Figure 3A. Wealth Table") |>
+  set_caption("Figure 3A. Wealth Summary Statistics") |>
   autofit() |>
   theme_vanilla() |>
   fontsize(size = 12, part = "all") |>
@@ -272,7 +272,7 @@ ft <- flextable(table) |>
 doc <- read_docx() |>
   body_add_flextable(ft) |>
   body_add_fpar(
-    fpar(ftext("Note: Estimates weighted using PSID family and clan weights.", prop = note_style),
+    fpar(ftext("Note: Gini coefficients and distributions based on weighted data using PSID family and clan weights. Wealth is measured exclusive of home equity. ", prop = note_style),
          fp_p = fp_par(text.align = "center"))
   )
 
@@ -287,7 +287,7 @@ yearly_plot <- inc_data %>%
   filter(year != "ALL") %>%
   mutate(year = as.numeric(year))
 
-# Grab ALL values for labeling averages
+# Grab ALL values for labeling averages (numeric only)
 all_vals <- inc_data %>%
   filter(year == "ALL") %>%
   select(r_hh_w_wealth, r_cl_w_wealth) %>%
@@ -295,19 +295,16 @@ all_vals <- inc_data %>%
                       names_to = "Unit",
                       values_to = "Gini") %>%
   mutate(
-    Label = case_when(
-      Unit == "r_hh_w_wealth" ~ sprintf("HH Avg. = %.2f", Gini),
-      Unit == "r_cl_w_wealth" ~ sprintf("Clan Avg. = %.2f", Gini)
-    ),
+    Label = sprintf("%.2f", Gini),   # just number
     x = max(yearly_plot$year) + 1,
     y = Gini
   )
 
-# Position the average labels
+# Position labels slightly above the line
 all_vals <- all_vals %>%
   mutate(y = case_when(
-    Unit == "r_hh_w_wealth" ~ Gini + 0.8,  # Household label a bit higher
-    Unit == "r_cl_w_wealth" ~ Gini + 0.8,  # Clan label even higher
+    Unit == "r_hh_w_wealth" ~ Gini + 0.01,
+    Unit == "r_cl_w_wealth" ~ Gini + 0.01,
     TRUE ~ Gini
   ))
 
@@ -323,37 +320,20 @@ plot <- ggplot(yearly_plot, aes(x = year)) +
   scale_y_continuous(limits = c(0, 1)) +
   scale_x_continuous(
     breaks = seq(min(yearly_plot$year, na.rm = TRUE),
-               max(yearly_plot$year, na.rm = TRUE),
-               by = 5),
-    expand = expansion(mult = c(0, 0.15))  # add 15% space to the right
-    ) +
+                 max(yearly_plot$year, na.rm = TRUE),
+                 by = 5),
+    expand = expansion(mult = c(0, 0.15))
+  ) +
   scale_linetype_manual(values = c("Household" = "solid", "Clan" = "dotted")) +
   labs(
-    title = "Figure 3B. Gini Coefficient by Year",
+    title = "Figure 3B. Wealth Inequality 1984 - 2021",
     x = "Year", y = "Gini Coefficient", linetype = "Unit"
-    ) +
+  ) +
   theme_minimal(base_size = 12, base_family = "serif") +
   theme(legend.position = "bottom")
 
-plot <- plot_grid(
-  plot,
-  ggdraw() + draw_label("Note: Estimates weighted using PSID family and clan weights.",
-                        fontfamily = "serif", fontface = "italic", size = 10,
-                        x = 0.5, hjust = 0.5),
-  ncol = 1, rel_heights = c(1, 0.05)
-)
 
-ggsave(here("7_figures", "output", "figure3", "Figure3B.pdf"),
-       plot = plot, width = 9, height = 7)
-
-
-# ---- 3C. Lorenz Curve (orange, combined panel) ----
-r_hh_wealth <- r_hh %>%
-  filter(year %in% c(1984, 1989, 1994, seq(1999, 2021, by = 2))) 
-
-r_clans_wealth <- r_clans %>%
-  filter(year %in% c(1984, 1989, 1994, seq(1999, 2021, by = 2))) 
-
+# ---- 3C. Lorenz Curve ----
 years_wealth <- c(1989, 2019)
 w_hh   <- get_lorenz_weighted(r_hh_wealth,    "wealth_nohouse", "fam_weight",  years_wealth, "Household")
 w_clan <- get_lorenz_weighted(r_clans_wealth, "wealth_nohouse", "clan_weight", years_wealth, "Clan")
@@ -362,16 +342,16 @@ w_all  <- bind_rows(w_hh, w_clan)
 lorenz <- ggplot(
   w_all,
   aes(x = p, y = L,
-      color = factor(year),      # color only by year
-      linetype = Unit,           # solid vs dashed by unit
+      color = factor(year),
+      linetype = Unit,
       group = interaction(year, Unit))
 ) +
   geom_line(size = 0.75) +
   geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "grey50") +
-  scale_color_manual(values = c("1989" = "#4a71c7", "2019" = "#E66101")) +  # orange shades
+  scale_color_manual(values = c("1989" = "#4a71c7", "2019" = "#E66101")) +
   scale_linetype_manual(values = c("Household" = "solid", "Clan" = "dotted")) +
   labs(
-    title = paste0("Figure 3C. Lorenz Curves — Wealth (", paste(years_income, collapse = ", "), ")"),
+    title = paste0("Figure 3C. Distribution of Wealth in ", paste(years_wealth, collapse = ", ")),
     x = "Cumulative Proportion of Units",
     y = "Cumulative Proportion of Wealth",
     color = "Year", linetype = "Unit"
@@ -379,28 +359,29 @@ lorenz <- ggplot(
   theme_minimal(base_size = 12, base_family = "serif") +
   theme(legend.position = "bottom")
 
-lorenz <- plot_grid(
-  lorenz,
-  ggdraw() + draw_label("Note: Estimates weighted using PSID family and clan weights.",
-                        fontfamily = "serif", fontface = "italic", size = 10,
-                        x = 0.5, hjust = 0.5),
-  ncol = 1, rel_heights = c(1, 0.05)
+
+# ---- Combine line + Lorenz plots side by side ----
+combined <- plot_grid(
+  plot, lorenz,
+  ncol = 2,
+  rel_widths = c(1, 1)
 )
 
-ggsave(here("7_figures", "output", "figure3", "Figure3C.pdf"),
-       plot = lorenz, width = 8, height = 6)
+ggsave(
+  here("7_figures", "output", "figure3", "Figure3B_C_combined.pdf"),
+  plot = combined, width = 14, height = 7
+)
+
 
 
 
 # FIGURE 4 - BY RACE ----------------------------------------------------------------------------------------------------
-   # ---- 4A. Race Table ----
+# ---- 4A. Race Table (Income) ----
 summary <- read_csv(here("6_summary", "output", "summary_statistics.csv"))
 race_gini <- read_csv(here("5_calculate_gini", "output", "inc_by_year_race.csv"))
-
-# Get ALL row from race_gini for average Ginis
 race_all <- race_gini %>% filter(year == "ALL")
 
-table <- tibble(
+table_income <- tibble(
   Unit = c("Households", "Clans"),
   N = c(
     summary %>% filter(Table == "Income", Unit == "Household") %>% pull(N),
@@ -421,69 +402,39 @@ table <- tibble(
 ) %>%
   mutate(
     N = format(round(N, 0), big.mark = ","),
-    `Black % Wtd.` = sprintf("%.1f%%", `Black % Wtd.` * 1),  # ensure percent
+    `Black % Wtd.` = sprintf("%.1f%%", `Black % Wtd.`),
     `Gini Black` = sprintf("%.3f", `Gini Black`),
     `Gini Non-Black` = sprintf("%.3f", `Gini Non-Black`)
   )
 
-ft <- flextable(table) |>
-  set_caption("Figure 4A. Income Inequality by Race") |>
+ft_income <- flextable(table_income) |>
+  set_caption("Figure 4A. Income Summary Statisics by Race") |>
   autofit() |>
   theme_vanilla() |>
   fontsize(size = 12, part = "all") |>
   fontsize(size = 10, part = "body") |>
   align(align = "center", part = "all")
 
-doc <- read_docx() |>
-  body_add_flextable(ft) |>
-  body_add_fpar(
-    fpar(
-      ftext("Note: Estimates weighted using PSID family and clan weights.", 
-            prop = fp_text(italic = TRUE, font.size = 10)),
-      fp_p = fp_par(text.align = "center")
-    )
-  )
-
-print(doc, target = here("7_figures", "output", "figure4", "Figure4A.docx"))
-
-# ---- 4B. Race Line Plot ----
+# ---- 4B. Race Line Plot (Income) ----
 race_data <- read_csv(here("5_calculate_gini", "output", "inc_by_year_race.csv"))
-
 yearly_plot <- race_data %>%
   filter(year != "ALL") %>%
   mutate(year = as.numeric(year))
 
-# Adjust ALL labels with spacing
 all_vals <- race_data %>%
   filter(year == "ALL") %>%
   select(r_hh_w_inc_black, r_hh_w_inc_nonblack, 
          r_cl_w_inc_black, r_cl_w_inc_nonblack) %>%
   pivot_longer(everything(), names_to = "Series", values_to = "Gini") %>%
   mutate(
-    Label = case_when(
-      Series == "r_hh_w_inc_black"     ~ sprintf("HH Black Avg. = %.2f", Gini),
-      Series == "r_hh_w_inc_nonblack" ~ sprintf("HH Non-Black Avg. = %.2f", Gini),
-      Series == "r_cl_w_inc_black"    ~ sprintf("Clan Black Avg. = %.2f", Gini),
-      Series == "r_cl_w_inc_nonblack" ~ sprintf("Clan Non-Black Avg. = %.2f", Gini)
-    ),
-    Unit = ifelse(grepl("^r_hh", Series), "Household", "Clan"),
+    Label = sprintf("%.2f", Gini),  # numeric only
     Race = ifelse(grepl("nonblack", Series), "Non-Black", "Black"),
-    Linetype = ifelse(Unit == "Household", "solid", "dotted"),
-    Color = ifelse(Race == "Black", "#1b9e77", "#E66101"),
-    x = max(yearly_plot$year) + 1,   # just past last year
-    y = case_when(
-      # Households: a bit above their line
-      grepl("hh", Series) ~ Gini + 0.07,
-      # Clans: right on line or slightly above
-      grepl("cl", Series) ~ Gini + 0.06,
-      TRUE ~ Gini
-    )
+    Unit = ifelse(grepl("^r_hh", Series), "Household", "Clan"),
+    x = max(yearly_plot$year) + 1,
+    y = Gini + 0.05
   )
 
-
-
-# Build plot
-plot <- ggplot(yearly_plot, aes(x = year)) +
+plot_income <- ggplot(yearly_plot, aes(x = year)) +
   geom_smooth(aes(y = r_hh_w_inc_black, color = "Black", linetype = "Household"),
               se = FALSE, size = 0.9) +
   geom_smooth(aes(y = r_hh_w_inc_nonblack, color = "Non-Black", linetype = "Household"),
@@ -501,39 +452,23 @@ plot <- ggplot(yearly_plot, aes(x = year)) +
     breaks = seq(min(yearly_plot$year, na.rm = TRUE),
                  max(yearly_plot$year, na.rm = TRUE),
                  by = 5),
-    expand = expansion(mult = c(0, 0.3))   # more room on right side
+    expand = expansion(mult = c(0, 0.3))
   ) +
   scale_color_manual(values = c("Black" = "#1b9e77", "Non-Black" = "#E66101")) +
   scale_linetype_manual(values = c("Household" = "solid", "Clan" = "dotted")) +
   labs(
-    title = "Figure 4B. Gini Coefficient by Race and Unit",
+    title = "Figure 4B. Income Inequality by Race 1968 - 2021",
     x = "Year", y = "Gini Coefficient",
     color = "Race", linetype = "Unit"
   ) +
   theme_minimal(base_size = 12, base_family = "serif") +
   theme(legend.position = "bottom")
 
-
-plot <- plot_grid(
-  plot,
-  ggdraw() + draw_label("Note: Estimates weighted using PSID family and clan weights.",
-                        fontfamily = "serif", fontface = "italic", size = 10,
-                        x = 0.5, hjust = 0.5),
-  ncol = 1, rel_heights = c(1, 0.05)
-)
-
-ggsave(here("7_figures", "output", "figure4", "Figure4B.pdf"),
-       plot = plot, width = 9, height = 7)
-
-
 # ---- 4C. Wealth Table ----
-summary <- read_csv(here("6_summary", "output", "summary_statistics.csv"))
 wealth_gini <- read_csv(here("5_calculate_gini", "output", "wealth_by_year_race.csv"))
-
-# Get ALL row from wealth_gini for average Ginis
 wealth_all <- wealth_gini %>% filter(year == "ALL")
 
-table <- tibble(
+table_wealth <- tibble(
   Unit = c("Households", "Clans"),
   N = c(
     summary %>% filter(Table == "Wealth", Unit == "Household") %>% pull(N),
@@ -559,61 +494,34 @@ table <- tibble(
     `Gini Non-Black` = sprintf("%.3f", `Gini Non-Black`)
   )
 
-ft <- flextable(table) |>
-  set_caption("Figure 4C. Wealth Inequality by Race") |>
+ft_wealth <- flextable(table_wealth) |>
+  set_caption("Figure 4C. Wealth Summary Statistics by Race") |>
   autofit() |>
   theme_vanilla() |>
   fontsize(size = 12, part = "all") |>
   fontsize(size = 10, part = "body") |>
   align(align = "center", part = "all")
 
-doc <- read_docx() |>
-  body_add_flextable(ft) |>
-  body_add_fpar(
-    fpar(
-      ftext("Note: Estimates weighted using PSID family and clan weights. Wealth excludes home equity.", 
-            prop = fp_text(italic = TRUE, font.size = 10)),
-      fp_p = fp_par(text.align = "center")
-    )
-  )
-
-print(doc, target = here("7_figures", "output", "figure4", "Figure4C.docx"))
-
-
 # ---- 4D. Wealth Line Plot ----
 wealth_data <- read_csv(here("5_calculate_gini", "output", "wealth_by_year_race.csv"))
-
 yearly_plot <- wealth_data %>%
   filter(year != "ALL") %>%
   mutate(year = as.numeric(year))
 
-# Grab ALL row for labels
 all_vals <- wealth_data %>%
   filter(year == "ALL") %>%
   select(r_hh_w_wealth_black, r_hh_w_wealth_nonblack, 
          r_cl_w_wealth_black, r_cl_w_wealth_nonblack) %>%
   pivot_longer(everything(), names_to = "Series", values_to = "Gini") %>%
   mutate(
-    Label = case_when(
-      Series == "r_hh_w_wealth_black"     ~ sprintf("HH Black Avg. = %.2f", Gini),
-      Series == "r_hh_w_wealth_nonblack" ~ sprintf("HH Non-Black Avg. = %.2f", Gini),
-      Series == "r_cl_w_wealth_black"    ~ sprintf("Clan Black Avg. = %.2f", Gini),
-      Series == "r_cl_w_wealth_nonblack" ~ sprintf("Clan Non-Black Avg. = %.2f", Gini)
-    ),
-    Unit = ifelse(grepl("^r_hh", Series), "Household", "Clan"),
+    Label = sprintf("%.2f", Gini),  # numeric only
     Race = ifelse(grepl("nonblack", Series), "Non-Black", "Black"),
-    Linetype = ifelse(Unit == "Household", "solid", "dotted"),
-    Color = ifelse(Race == "Black", "#1b9e77", "#E66101"),
+    Unit = ifelse(grepl("^r_hh", Series), "Household", "Clan"),
     x = max(yearly_plot$year) + 1,
-    y = case_when(
-      grepl("hh", Series) ~ Gini + 0.02,  # HH labels slightly above
-      grepl("cl", Series) ~ Gini + 0.01,  # Clan labels almost aligned
-      TRUE ~ Gini
-    )
+    y = Gini + 0.02
   )
 
-# Build plot
-plot <- ggplot(yearly_plot, aes(x = year)) +
+plot_wealth <- ggplot(yearly_plot, aes(x = year)) +
   geom_smooth(aes(y = r_hh_w_wealth_black, color = "Black", linetype = "Household"),
               se = FALSE, size = 0.9) +
   geom_smooth(aes(y = r_hh_w_wealth_nonblack, color = "Non-Black", linetype = "Household"),
@@ -631,25 +539,29 @@ plot <- ggplot(yearly_plot, aes(x = year)) +
     breaks = seq(min(yearly_plot$year, na.rm = TRUE),
                  max(yearly_plot$year, na.rm = TRUE),
                  by = 5),
-    expand = expansion(mult = c(0, 0.3))   # extra room for labels
+    expand = expansion(mult = c(0, 0.3))
   ) +
   scale_color_manual(values = c("Black" = "#1b9e77", "Non-Black" = "#E66101")) +
   scale_linetype_manual(values = c("Household" = "solid", "Clan" = "dotted")) +
   labs(
-    title = "Figure 4D. Gini Coefficient of Wealth by Race and Unit",
+    title = "Figure 4D. Wealth Inequality by Race 1984 - 2021",
     x = "Year", y = "Gini Coefficient",
     color = "Race", linetype = "Unit"
   ) +
   theme_minimal(base_size = 12, base_family = "serif") +
   theme(legend.position = "bottom")
 
-plot <- plot_grid(
-  plot,
-  ggdraw() + draw_label("Note: Estimates weighted using PSID family and clan weights. Wealth excludes home equity.",
-                        fontfamily = "serif", fontface = "italic", size = 10,
-                        x = 0.5, hjust = 0.5),
-  ncol = 1, rel_heights = c(1, 0.05)
-)
+# ---- Export Tables (Word, side by side) ----
+doc <- read_docx() |>
+  body_add_flextable(ft_income) |>
+  body_add_flextable(ft_wealth, align = "right")
 
-ggsave(here("7_figures", "output", "figure4", "Figure4D.pdf"),
-       plot = plot, width = 9, height = 7)
+print(doc, target = here("7_figures", "output", "figure4", "Figure4_Tables.docx"))
+
+# ---- Export Plots (PDF, side by side) ----
+combined_plots <- plot_grid(plot_income, plot_wealth, ncol = 2, rel_widths = c(1, 1))
+
+ggsave(
+  here("7_figures", "output", "figure4", "Figure4_Plots.pdf"),
+  plot = combined_plots, width = 14, height = 7
+)
