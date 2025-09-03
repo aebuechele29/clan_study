@@ -1,6 +1,6 @@
 # INPUTS: 3_households/output/households.rds, 3_robust_households/output/robust_households.rds
 # INPUTS: 4_clans/output/clans.rds, 4_robust_clans/output/robust_clans.rds
-# OUTPUTS: 7_summary/output/summary_statistics.docx
+# OUTPUTS: 6_summary/output/summary_statistics.docx
 
 
 # DATA ---------------------------------------------------------------------
@@ -101,44 +101,22 @@ clanw_summary <- tibble(
   median_val   = median(r_clans_wealth$wealth_nohouse, na.rm = TRUE)
 )
 
-# COMBINE AND OUTPUT ------------------------------------------------------
+# COMBINE -------------------------------------------------------------------
 summary_table <- bind_rows(hh_summary, clan_summary, hhw_summary, clanw_summary)
 
 summary_output <- summary_table %>%
   mutate(
-    black_pct    = sprintf("%.1f%%", black_pct),
-    black_pct_w  = sprintf("%.1f%%", black_pct_w),
-    mean_val     = dollar(mean_val, accuracy = 1),
-    median_val   = dollar(median_val, accuracy = 1),
-    sd_val       = dollar(sd_val, accuracy = 1),
-    mean_val_w   = dollar(mean_val_w, accuracy = 1),
-    median_val_w = dollar(median_val_w, accuracy = 1),
-    sd_val_w     = dollar(sd_val_w, accuracy = 1)
-  ) %>%
-  gt(groupname_col = "Table") %>%
-  tab_header(title = md("**Descriptive Statistics**")) %>%
-  cols_label(
-    Unit         = "Unit",
-    N            = "N",
-    black_pct_w  = "Black % (Weighted)",
-    black_pct    = "Black % (Unweighted)",
-    unique_clans = "Unique Clans",
-    mean_val_w   = "Mean (Weighted)",
-    median_val_w = "Median (Weighted)",
-    sd_val_w     = "SD (Weighted)",
-    mean_val     = "Mean (Unweighted)",
-    median_val   = "Median (Unweighted)",
-    sd_val       = "SD (Unweighted)"
-  ) %>%
-  tab_options(
-    table.font.names = "Times New Roman",
-    table.font.size  = px(12),
-    table.width      = pct(100)
-  ) %>%
-  tab_source_note(
-    source_note = "Notes: Estimates are weighted for clans and households using survey design with strata and clusters. Wealth estimates exclude home equity."
+    black_pct    = sprintf("%.1f", black_pct),     # keep as numbers or percents
+    black_pct_w  = sprintf("%.1f", black_pct_w),
+    mean_val     = round(mean_val, 1),
+    median_val   = round(median_val, 1),
+    sd_val       = round(sd_val, 1),
+    mean_val_w   = round(mean_val_w, 1),
+    median_val_w = round(median_val_w, 1),
+    sd_val_w     = round(sd_val_w, 1)
   )
 
-gtsave(summary_output, here("7_summary", "output", "summary_statistics.docx"))
+# EXPORT 
+write_csv(summary_output, here("6_summary", "output", "summary_statistics.csv"))
 
-rm(list = ls())  
+rm(list = ls())

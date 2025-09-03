@@ -31,7 +31,11 @@ pacman::p_load(
   acid,
   convey,
   rlang,
-  gt
+  gt,
+  flextable,
+  officer,
+  cowplot,
+  acid
 )
 
 here::i_am("1_build_panel/src/build_panel.R")
