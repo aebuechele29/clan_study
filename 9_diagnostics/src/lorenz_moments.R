@@ -24,11 +24,7 @@ lorenz_tbl <- function(x, w = NULL) {
   tibble(p = L$p, L = L$L)
 }
 
-<<<<<<< HEAD
 # Scaled conditional mean M(u) = L(u) / u  
-=======
-# --- scaled conditional mean M(u) = L(u) / u  --------------------------
->>>>>>> c3f72331da13891e251385797078402f9226ba81
 scmc_from_lorenz <- function(p, L) {
   # safe divide, define M(0) from right-hand limit
   denom <- pmax(p, .Machine$double.eps)
@@ -88,11 +84,7 @@ calc_gini_from_lorenz <- function(p, L) {
   1 - 2 * trapz(p, L)
 }
 
-<<<<<<< HEAD
 # Bonferroni index from Lorenz (via SCMC) ---------------------------
-=======
-# --- Bonferroni index from Lorenz (via SCMC) ---------------------------
->>>>>>> c3f72331da13891e251385797078402f9226ba81
 # B = 1 - ∫_0^1 [ L(u) / u ] du   (area under M(u))
 calc_bonf_from_lorenz <- function(p, L) {
   denom <- pmax(p, .Machine$double.eps)
@@ -107,18 +99,11 @@ inc_hh   <- get_lorenz_both(r_hh,    "inc_all",     "fam_weight",  years_income,
 inc_clan <- get_lorenz_both(r_clans, "inc_all",     "clan_weight", years_income, "Clan")
 inc_all  <- bind_rows(inc_hh, inc_clan)
 
-<<<<<<< HEAD
 # write_csv(inc_all, here("9_diagnostics", "output", "inc_curve_inputs.csv"))
 
 # Compute weighted Lorenz-based indices
 inc_w <- inc_all %>%
   filter(weighting == "Weighted") %>%
-=======
-write_csv(inc_all, here("9_diagnostics", "output", "income_L_and_SCMC_curves.csv"))
-
-inc_unw <- inc_all %>%
-  filter(weighting == "Unweighted") %>%
->>>>>>> c3f72331da13891e251385797078402f9226ba81
   group_by(Unit, year) %>%
   summarise(
     calc_D123(p, L),
@@ -205,21 +190,12 @@ doc <- read_docx() |>
 
 print(doc, target = here("9_diagnostics", "output", "income_family.docx"))
 
-<<<<<<< HEAD
-=======
-write_csv(inc_unw, here("9_diagnostics", "output", "income_D123.csv"))
->>>>>>> c3f72331da13891e251385797078402f9226ba81
 
 
 # WEALTH ---------------------------------------------------------------------
 w_hh   <- get_lorenz_both(r_hh_wealth,    "wealth_nohouse",     "fam_weight",  years_wealth, "Household")
 w_clan <- get_lorenz_both(r_clans_wealth, "wealth_nohouse",     "clan_weight", years_wealth, "Clan")
 w_all <- bind_rows(w_hh, w_clan)
-<<<<<<< HEAD
-=======
-
-write_csv(w_all, here("9_diagnostics", "output", "wealth_L_and_SCMC_curves.csv"))
->>>>>>> c3f72331da13891e251385797078402f9226ba81
 
 # write_csv(w_all, here("9_diagnostics", "output", "wealth_curve_inputs.csv"))
 
@@ -247,7 +223,6 @@ w_w <- w_all %>%
     C3 = C3
   )
 
-<<<<<<< HEAD
 # Define year bands
 year_bands <- tibble(
   year = c(1984, 1989, 1994,
@@ -313,9 +288,6 @@ doc <- read_docx() |>
   )
 
 print(doc, target = here("9_diagnostics", "output", "wealth_family.docx"))
-=======
-write_csv(w_unw, here("9_diagnostics", "output", "wealth_D123.csv"))
->>>>>>> c3f72331da13891e251385797078402f9226ba81
 
 # ---- Single-panel overlay for a chosen Unit/weighting/year set ----------
 plot_scmc_vs_lorenz <- function(curves_df,
@@ -350,7 +322,6 @@ plot_scmc_vs_lorenz <- function(curves_df,
 p1 <- plot_scmc_vs_lorenz(inc_all, unit = "Household", weighting = "Unweighted")
 # print(p1)
 
-<<<<<<< HEAD
 # write_csv(w_unw, here("9_diagnostics", "output", "wealth_moments.csv"))
 
 # # ---- Single-panel overlay for a chosen Unit/weighting/year set ----------
@@ -423,29 +394,4 @@ p1 <- plot_scmc_vs_lorenz(inc_all, unit = "Household", weighting = "Unweighted")
 # wealth_curves <- p3 + p4
 # ggsave(here("9_diagnostics", "output", "wealth_curves.png"),
 #        wealth_curves, width = 12, height = 6, dpi = 300)
-=======
-# clans, unweighted, all years
-p2 <- plot_scmc_vs_lorenz(inc_all, unit = "Clan", weighting = "Unweighted")
-
-# Batch: make one plot per (Unit, weighting) and save ----------------
-# save_all_scmc_lorenz_plots <- function(curves_df, out_dir = "9_diagnostics/output",
-#                                        file_stub = "Lorenz_vs_SCMC") {
-#   dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
-
-#   combos <- curves_df %>%
-#     distinct(Unit, weighting) %>%
-#     arrange(Unit, weighting)
-
-#   pwalk(combos, function(Unit, weighting) {
-#     g <- plot_scmc_vs_lorenz(curves_df, unit = Unit, weighting = weighting)
-#     fn <- file.path(out_dir,
-#                     sprintf("%s_%s_%s.png",
-#                             file_stub,
-#                             gsub("\\s+", "", as.character(Unit)),
-#                             gsub("\\s+", "", as.character(weighting))))
-#     ggsave(fn, g, width = 10, height = 6, dpi = 300)
-#     message("Saved: ", fn)
-#   })
-# }
->>>>>>> c3f72331da13891e251385797078402f9226ba81
 
