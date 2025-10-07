@@ -16,7 +16,7 @@ theme_set(theme_minimal(base_size = 12, base_family = "serif"))
 note_style <- fp_text(italic = TRUE, font.size = 10)
 
 # Define functions for plotting Lorenz curves
-# Manually plotting the Lorenz as a CDF because the weights introduced errors
+# Manually plotting the Lorenz as a CDF because the weights introduced errors with the lorenz function
 lorenz_tbl <- function(x, w) {
   stopifnot(length(x) == length(w))
   

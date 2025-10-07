@@ -89,8 +89,8 @@ lorenz_df <- function(x, label) {
 # ---------- Single simulation with guards ----------
 # clan_size_scenario: "equal", "random", "rich_big", "rich_small"
 simulate_ginis <- function(
-  n_clans = 10,
-  hh_per_clan = 20,
+  n_clans = 2500,
+  hh_per_clan = 4,
   dist = "lognormal",
   dist_params = list(meanlog = 0, sdlog = 1),
   clan_size_scenario = "equal",
@@ -397,9 +397,9 @@ set.seed(123)
 
 # Example A: Income-like
 sims <- run_many_sims(
-  n_sims = 100,
-  n_clans = 5,
-  hh_per_clan = 10,
+  n_sims = 1000,
+  n_clans = 2500,
+  hh_per_clan = 4,
   dist = "lognormal", # 'lognormal', 'normal', or 'two_sided_lognormal'
   dist_params = list(meanlog = 0, sdlog = 1),
   clan_size_scenario = "rich_big"   # try "equal", "random", "rich_small"
@@ -444,7 +444,7 @@ print(p_mekko_four) # <-- This is what you look at for understanding which varia
 sims_w <- run_many_sims(
   n_sims = 100,
   n_clans = 5,
-  hh_per_clan = 10,
+  hh_per_clan = 4,
   dist = "two_sided_lognormal",
   dist_params = list(
     meanlog_pos = 1.0, sdlog_pos = 1.0,  # assets
@@ -483,5 +483,14 @@ p_mekko_four_w <- make_four_mekko(
   ext$idx_min_sums,  ext$idx_max_sums
 )
 print(p_mekko_four_w) # <-- This is what you look at for understanding which variables create extreme values!
+
+
+
+
+
+
+
+
+
 
 

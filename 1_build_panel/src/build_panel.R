@@ -35,7 +35,8 @@ pacman::p_load(
   flextable,
   officer,
   cowplot,
-  acid
+  acid,
+  officer
 )
 
 here::i_am("1_build_panel/src/build_panel.R")
