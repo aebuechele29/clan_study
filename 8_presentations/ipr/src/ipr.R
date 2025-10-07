@@ -139,7 +139,7 @@ doc_write(
 inc_yearly <- inc_by_year |> filter(year != "ALL") |> mutate(year = as.numeric(year))
 p_inc <- gg_gini_time(
   inc_yearly, "r_hh_w_inc", "r_cl_w_inc",
-  "Income Inequality from 1969 - 2021",
+  "Figure 1A: Income Inequality from 1969 - 2021",
   "Note: Gini coefficents are weighted. Income data were collected annually until 1997, and biennially thereafter."
 )
 ggsave(here("8_presentations", "ipr", "output", "figure1a.pdf"),
@@ -149,8 +149,10 @@ ggsave(here("8_presentations", "ipr", "output", "figure1a.pdf"),
 wealth_yearly <- wealth_by_year |> filter(year != "ALL") |> mutate(year = as.numeric(year))
 p_w <- gg_gini_time(
   wealth_yearly, "r_hh_w_wealth", "r_cl_w_wealth",
-  "Wealth Inequality from 1984 - 2021",
-  "Note: Gini coefficients are weighted. Wealth data were collected every five years from 1984 to 1999, and every other year thereafter. Wealth is measured excluding home equity."
+  "Figure 2A: Wealth Inequality from 1984 - 2021",
+  "Note: Gini coefficients are weighted. Wealth data were collected every five years 
+  from 1984 to 1999, and every other year thereafter. 
+  Wealth is measured excluding home equity."
 )
 ggsave(here("8_presentations", "ipr", "output", "figure2a.pdf"),
        plot = p_w, width = 7, height = 5, bg = "white")
