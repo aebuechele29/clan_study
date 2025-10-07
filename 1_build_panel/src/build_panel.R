@@ -36,7 +36,8 @@ pacman::p_load(
   officer,
   cowplot,
   acid,
-  officer
+  officer,
+  reldist
 )
 
 here::i_am("1_build_panel/src/build_panel.R")
