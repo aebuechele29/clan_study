@@ -58,6 +58,70 @@ doc_write <- function(ft, caption, note, outpath) {
   invisible(NULL)
 }
 
+
+assign_quartile <- function(design, var,
+                            probs = c(0, .25, .5, .75, 1),
+                            labs = c("Q1 (Lowest 25%)", "Q2", "Q3", "Q4 (Highest 25%)")) {
+  qs <- svyquantile(as.formula(paste0("~", var)), design,
+                    quantiles = probs, na.rm = TRUE, ci = FALSE) |> unlist()
+  design$variables$quartile <- cut(design$variables[[var]],
+                                   breaks = c(-Inf, qs[2:4], Inf),
+                                   labels = labs, include.lowest = TRUE, right = TRUE)
+  design
+}
+
+build_quartile_rows <- function(hh_df, cl_df, var, year,
+                                hh_black_var = "black_head",
+                                cl_black_var = "black_clan") {
+  if (nrow(hh_df) == 0 || nrow(cl_df) == 0) return(NULL)
+
+  hh_d <- svydesign(ids = ~cluster, strata = ~stratum, weights = ~fam_weight,  data = hh_df, nest = TRUE)
+  cl_d <- svydesign(ids = ~cluster, strata = ~stratum, weights = ~clan_weight, data = cl_df, nest = TRUE)
+
+  hh_q <- assign_quartile(hh_d, var)
+  hh_mean <- svyby(as.formula(paste0("~", var)), ~quartile, hh_q, svymean, na.rm = TRUE) |>
+    transmute(Quartile = as.character(quartile),
+              Mean = as.numeric(.data[[var]]))
+  hh_people <- svyby(~numfu, ~quartile, hh_q, svymean, na.rm = TRUE) |>
+    transmute(Quartile = as.character(quartile),
+              `Avg # People` = as.numeric(numfu))
+  hh_black <- svyby(as.formula(paste0("~", hh_black_var)), ~quartile, hh_q, svymean, na.rm = TRUE)
+  hh_black <- tibble(
+    Quartile = as.character(hh_black$quartile),
+    `% Black` = 100 * as.numeric(hh_black[[hh_black_var]])
+  )
+  hh_tab <- list(hh_people, hh_mean, hh_black) |>
+    purrr::reduce(left_join, by = "Quartile") |>
+    mutate(Year = year, Unit = "Household", `Avg # HH per Clan` = NA_real_) |>
+    select(Year, Unit, Quartile, `Avg # People`, `Avg # HH per Clan`, `% Black`, Mean)
+
+  cl_q <- assign_quartile(cl_d, var)
+  cl_mean <- svyby(as.formula(paste0("~", var)), ~quartile, cl_q, svymean, na.rm = TRUE) |>
+    transmute(Quartile = as.character(quartile),
+              Mean = as.numeric(.data[[var]]))
+  cl_people <- svyby(~num_clan_people, ~quartile, cl_q, svymean, na.rm = TRUE) |>
+    transmute(Quartile = as.character(quartile),
+              `Avg # People` = as.numeric(num_clan_people))
+  cl_hh <- svyby(~numclan, ~quartile, cl_q, svymean, na.rm = TRUE) |>
+    transmute(Quartile = as.character(quartile),
+              `Avg # HH per Clan` = as.numeric(numclan))
+  cl_black <- svyby(as.formula(paste0("~", cl_black_var)), ~quartile, cl_q, svymean, na.rm = TRUE)
+  cl_black <- tibble(
+    Quartile = as.character(cl_black$quartile),
+    `% Black` = 100 * as.numeric(cl_black[[cl_black_var]])
+  )
+  cl_tab <- list(cl_people, cl_hh, cl_black, cl_mean) |>
+    purrr::reduce(left_join, by = "Quartile") |>
+    mutate(Year = year, Unit = "Clan") |>
+    select(Year, Unit, Quartile, `Avg # People`, `Avg # HH per Clan`, `% Black`, Mean)
+
+  bind_rows(hh_tab, cl_tab) |>
+    mutate(Quartile = factor(Quartile,
+                             levels = c("Q1 (Lowest 25%)","Q2","Q3","Q4 (Highest 25%)")))
+}
+
+
+
 # TABLE 1: AVERAGE GINI COEFFICIENTS OVER TIME
 inc_by_year    <- read_csv(here("5_calculate_gini", "output", "inc_by_year.csv"), show_col_types = FALSE)
 wealth_by_year <- read_csv(here("5_calculate_gini", "output", "wealth_by_year.csv"), show_col_types = FALSE)
@@ -157,165 +221,91 @@ p_w <- gg_gini_time(
 ggsave(here("8_presentations", "ipr", "output", "figure2a.pdf"),
        plot = p_w, width = 7, height = 5, bg = "white")
 
-# FIGURE 1B: INCOME QUINTILES IN 1979, 1999, AND 2019
-years_quintile <- c(1979, 1999, 2019)
-hh_q <- r_hh |> filter(year %in% years_quintile)
-cl_q <- r_clans |> filter(year %in% years_quintile)
-get_quintile_means <- function(design, var) {
-  qtiles <- svyquantile(as.formula(paste0("~", var)), design, quantiles = seq(0, 1, 0.2), na.rm = TRUE, ci = FALSE) |> unlist()
-  design$variables$quintile <- cut(design$variables[[var]],
-                                   breaks = c(-Inf, qtiles[2:5], Inf),
-                                   labels = c("Lowest 20%", "2nd 20%", "3rd 20%", "4th 20%", "Highest 20%"),
-                                   include.lowest = TRUE)
-  m <- svyby(as.formula(paste0("~", var)), ~quintile, design, svymean, na.rm = TRUE)
-  setNames(as.numeric(m[[var]]), as.character(m$quintile))
-}
+# FIGURE 1B: INCOME QUARTILES IN 1979, 1999, AND 2019
+years_quartile <- c(1979, 1999, 2019)
+hh_inc_sub <- r_hh    |> dplyr::filter(year %in% years_quartile)
+cl_inc_sub <- r_clans |> dplyr::filter(year %in% years_quartile)
 
-res_inc <- lapply(years_quintile, function(yr) {
-  hh_y <- hh_q |> dplyr::filter(year == yr)
-  cl_y <- cl_q |> dplyr::filter(year == yr)
+res_inc_quarts <- lapply(years_quartile, function(yr) {
+  hh_y <- hh_inc_sub |> dplyr::filter(year == yr)
+  cl_y <- cl_inc_sub |> dplyr::filter(year == yr)
+  build_quartile_rows(hh_y, cl_y, var = "inc_all", year = yr,
+                      hh_black_var = "black_head", cl_black_var = "black_clan")
+}) |> dplyr::bind_rows() |>
+  dplyr::arrange(Year, factor(Unit, levels = c("Household", "Clan")), Quartile)
 
-  if (nrow(hh_y) == 0 || nrow(cl_y) == 0) return(NULL)
+gini_lookup_inc_q <- inc_by_year |>
+  dplyr::filter(year %in% years_quartile) |>
+  dplyr::transmute(Year = as.numeric(year),
+                   Household = r_hh_w_inc, Clan = r_cl_w_inc) |>
+  tidyr::pivot_longer(c(Household, Clan), names_to = "Unit", values_to = "Gini")
 
-  hh_d <- svydesign(ids = ~cluster, strata = ~stratum, weights = ~fam_weight,
-                    data = hh_y, nest = TRUE)
-  cl_d <- svydesign(ids = ~cluster, strata = ~stratum, weights = ~clan_weight,
-                    data = cl_y, nest = TRUE)
+t_inc_q <- res_inc_quarts |>
+  dplyr::left_join(gini_lookup_inc_q, by = c("Year","Unit")) |>
+  dplyr::relocate(Gini, .after = Unit)
 
-  qm_hh <- get_quintile_means(hh_d, "inc_all")
-  qm_cl <- get_quintile_means(cl_d, "inc_all")
-
-  dplyr::bind_rows(
-    tibble::tibble(
-      Year   = yr, Unit = "Household",
-      Median = get_wtd_median(hh_d, "inc_all"),
-      Mean   = as.numeric(svymean(~inc_all, hh_d, na.rm = TRUE)),
-      people_or_clan = as.numeric(svymean(~numfu, hh_d, na.rm = TRUE)),
-      `Lowest 20%`   = qm_hh[["Lowest 20%"]],
-      `2nd 20%`      = qm_hh[["2nd 20%"]],
-      `3rd 20%`      = qm_hh[["3rd 20%"]],
-      `4th 20%`      = qm_hh[["4th 20%"]],
-      `Highest 20%`  = qm_hh[["Highest 20%"]]
-    ),
-    tibble::tibble(
-      Year   = yr, Unit = "Clan",
-      Median = get_wtd_median(cl_d, "inc_all"),
-      Mean   = as.numeric(svymean(~inc_all, cl_d, na.rm = TRUE)),
-      people_or_clan = as.numeric(svymean(~num_clan_people, cl_d, na.rm = TRUE)),
-      hh_per_clan    = as.numeric(svymean(~numclan, cl_d, na.rm = TRUE)),
-      `Lowest 20%`   = qm_cl[["Lowest 20%"]],
-      `2nd 20%`      = qm_cl[["2nd 20%"]],
-      `3rd 20%`      = qm_cl[["3rd 20%"]],
-      `4th 20%`      = qm_cl[["4th 20%"]],
-      `Highest 20%`  = qm_cl[["Highest 20%"]]
-    )
+t_inc_q_fmt <- t_inc_q |>
+  dplyr::mutate(
+    `Avg # People` = sprintf("%.2f", `Avg # People`),
+    `Avg # HH per Clan` = dplyr::if_else(Unit == "Clan",
+                                         sprintf("%.2f", `Avg # HH per Clan`), ""),
+    `% Black` = sprintf("%.1f", `% Black`),
+    Mean = formatC(Mean, format = "f", digits = 0, big.mark = ","),
+    Gini = sprintf("%.3f", Gini)
   )
-}) |> dplyr::bind_rows()
 
-
-t1b <- res_inc |>
-  rename(`Avg. No. of Individuals` = people_or_clan, `Avg. No. of HH` = hh_per_clan) |>
-  select(Year, Unit, `Avg. No. of Individuals`, `Avg. No. of HH`,
-         Median, Mean, `Lowest 20%`, `2nd 20%`, `3rd 20%`, `4th 20%`, `Highest 20%`) |>
-  arrange(Year, factor(Unit, levels = c("Household", "Clan")))
-
-gini_lookup_inc <- inc_by_year |>
-  filter(year %in% years_quintile) |>
-  transmute(Year = as.numeric(year), Household = r_hh_w_inc, Clan = r_cl_w_inc) |>
-  pivot_longer(c(Household, Clan), names_to = "Unit", values_to = "Gini")
-
-t1b <- t1b |> left_join(gini_lookup_inc, by = c("Year", "Unit"))
-
-t1b_fmt <- t1b |>
-  select(Year, Unit, `Avg. No. of Individuals`, `Avg. No. of HH`,
-         Gini, Median, Mean, `Lowest 20%`, `2nd 20%`, `3rd 20%`, `4th 20%`, `Highest 20%`) |>
-  mutate(across(c(`Avg. No. of Individuals`, `Avg. No. of HH`, Gini),
-                ~formatC(.x, format = "f", digits = 2, big.mark = ","))) |>
-  mutate(across(c(Median, Mean, `Lowest 20%`, `2nd 20%`, `3rd 20%`, `4th 20%`, `Highest 20%`),
-                ~formatC(.x, format = "f", digits = 0, big.mark = ",")))
-
-ft1b <- fmt_table(t1b_fmt)
+ft_inc_q <- fmt_table(t_inc_q_fmt)
 doc_write(
-  ft1b,
-  "Figure 1B. Income Quintiles for Households and Clans: 1979, 1999, 2019",
-  "Note: Values are weighted. Quintile means are computed within each year’s distribution.",
+  ft_inc_q,
+  "Figure 1B: Income Quartiles (1979, 1999, 2019)",
+  "Note: Values are survey-weighted. Quartiles computed within each year and unit. Avg # HH per Clan applies only to clans. % Black is the weighted share within each quartile.",
   here("8_presentations", "ipr", "output", "figure1b.docx")
 )
 
+
+
 # FIGURE 2B: WEALTH QUINTILES IN 1989, 2009, AND 2019
-years_quintile_w <- c(1989, 2009, 2019)
-r_hh_w_all <- r_hh |> filter(year %in% wealth_years)
-r_cl_w_all <- r_clans |> filter(year %in% wealth_years)
+years_quartile_w <- c(1989, 2009, 2019)
+hh_w_sub <- r_hh    |> dplyr::filter(year %in% years_quartile_w)
+cl_w_sub <- r_clans |> dplyr::filter(year %in% years_quartile_w)
 
-res_w <- lapply(years_quintile_w, function(yr) {
-  hh_y <- r_hh_w_all |> dplyr::filter(year == yr)
-  cl_y <- r_cl_w_all |> dplyr::filter(year == yr)
-  if (nrow(hh_y) == 0 || nrow(cl_y) == 0) return(NULL)
+res_w_quarts <- lapply(years_quartile_w, function(yr) {
+  hh_y <- hh_w_sub |> dplyr::filter(year == yr)
+  cl_y <- cl_w_sub |> dplyr::filter(year == yr)
+  build_quartile_rows(hh_y, cl_y, var = "wealth_nohouse", year = yr,
+                      hh_black_var = "black_head", cl_black_var = "black_clan")
+}) |> dplyr::bind_rows() |>
+  dplyr::arrange(Year, factor(Unit, levels = c("Household", "Clan")), Quartile)
 
-  hh_dy <- svydesign(ids = ~cluster, strata = ~stratum, weights = ~fam_weight,
-                     data = hh_y, nest = TRUE)
-  cl_dy <- svydesign(ids = ~cluster, strata = ~stratum, weights = ~clan_weight,
-                     data = cl_y, nest = TRUE)
+gini_lookup_w_q <- wealth_by_year |>
+  dplyr::filter(year %in% years_quartile_w) |>
+  dplyr::transmute(Year = as.numeric(year),
+                   Household = r_hh_w_wealth, Clan = r_cl_w_wealth) |>
+  tidyr::pivot_longer(c(Household, Clan), names_to = "Unit", values_to = "Gini")
 
-  qm_hh <- get_quintile_means(hh_dy, "wealth_nohouse")
-  qm_cl <- get_quintile_means(cl_dy, "wealth_nohouse")
+t_w_q <- res_w_quarts |>
+  dplyr::left_join(gini_lookup_w_q, by = c("Year","Unit")) |>
+  dplyr::relocate(Gini, .after = Unit)
 
-  dplyr::bind_rows(
-    tibble::tibble(
-      Year = yr, Unit = "Household",
-      Median = get_wtd_median(hh_dy, "wealth_nohouse"),
-      Mean   = as.numeric(svymean(~wealth_nohouse, hh_dy, na.rm = TRUE)),
-      people_or_clan = as.numeric(svymean(~numfu, hh_dy, na.rm = TRUE)),
-      `Lowest 20%`   = qm_hh[["Lowest 20%"]],
-      `2nd 20%`      = qm_hh[["2nd 20%"]],
-      `3rd 20%`      = qm_hh[["3rd 20%"]],
-      `4th 20%`      = qm_hh[["4th 20%"]],
-      `Highest 20%`  = qm_hh[["Highest 20%"]]
-    ),
-    tibble::tibble(
-      Year = yr, Unit = "Clan",
-      Median = get_wtd_median(cl_dy, "wealth_nohouse"),
-      Mean   = as.numeric(svymean(~wealth_nohouse, cl_dy, na.rm = TRUE)),
-      people_or_clan = as.numeric(svymean(~num_clan_people, cl_dy, na.rm = TRUE)),
-      hh_per_clan    = as.numeric(svymean(~numclan, cl_dy, na.rm = TRUE)),
-      `Lowest 20%`   = qm_cl[["Lowest 20%"]],
-      `2nd 20%`      = qm_cl[["2nd 20%"]],
-      `3rd 20%`      = qm_cl[["3rd 20%"]],
-      `4th 20%`      = qm_cl[["4th 20%"]],
-      `Highest 20%`  = qm_cl[["Highest 20%"]]
-    )
+t_w_q_fmt <- t_w_q |>
+  dplyr::mutate(
+    `Avg # People` = sprintf("%.2f", `Avg # People`),
+    `Avg # HH per Clan` = dplyr::if_else(Unit == "Clan",
+                                         sprintf("%.2f", `Avg # HH per Clan`), ""),
+    `% Black` = sprintf("%.1f", `% Black`),
+    Mean = formatC(Mean, format = "f", digits = 0, big.mark = ","),
+    Gini = sprintf("%.3f", Gini)
   )
-}) |> dplyr::bind_rows()
 
-
-t2b <- res_w |>
-  rename(`Avg. No. of Individuals` = people_or_clan, `Avg. No. of HH` = hh_per_clan) |>
-  select(Year, Unit, `Avg. No. of Individuals`, `Avg. No. of HH`,
-         Median, Mean, `Lowest 20%`, `2nd 20%`, `3rd 20%`, `4th 20%`, `Highest 20%`) |>
-  arrange(Year, factor(Unit, levels = c("Household", "Clan")))
-
-gini_lookup_w <- wealth_by_year |>
-  filter(year %in% years_quintile_w) |>
-  transmute(Year = as.numeric(year), Household = r_hh_w_wealth, Clan = r_cl_w_wealth) |>
-  pivot_longer(c(Household, Clan), names_to = "Unit", values_to = "Gini")
-
-t2b <- t2b |> left_join(gini_lookup_w, by = c("Year", "Unit"))
-
-t2b_fmt <- t2b |>
-  select(Year, Unit, `Avg. No. of Individuals`, `Avg. No. of HH`,
-         Gini, Median, Mean, `Lowest 20%`, `2nd 20%`, `3rd 20%`, `4th 20%`, `Highest 20%`) |>
-  mutate(across(c(`Avg. No. of Individuals`, `Avg. No. of HH`, Gini),
-                ~formatC(.x, format = "f", digits = 2, big.mark = ","))) |>
-  mutate(across(c(Median, Mean, `Lowest 20%`, `2nd 20%`, `3rd 20%`, `4th 20%`, `Highest 20%`),
-                ~formatC(.x, format = "f", digits = 0, big.mark = ",")))
-
-ft2b <- fmt_table(t2b_fmt)
+ft_w_q <- fmt_table(t_w_q_fmt)
 doc_write(
-  ft2b,
-  "Figure 2B. Wealth Quintiles for Households and Clans: 1989, 2009, 2019",
-  "Note: Values are weighted. Quintile means are computed within each year’s distribution.",
+  ft_w_q,
+  "Figure 2B: Wealth Quartiles (1989, 2009, 2019)",
+  "Note: Values are survey-weighted. Wealth excludes home equity. Quartiles computed within each year and unit. Avg # HH per Clan applies only to clans. % Black is the weighted share within each quartile.",
   here("8_presentations", "ipr", "output", "figure2b.docx")
 )
+
+
 
 # FIGURE 3: RACE DIFFERENCE BETWEEN AVERAGE GINI COEFFICIENT FOR HOUSEHOLDS AND CLANS
 inc_by_year_race    <- read_csv(here("5_calculate_gini", "output", "inc_by_year_race.csv"), show_col_types = FALSE)
