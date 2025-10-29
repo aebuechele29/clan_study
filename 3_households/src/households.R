@@ -1,6 +1,3 @@
-# INPUTS: 2_clean_panel/output/clean.rds
-# OUTPUTS: 3_households/output/households.rds
-
 # LOAD DATA ------------------------------------------------------------------
 clean <- readRDS(here("2_clean_panel", "output", "clean.rds"))
 data <- clean
@@ -73,7 +70,6 @@ ind_wide <- dcast(
   value.var = "value"
 )
 
-
 # CLEAN HOUSEHOLD FILE -------------------------------------------------------------
 # Remove columns with the same values for all roles within a family (i.e. adopt value for the head) 
 ind_wide <- ind_wide %>%
@@ -124,6 +120,59 @@ households <- households %>%
     -starts_with("ind_top_"),
     -starts_with("race_year_"))
 
+# DEAL WITH HOUSEHOLDS THAT BELONG TO MULTIPLE CLANS ---------------------------------
+# Check that clan ids are shared between heads and spouses
+# Save mismatched cases
+  mismatched <- households %>%
+    filter(
+      !is.na(id1968) & 
+      !is.na(id1968_spouse) & 
+      id1968 != id1968_spouse
+    ) 
+  
+  saveRDS(mismatched, here("3_households", "output", "mismatched.rds"))
+
+# Duplicate mismatched cases to assign to both clans
+households_keep <- households %>%
+  filter(
+    is.na(id1968) |
+      is.na(id1968_spouse) |
+      id1968 == id1968_spouse
+  )
+
+head <- mismatched
+
+spouse <- head %>%
+  mutate(id1968_mis = id1968,
+         id1968     = id1968_spouse,
+         id1968_spouse = id1968_mis) %>%
+  select(-id1968_mis)
+
+households_dual_clan <- bind_rows(
+  households_keep,     # unchanged (matched or missing)
+  head,          # original rows (head's clan)
+  spouse   # duplicated rows (spouse's clan)
+) %>%
+  arrange(year, fam_id)
+
+dup_counts <- households_dual_clan %>%
+  count(year, fam_id, name = "n") %>%
+  filter(n > 1)
+
+if (nrow(dup_counts) != nrow(mismatched)) {
+  warning("Mismatch in duplication count: ",
+          "duplicated fam_id-year = ", nrow(dup_counts),
+          " vs mismatched rows = ", nrow(mismatched))
+}
+
+over_duped <- dup_counts %>% filter(n > 2)
+if (nrow(over_duped) > 0) {
+  warning("Some fam_id-year combinations have more than two rows:\n",
+          paste0(capture.output(print(over_duped)), collapse = "\n"))
+}
+
+households <- households_dual_clan
+rm(head, spouse, households_dual_clan, households_keep, dup_counts, over_duped)
 
 # ADD CLAN DATA TO HOUSEHOLDS ------------------------------------------------------------------
 # Add number of households within each clan by year
@@ -145,49 +194,15 @@ households <- households %>%
   mutate(num_clan_people = sum(numfu, na.rm = TRUE)) %>%
   ungroup()
 
-# Check that clan ids are shared between heads and spouses
-# Save mismatched cases
-  mismatched <- households %>%
-    filter(
-      !is.na(id1968) & 
-      !is.na(id1968_spouse) & 
-      id1968 != id1968_spouse
-    ) 
-  
-  saveRDS(mismatched, here("3_households", "output", "mismatched.rds"))
 
-# Remove mismatched from the main dataset
-  households <- households %>%
-    filter(
-      is.na(id1968) | 
-       is.na(id1968_spouse) | 
-       id1968 == id1968_spouse
-   )
+# PREP WEIGHTS   ---------------------------------------------------
+  # The sum of all weights is saved as sum_all_weights. 
+  # In the clan file, sum_all_weights is divided by the number of households in the clan to get average weight per household
 
-
-# ADD WEIGHTED VALUES   ---------------------------------------------------
-  # These values are added to households so that they can be used in the clan file
-  # Raw values are not meaningful, each represents (xi x wi) where xi is the value and wi is the weight
-  # The sum of all weights is saved as sum_all_weights. Dividing the sum of weighted values by this gives the weighted mean
-  # The survey package replicates the same weighted mean calculation and reports on variation based on strata and clusters
-
+# Add sum of all weights as a variable
 households <- households %>%
   mutate(fam_weight = as.numeric(fam_weight))
 
-# Calculate weighted values for income and wealth
-vars <- c(
-  "inc_all", "inc_tax_hs", "inc_tax_o", "inc_trans_hs", "inc_trans_o1", "inc_trans_o2",
-  "wealth_nohouse", "wealth", "wealth_farmbus", "wealth_checking", "wealth_debt",
-  "wealth_re", "wealth_stocks", "wealth_vehicles", "wealth_other", "wealth_home",
-  "student_loans"
-)
-
-for (var in vars) {
-  households[[paste0(var, "_w")]] <- households[[var]] * households$fam_weight
-}
-
-
-# Add sum of all weights as a variable
 households <- households %>%
   ungroup() %>%
   mutate(sum_all_weights = efficient_sum(fam_weight))
@@ -204,8 +219,7 @@ households <- households %>%
     starts_with("inc_"),
     
     # Wealth variables
-    starts_with("wealth"),
-    starts_with("student_loans")
+    starts_with("wealth")
   )
 
 # LIMIT SAMPLE -----------------------------------------------------------------

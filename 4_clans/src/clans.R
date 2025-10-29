@@ -1,6 +1,4 @@
-# INPUTS: 3_households/output/households.rds
-# OUTPUTS: 4_clans/output/clans.rds, 4_clans/output/robust_clans.rds, 3_households/output/robust_households.rds
-
+# LOAD DATA ------------------------------------------------------------------
 households <- readRDS(here("3_households", "output", "households.rds"))
 
 # CREATE CLAN-LEVEL DATAFRAME ---------------------------------------------------
@@ -18,7 +16,7 @@ clans <- households %>%
 
     # Income & wealth (unweighted): sum / median / count
     across(
-      .cols = c(inc_all, wealth_nohouse),
+      .cols = c(inc_all, wealth_nohouse, wealth),
       .fns  = list(
         clan   = ~ sum(.x, na.rm = TRUE),   # total (will be renamed)
         median = ~ median(.x, na.rm = TRUE),
@@ -40,16 +38,18 @@ clans <- households %>%
 clans <- clans %>%
   rename(
     inc_all       = inc_all_clan,
-    wealth_nohouse = wealth_nohouse_clan
+    wealth_nohouse = wealth_nohouse_clan,
+    wealth = wealth_clan
   )
 
 clans <- clans %>%
   mutate(
     inc_all_mean = inc_all / numclan,
-    wealth_nohouse_mean = wealth_nohouse / numclan
+    wealth_nohouse_mean = wealth_nohouse / numclan,
+    wealth_mean = wealth / numclan
   )
 
-# VALIDATE CLAN IDENTIFIERS ---------------------------------------------------
+# Validate merges
 if (nrow(distinct(households, id1968, year)) != nrow(clans)) {
   stop("Different number of distinct clans in household and clan file. Check merge.")
 }
@@ -77,10 +77,33 @@ clans <- clans %>%
 robust_clans <- robust_clans %>%
   select(-fam_id)
 
+
+# CREATE WEALTH FILES (LIMITED TO WEALTH SUPPLEMENT YEARS) ---------------------------------
+# The wealth supplement was fielded in 1984, 1989, 1994, and every other year from 1999 to 2021
+
+hh_wealth <- households %>%
+  filter(year %in% c(1984, 1989, 1994, seq(1999, 2021, by = 2))) 
+
+r_hh_wealth <- robust_households %>%
+  filter(year %in% c(1984, 1989, 1994, seq(1999, 2021, by = 2))) 
+
+clans_wealth <- clans %>%
+  filter(year %in% c(1984, 1989, 1994, seq(1999, 2021, by = 2))) 
+
+r_clans_wealth <- robust_clans %>%
+  filter(year %in% c(1984, 1989, 1994, seq(1999, 2021, by = 2))) 
+
 # SAVE ---------------------------------------------------------------------------
+# Clans
 file.remove(list.files(here("4_clans", "output"), pattern = "\\.rds$", full.names = TRUE))
 saveRDS(clans, here("4_clans", "output", "clans.rds"))
+saveRDS(clans_wealth, here("4_clans", "output", "clans_wealth.rds"))
 saveRDS(robust_clans, here("4_clans", "output", "robust_clans.rds"))
+saveRDS(r_clans_wealth, here("4_clans", "output", "robust_clans_wealth.rds"))
+
+# Households
 saveRDS(robust_households, here("3_households", "output", "robust_households.rds"))
+saveRDS(hh_wealth, here("3_households", "output", "households_wealth.rds"))
+saveRDS(r_hh_wealth, here("3_households", "output", "robust_households_wealth.rds"))
 
 rm(remove, robust_clans, robust_households, clans, households)
