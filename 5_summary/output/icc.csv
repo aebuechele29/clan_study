@@ -1,0 +1,12 @@
+outcome,robust,Group,ICC,"performance::icc(m_wealth_home, by_group = TRUE)"
+inc_all,FALSE,id1968:fam_id,0.06576444131875564,NA
+inc_all,FALSE,id1968,0.1871407254106086,NA
+wealth_nohouse,FALSE,id1968:fam_id,0.40248359316035937,NA
+wealth_nohouse,FALSE,id1968,0.19876951138950494,NA
+wealth,FALSE,id1968:fam_id,2.3046552741741621e-10,NA
+wealth,FALSE,id1968,0.367419693932778,NA
+inc_all,TRUE,id1968:fam_id,0.05695568192421819,NA
+inc_all,TRUE,id1968,0.21287802399629902,NA
+wealth_nohouse,TRUE,id1968:fam_id,0.4418354740665684,NA
+wealth_nohouse,TRUE,id1968,0.10155912190202646,NA
+wealth,TRUE,NA,NA,NA
