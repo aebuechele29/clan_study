@@ -1,44 +1,24 @@
-# INPUTS: 0_data/psid.xlsx, 0_data/fims/, 0_data/fam_ind/
-# OUTPUTS: Data frames for family data and indiviudal data, including parent and grandparent IDs from FIMs
+# Activate virtual environment -------------------------------------------
+if (file.exists("renv/activate.R")) source("renv/activate.R")
+options(renv.config.auto.snapshot = TRUE)
+renv::settings$snapshot.type("implicit")
 
 # Load required libraries -------------------------------------------------
 if (!require("pacman")) install.packages("pacman", repos = "http://cran.us.r-project.org")
 
-pacman::p_load(
-  tidyverse,
-  dplyr,
-  purrr,
-  data.table, 
-  easyPSID,
-  openxlsx,
-  psidR,
-  here,
-  readxl,
-  data.table, 
-  gridExtra,
-  ggplot2,
-  scales,
-  lme4,
-  performance,
-  knitr,
-  kableExtra,
-  patchwork,
-  ineq,
-  showtext,
-  tibble,
-  tidyr,
-  survey,
-  acid,
-  convey,
-  rlang,
-  gt,
-  flextable,
-  officer,
-  cowplot,
-  acid,
-  officer,
-  reldist
+packages <- c(
+  "tidyverse","dplyr","purrr","data.table","openxlsx","psidR","here","readxl",
+  "gridExtra","ggplot2","scales","lme4","performance","knitr","kableExtra",
+  "patchwork","ineq","showtext","tibble","tidyr","survey","acid","convey",
+  "rlang","gt","flextable","officer","cowplot","reldist"
 )
+
+packages <- unique(packages) 
+pacman::p_load(char = packages)
+
+# Updates the lock file
+renv::snapshot(prompt = TRUE)
+renv::status()
 
 here::i_am("1_build_panel/src/build_panel.R")
 
