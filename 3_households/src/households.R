@@ -230,11 +230,11 @@ households <- households %>%
   filter(stratum != 43)
 
 # # Set negative values for wealth and income to 0 - i.e. bound Gini calculations
-# households <- households %>%
-#    mutate(
-#      wealth_nohouse = ifelse(wealth_nohouse < 0, 0, wealth_nohouse),
-#      inc_all        = ifelse(inc_all < 0, 0, inc_all)
-#    )
+households <- households %>%
+   mutate(
+     wealth_nohouse = ifelse(wealth_nohouse < 0, 0, wealth_nohouse),
+     inc_all        = ifelse(inc_all < 0, 0, inc_all)
+   )
 
 
 # SAVE ---------------------------------------------------------------------------
