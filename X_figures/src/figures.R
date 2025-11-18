@@ -59,8 +59,8 @@ get_lorenz_weighted <- function(df, value_var, weight_var, years, unit_label) {
 # FIGURE 1 - COMPARISON OF INCOME AND WEALTH INEQUALITY FOR HOUSEHOLDS AND CLANS ------------------------------------------
 
 # Data for Figure 1 
-inc_by_year    <- read_csv(here("5_calculate_gini", "output", "inc_by_year.csv"))
-wealth_by_year <- read_csv(here("5_calculate_gini", "output", "wealth_by_year.csv"))
+inc_by_year    <- read_csv(here("6_calculate_gini", "output", "all_ginis", "income.csv"))
+wealth_by_year <- read_csv(here("6_calculate_gini", "output", "all_ginis", "wealth_nohouse.csv"))
 
 # Build summary table
 summary_tbl <- tribble(
@@ -95,14 +95,14 @@ doc <- read_docx() |>
     )
   )
 
-print(doc, target = here("7_figures", "output", "figure1", "Figure1.docx"))
+print(doc, target = here("X_figures", "output", "figure1", "Figure1.docx"))
 
 
 
 # FIGURE 2 --------------------------------------------------------------------------------------------------------------
 
 # ---- 2A. Income Table ----
-summary <- read_csv(here("6_summary", "output", "summary_statistics.csv"))
+summary <- read_csv(here("5_summary/output/summary_statistics.csv"))
 
 table <- summary %>%
   filter(Table == "Income", Unit %in% c("Household", "Clan")) %>%
@@ -134,11 +134,11 @@ doc <- read_docx() |>
          fp_p = fp_par(text.align = "center"))
   )
 
-print(doc, target = here("7_figures", "output", "figure2", "Figure2A.docx"))
+print(doc, target = here("X_figures", "output", "figure2", "Figure2A.docx"))
 
 
 # ---- 2B. Line Plot  ----
-inc_data <- read_csv(here("5_calculate_gini", "output", "inc_by_year.csv"))
+inc_data <- inc_by_year
 
 # Data
 yearly_plot <- inc_data %>%
@@ -235,7 +235,7 @@ combined <- plot_grid(
 
 # Save combined PDF
 ggsave(
-  here("7_figures", "output", "figure2", "Figure2B_C_combined.pdf"),
+  here("X_figures", "output", "figure2", "Figure2B_C_combined.pdf"),
   plot = combined, width = 14, height = 7
 )
 
@@ -244,7 +244,7 @@ ggsave(
 
 # FIGURE 3 - WEALTH -------------------------------------------------------------------------------------------------------------
 # ---- 3A. Wealth Table ----
-summary <- read_csv(here("6_summary", "output", "summary_statistics.csv"))
+summary <- read_csv(here("5_summary/output/summary_statistics.csv"))
 
 table <- summary %>%
   filter(Table == "Wealth", Unit %in% c("Household", "Clan")) %>%
@@ -276,19 +276,19 @@ doc <- read_docx() |>
          fp_p = fp_par(text.align = "center"))
   )
 
-print(doc, target = here("7_figures", "output", "figure3", "Figure3A.docx"))
+print(doc, target = here("X_figures", "output", "figure3", "Figure3A.docx"))
 
 
 # ---- 3B. Line Plot  ----
-inc_data <- read_csv(here("5_calculate_gini", "output", "wealth_by_year.csv"))
+wealth_data <- wealth_by_year
 
 # Data
-yearly_plot <- inc_data %>%
+yearly_plot <- wealth_data %>%
   filter(year != "ALL") %>%
   mutate(year = as.numeric(year))
 
 # Grab ALL values for labeling averages (numeric only)
-all_vals <- inc_data %>%
+all_vals <- wealth_data %>%
   filter(year == "ALL") %>%
   select(r_hh_w_wealth, r_cl_w_wealth) %>%
   tidyr::pivot_longer(everything(),
@@ -368,7 +368,7 @@ combined <- plot_grid(
 )
 
 ggsave(
-  here("7_figures", "output", "figure3", "Figure3B_C_combined.pdf"),
+  here("X_figures", "output", "figure3", "Figure3B_C_combined.pdf"),
   plot = combined, width = 14, height = 7
 )
 
@@ -377,8 +377,7 @@ ggsave(
 
 # FIGURE 4 - BY RACE ----------------------------------------------------------------------------------------------------
 # ---- 4A. Race Table (Income) ----
-summary <- read_csv(here("6_summary", "output", "summary_statistics.csv"))
-race_gini <- read_csv(here("5_calculate_gini", "output", "inc_by_year_race.csv"))
+race_gini <- read_csv(here("6_calculate_gini/output/race_ginis/income_race.csv"))
 race_all <- race_gini %>% filter(year == "ALL")
 
 table_income <- tibble(
@@ -556,12 +555,12 @@ doc <- read_docx() |>
   body_add_flextable(ft_income) |>
   body_add_flextable(ft_wealth, align = "right")
 
-print(doc, target = here("7_figures", "output", "figure4", "Figure4_Tables.docx"))
+print(doc, target = here("X_figures", "output", "figure4", "Figure4_Tables.docx"))
 
 # ---- Export Plots (PDF, side by side) ----
 combined_plots <- plot_grid(plot_income, plot_wealth, ncol = 2, rel_widths = c(1, 1))
 
 ggsave(
-  here("7_figures", "output", "figure4", "Figure4_Plots.pdf"),
+  here("X_figures", "output", "figure4", "Figure4_Plots.pdf"),
   plot = combined_plots, width = 14, height = 7
 )
