@@ -152,3 +152,68 @@ print(c1_wnh_diff)
 print(c2_wnh_diff)
 print(c3_wnh_diff)
 dev.off()
+
+
+
+# Create summary table
+inc_all <- inc %>%
+  filter(year == "ALL") %>%
+  select(starts_with("C1_all"), starts_with("C2_all"), starts_with("C3_all")) %>%
+  distinct() %>%
+  slice(1)
+
+wnh_all <- wealth_nohouse %>%
+  filter(year == "ALL") %>%
+  select(starts_with("C1_all"), starts_with("C2_all"), starts_with("C3_all")) %>%
+  distinct() %>%
+  slice(1)
+
+C123_summary <- bind_rows(
+  inc_all %>%
+    transmute(
+      measure   = "Income",
+      C1_hh     = C1_all_hh,
+      C1_clan   = C1_all_clan,
+      C2_hh     = C2_all_hh,
+      C2_clan   = C2_all_clan,
+      C3_hh     = C3_all_hh,
+      C3_clan   = C3_all_clan
+    ),
+  wnh_all %>%
+    transmute(
+      measure   = "Wealth (no home equity)",
+      C1_hh     = C1_all_hh,
+      C1_clan   = C1_all_clan,
+      C2_hh     = C2_all_hh,
+      C2_clan   = C2_all_clan,
+      C3_hh     = C3_all_hh,
+      C3_clan   = C3_all_clan
+    )
+)
+
+C123_summary_fmt <- C123_summary %>%
+  mutate(across(where(is.numeric), ~ round(.x, 2))) %>%
+  rename(
+    `C1 (HH)`   = C1_hh,
+    `C1 (Clan)` = C1_clan,
+    `C2 (HH)`   = C2_hh,
+    `C2 (Clan)` = C2_clan,
+    `C3 (HH)`   = C3_hh,
+    `C3 (Clan)` = C3_clan
+  )
+
+ft <- flextable(C123_summary_fmt)
+ft <- autofit(ft)
+ft <- align(ft, align = "center", part = "all")
+ft <- bold(ft, part = "header")
+ft <- bg(ft, part = "header", bg = "#EEEEEE")
+
+doc <- read_docx()
+doc <- body_add_par(doc, "Table X. Average nuclear family indices (C1, C2, C3) for income and wealth", style = "heading 2")
+doc <- body_add_flextable(doc, ft)
+
+print(
+  doc,
+  target = here("7_nuclear_family", "output", "all_nuclear_family",
+                "C123_income_wealth_summary.docx")
+)
