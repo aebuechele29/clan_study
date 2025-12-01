@@ -1,3 +1,13 @@
+library(here)
+library(survey)
+library(dplyr)
+library(purrr)
+library(tibble)
+library(readr)
+library(tidyr)
+library(flextable)
+library(officer)
+
 # LOAD DATA ------------------------------------------------------------------
 hh <- readRDS(here("3_households", "output", "households.rds"))
 clans <- readRDS(here("4_clans", "output", "clans.rds"))
@@ -222,7 +232,7 @@ res_inc_quarts <- lapply(years_quartile, function(yr) {
 }) |> dplyr::bind_rows() |>
   dplyr::arrange(Year, factor(Unit, levels = c("Household", "Clan")), Quartile)
 
-inc_by_year <- read_csv(here("6_calculate_gini/output/all_ginis/income.csv"))
+inc_by_year <- read_csv(here("6_calculate_gini/output/income.csv"))
 gini_lookup_inc_q <- inc_by_year |>
   dplyr::filter(year %in% years_quartile) |>
   dplyr::transmute(Year = as.numeric(year),
@@ -265,7 +275,7 @@ res_w_quarts <- lapply(years_quartile_w, function(yr) {
 }) |> dplyr::bind_rows() |>
   dplyr::arrange(Year, factor(Unit, levels = c("Household", "Clan")), Quartile)
 
-wealth_by_year <- read_csv(here("6_calculate_gini/output/all_ginis/wealth_nohouse.csv"))
+wealth_by_year <- read_csv(here("6_calculate_gini/output/wealth_nohouse.csv"))
 gini_lookup_w_q <- wealth_by_year |>
   dplyr::filter(year %in% years_quartile_w) |>
   dplyr::transmute(Year = as.numeric(year),

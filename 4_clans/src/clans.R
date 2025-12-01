@@ -1,3 +1,6 @@
+library(here)
+library(dplyr)
+
 # LOAD DATA ------------------------------------------------------------------
 households <- readRDS(here("3_households", "output", "households.rds"))
 
