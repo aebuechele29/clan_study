@@ -1,5 +1,7 @@
-# INPUTS: 1_build_panel/output/build.rds, functions/src/functions.R
-# OUTPUTS: 2_clean_panel/output/clean.rds
+library(here)
+library(dplyr)
+library(tidyr)
+library(tibble)
 
 # LOAD DATA ------------------------------------------------------------------
 # Each row represents a person-year, data is collected for the individual or the family
@@ -330,5 +332,5 @@ file.remove(list.files(here("2_clean_panel", "output"), pattern = "\\.rds$", ful
 saveRDS(build, here("2_clean_panel", "output", "clean.rds"))
 
 # Clean Up Temporary Files --------------------------------------------------
-
+rm(sample_fast, psid_data, pid_lookup)
 
