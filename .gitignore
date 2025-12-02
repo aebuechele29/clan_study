@@ -1,7 +1,5 @@
 0_data/fam_ind
 1_build_panel/output
 2_clean_panel/output
-3_households/output
-4_clans/output
 .DS_Store
 .vscode
