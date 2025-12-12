@@ -233,21 +233,20 @@ households <- households %>%
   mutate(stratum = as.numeric(as.character(stratum))) %>%
   filter(stratum != 43)
 
-# # Set negative values for wealth and income to 0 - i.e. bound Gini calculations
+
+# SAVE (Households with negative values for income and wealth))
+file.remove(list.files(here("3_households", "output"), pattern = "\\.rds$", full.names = TRUE))
+saveRDS(households, here("3_households", "output", "neg_households.rds"))
+
+# Set negative values for wealth and income to 0 - i.e. bound Gini calculations
 households <- households %>%
    mutate(
      wealth_nohouse = ifelse(wealth_nohouse < 0, 0, wealth_nohouse),
      inc_all        = ifelse(inc_all < 0, 0, inc_all)
    )
 
-
-# SAVE ---------------------------------------------------------------------------
-file.remove(list.files(here("3_households", "output"), pattern = "\\.rds$", full.names = TRUE))
+# SAVE (households with bounded values for income and wealth)
 saveRDS(households, here("3_households", "output", "households.rds"))
 
 # Clean Up Temporary Files --------------------------------------------------
 rm(clean, data, dt, fam_wide, ind_wide, long_dt, mismatched)
-
-
-
-
