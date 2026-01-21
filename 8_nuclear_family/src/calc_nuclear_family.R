@@ -5,7 +5,12 @@ library(purrr)
 library(readr)
 library(ggplot2)
 library(flextable)
+library(tibble)
+library(rlang)
+library(flextable)
 library(officer)
+library(survey)
+library(convey)
 
 # Load data
 r_hh <- readRDS(here("3_households", "output", "robust_households.rds"))

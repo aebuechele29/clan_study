@@ -115,8 +115,8 @@ make_clans <- function(
   ))
 }
 
-make_clan_outputs(households,     prefix = "")
-make_clan_outputs(neg_households, prefix = "neg_")
+make_clans(households,     prefix = "")
+make_clans(neg_households, prefix = "neg_")
 
 rm(households, neg_households)
 

@@ -4,12 +4,16 @@ library(readr)
 library(officer)
 library(flextable)
 library(rlang)
+library(tidyverse)
+library(ineq)
+library(glue)
+library(rvg)
 
-# Clear all previous files
+out_base <- here("10_appendix", "output")
+dir.create(out_base, recursive = TRUE, showWarnings = FALSE)
 unlink(list.files(out_base, full.names = TRUE, recursive = TRUE, include.dirs = FALSE), force = TRUE)
 
 # Set output
-out_base <- here("10_appendix", "output")
 dirs <- c("appendix_a", "appendix_b", "appendix_c", "appendix_d", "appendix_e", "appendix_f", "appendix_g")
 invisible(lapply(file.path(out_base, dirs), dir.create, recursive = TRUE, showWarnings = FALSE))
 
@@ -22,12 +26,67 @@ read_gini <- function(path) {
     arrange(year)
 }
 
+add_gg <- function(doc, gg, width = 6.5, height = 4.5) {
+  body_add(doc, rvg::dml(ggobj = gg), width = width, height = height)
+}
+
 # Load data
 income <- read_gini(here("6_calculate_gini", "output", "income.csv"))
 wealth_nohouse <- read_gini(here("6_calculate_gini", "output", "wealth_nohouse.csv"))
 wealth_withhome <- read_gini(here("6_calculate_gini", "output", "wealth_withhome.csv"))
 
 # APPENDIX A: Simulation results
+
+# (A1) Run sims (your sums-only simulation code should already be defined above)
+set.seed(123)
+
+sims <- run_many_sims(
+  n_sims = 100,
+  n_clans = 5,
+  hh_per_clan = 10,
+  dist = "lognormal",
+  dist_params = list(meanlog = 0, sdlog = 1),
+  clan_size_scenario = "rich_big"
+)
+
+df_res <- results_from_sims(sims)
+ext <- extreme_indices(df_res)
+
+# (A2) Build plots
+p_sums_min <- plot_lorenz_for_sim(
+  sims[[ext$idx_min_sums]],
+  title_prefix = sprintf("Lowest diff (household − clan sums) [sim %d]", ext$idx_min_sums)
+)
+
+p_sums_max <- plot_lorenz_for_sim(
+  sims[[ext$idx_max_sums]],
+  title_prefix = sprintf("Highest diff (household − clan sums) [sim %d]", ext$idx_max_sums)
+)
+
+p_mekko_two <- make_two_mekko(sims, df_res, ext$idx_min_sums, ext$idx_max_sums)
+
+# (A3) Export to docx (match appendix style + paths)
+appendix_a_out <- file.path(out_base, "appendix_a", "appendix_a.docx")
+
+doc <- read_docx()
+
+doc <- doc |>
+  body_add_par("Appendix A: Simulation results", style = "heading 1") |>
+  body_add_par(
+    "This appendix illustrates that clan-level inequality (using clan sums) can be lower or higher than household-level inequality depending on how clan size relates to the underlying distribution.",
+    style = "Normal"
+  ) |>
+  body_add_par("Lorenz curves — extreme cases (clan sums)", style = "heading 2") |>
+  body_add_par(sprintf("Lowest difference (sim %d)", ext$idx_min_sums), style = "heading 3") |>
+  body_add(value = dml(ggobj = p_sums_min), width = 6.5, height = 4.5) |>
+  body_add_par(sprintf("Highest difference (sim %d)", ext$idx_max_sums), style = "heading 3") |>
+  body_add(value = dml(ggobj = p_sums_max), width = 6.5, height = 4.5) |>
+  body_add_par("Mekko summaries — extreme cases (clan sums)", style = "heading 2") |>
+  body_add(value = dml(ggobj = p_mekko_two), width = 6.5, height = 6)
+
+print(doc, target = appendix_a_out)
+message("Saved: ", appendix_a_out)
+
 
 # APPENDIX B: Compares Gini coefficients with other studies
 
@@ -292,12 +351,17 @@ get_all_row <- function(df) {
 inc_all <- get_all_row(inc)
 wnh_all <- get_all_row(wnh)
 
+C123_tbl <- bind_rows(
+  inc_all %>% mutate(Measure = "Income"),
+  wnh_all %>% mutate(Measure = "Wealth (No House)")
+)
+
 C123_tbl <- C123_tbl %>%
   select(
     Measure,
-    C1_HH, C1_Clan,
-    C2_HH, C2_Clan,
-    C3_HH, C3_Clan
+    C1_hh, C1_clan,
+    C2_hh, C2_clan,
+    C3_hh, C3_clan
   )
 
 ft <- flextable(C123_tbl)
@@ -313,9 +377,9 @@ ft <- add_header_row(
 ft <- set_header_labels(
   ft,
   Measure = "",
-  C1_HH = "HH",   C1_Clan = "Clans",
-  C2_HH = "HH",   C2_Clan = "Clans",
-  C3_HH = "HH",   C3_Clan = "Clans"
+  C1_hh = "HH",   C1_clan = "Clans",
+  C2_hh = "HH",   C2_clan = "Clans",
+  C3_hh = "HH",   C3_clan = "Clans"
 )
 
 ft <- theme_booktabs(ft)

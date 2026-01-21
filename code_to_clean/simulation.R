@@ -83,7 +83,7 @@ lorenz_df <- function(x, label) {
 }
 
 # ===============================================================
-# Simulation
+# Simulation (SUMS ONLY)
 # ===============================================================
 
 # ---------- Single simulation with guards ----------
@@ -133,28 +133,21 @@ simulate_ginis <- function(
 
   gini_households <- gini_safe(df$value)
 
-  clan_means <- df |>
-    dplyr::group_by(clan) |>
-    dplyr::summarise(mean_value = mean(value, na.rm = TRUE), .groups = "drop") |>
-    dplyr::filter(is.finite(mean_value), !is.na(mean_value))
-
   clan_sums <- df |>
     dplyr::group_by(clan) |>
     dplyr::summarise(sum_value = sum(value, na.rm = TRUE), .groups = "drop") |>
     dplyr::filter(is.finite(sum_value), !is.na(sum_value))
 
-  gini_clan_means <- gini_safe(clan_means$mean_value)
-  gini_clan_sums  <- gini_safe(clan_sums$sum_value)
+  gini_clan_sums <- gini_safe(clan_sums$sum_value)
 
   list(
     gini_households = gini_households,
-    gini_clan_means = gini_clan_means,
     gini_clan_sums  = gini_clan_sums,
     data = df
   )
 }
 
-# ---------- Run many simulations (safer than replicate) ----------
+# ---------- Run many simulations ----------
 run_many_sims <- function(n_sims = 100, ..., debug_every = NULL) {
   sims <- vector("list", n_sims)
   for (i in seq_len(n_sims)) {
@@ -164,18 +157,9 @@ run_many_sims <- function(n_sims = 100, ..., debug_every = NULL) {
   sims
 }
 
-# ---------- Results frame ----------
+# ---------- Results frame (SUMS ONLY) ----------
 results_from_sims <- function(sims) {
   g_hh <- vapply(sims, function(x) gini_safe(x$data$value), numeric(1))
-  g_cm <- vapply(sims, function(x) {
-    cm <- x$data |>
-      dplyr::group_by(clan) |>
-      dplyr::summarise(m = mean(value, na.rm = TRUE), .groups = "drop") |>
-      dplyr::filter(is.finite(m), !is.na(m)) |>
-      dplyr::pull(m)
-    if (length(cm) == 0L) return(NA_real_)
-    gini_safe(cm)
-  }, numeric(1))
   g_cs <- vapply(sims, function(x) {
     cs <- x$data |>
       dplyr::group_by(clan) |>
@@ -188,65 +172,41 @@ results_from_sims <- function(sims) {
 
   tibble::tibble(
     gini_households = g_hh,
-    gini_clan_means = g_cm,
     gini_clan_sums  = g_cs
   ) |>
-    dplyr::mutate(
-      diff_means = gini_households - gini_clan_means,
-      diff_sums  = gini_households - gini_clan_sums
-    )
+    dplyr::mutate(diff_sums = gini_households - gini_clan_sums)
 }
 
 # ---------- Extremes (NA-safe) ----------
 extreme_indices <- function(df_res) {
-  get_idx_min <- function(x) {
-    oks <- which(is.finite(x))
-    if (length(oks) == 0L) stop("No finite values to find minimum.")
-    oks[ which.min(x[oks]) ]
-  }
-  get_idx_max <- function(x) {
-    oks <- which(is.finite(x))
-    if (length(oks) == 0L) stop("No finite values to find maximum.")
-    oks[ which.max(x[oks]) ]
-  }
+  oks <- which(is.finite(df_res$diff_sums))
+  if (length(oks) == 0L) stop("No finite values to find extremes.")
   list(
-    idx_min_means = get_idx_min(df_res$diff_means),
-    idx_max_means = get_idx_max(df_res$diff_means),
-    idx_min_sums  = get_idx_min(df_res$diff_sums),
-    idx_max_sums  = get_idx_max(df_res$diff_sums)
+    idx_min_sums = oks[which.min(df_res$diff_sums[oks])],
+    idx_max_sums = oks[which.max(df_res$diff_sums[oks])]
   )
 }
 
 # ===============================================================
-# Plotting
+# Plotting (SUMS ONLY)
 # ===============================================================
 
-plot_lorenz_for_sim <- function(sim, mode = c("means", "sums"), title_prefix = "Difference case") {
-  mode <- match.arg(mode)
+plot_lorenz_for_sim <- function(sim, title_prefix = "Difference case") {
   df <- sim$data
 
   x_house <- df$value
   g_house <- gini_safe(x_house)
 
-  if (mode == "means") {
-    x_clan <- df |>
-      dplyr::group_by(clan) |>
-      dplyr::summarise(val = mean(value, na.rm = TRUE), .groups = "drop") |>
-      dplyr::filter(is.finite(val)) |>
-      dplyr::pull(val)
-    mode_label <- "Clan means"
-  } else {
-    x_clan <- df |>
-      dplyr::group_by(clan) |>
-      dplyr::summarise(val = sum(value, na.rm = TRUE), .groups = "drop") |>
-      dplyr::filter(is.finite(val)) |>
-      dplyr::pull(val)
-    mode_label <- "Clan sums"
-  }
+  x_clan <- df |>
+    dplyr::group_by(clan) |>
+    dplyr::summarise(val = sum(value, na.rm = TRUE), .groups = "drop") |>
+    dplyr::filter(is.finite(val)) |>
+    dplyr::pull(val)
+
   g_clan <- gini_safe(x_clan)
 
   ld_house <- lorenz_df(x_house, "Households")
-  ld_clan  <- lorenz_df(x_clan,  mode_label)
+  ld_clan  <- lorenz_df(x_clan,  "Clan sums")
   ld <- dplyr::bind_rows(ld_house, ld_clan)
 
   y_house <- lorenz_y_at_safe(x_house, 0.7)
@@ -260,7 +220,7 @@ plot_lorenz_for_sim <- function(sim, mode = c("means", "sums"), title_prefix = "
     labs(
       x = "Cumulative share of units",
       y = "Cumulative share of income/wealth",
-      title = paste0(title_prefix, " — ", mode_label),
+      title = paste0(title_prefix, " — Clan sums"),
       linetype = NULL
     ) +
     theme_minimal(base_size = 12) +
@@ -269,49 +229,45 @@ plot_lorenz_for_sim <- function(sim, mode = c("means", "sums"), title_prefix = "
              label = sprintf("Gini (Households) = %.3f", g_house),
              hjust = 0, size = 4) +
     annotate("text", x = 0.72, y = y_clan + 0.02,
-             label = sprintf("Gini (%s) = %.3f", mode_label, g_clan),
+             label = sprintf("Gini (Clan sums) = %.3f", g_clan),
              hjust = 0, size = 4)
 }
 
-# ---- Mekko (variable-width) ----
-mekko_df <- function(sim, mode = c("means", "sums")) {
-  mode <- match.arg(mode)
+# ---- Mekko (variable-width; SUMS ONLY) ----
+mekko_df <- function(sim) {
   df <- sim$data
 
   cs <- df |>
     dplyr::group_by(clan) |>
     dplyr::summarise(
-      n_hh    = dplyr::n(),
-      mean_val = mean(value, na.rm = TRUE),
-      sum_val  = sum(value, na.rm = TRUE),
+      n_hh   = dplyr::n(),
+      sum_val = sum(value, na.rm = TRUE),
       .groups = "drop"
     ) |>
-    dplyr::mutate(stat = if (mode == "means") mean_val else sum_val) |>
-    dplyr::arrange(stat) |>
+    dplyr::arrange(sum_val) |>
     dplyr::mutate(
       width   = n_hh,
       w_share = width / sum(width),
       x_max   = cumsum(w_share),
       x_min   = x_max - w_share,
       y_min   = 0,
-      y_max   = stat,
+      y_max   = sum_val,
       clan_id = dplyr::row_number()
     )
 
   g_house <- gini_safe(df$value)
-  g_clan  <- if (mode == "means") gini_safe(cs$mean_val) else gini_safe(cs$sum_val)
+  g_clan  <- gini_safe(cs$sum_val)
 
   list(df = cs, g_house = g_house, g_clan = g_clan)
 }
 
-plot_mekko_for_sim <- function(sim, mode = c("means", "sums"), title = "Scenario summary") {
-  mode <- match.arg(mode)
-  out  <- mekko_df(sim, mode)
-  cs   <- out$df
+plot_mekko_for_sim <- function(sim, title = "Scenario summary") {
+  out <- mekko_df(sim)
+  cs  <- out$df
 
   subtitle <- glue(
     "Gini (Households) = {sprintf('%.3f', out$g_house)}   |   ",
-    "Gini (Clans - {if (mode=='means') 'means' else 'sums'}) = {sprintf('%.3f', out$g_clan)}   |   ",
+    "Gini (Clans - sums) = {sprintf('%.3f', out$g_clan)}   |   ",
     "Difference = {sprintf('%.3f', out$g_house - out$g_clan)}"
   )
 
@@ -320,7 +276,7 @@ plot_mekko_for_sim <- function(sim, mode = c("means", "sums"), title = "Scenario
               color = "grey30", fill = "grey70", alpha = 0.8) +
     labs(
       x = "Cumulative share of households (by clan width)",
-      y = if (mode == "means") "Clan mean income/wealth" else "Clan total income/wealth",
+      y = "Clan total income/wealth",
       title = title,
       subtitle = subtitle
     ) +
@@ -328,40 +284,28 @@ plot_mekko_for_sim <- function(sim, mode = c("means", "sums"), title = "Scenario
     theme(panel.grid.minor = element_blank())
 }
 
-make_four_mekko <- function(sims, df_res,
-                            idx_min_means, idx_max_means,
-                            idx_min_sums,  idx_max_sums) {
+make_two_mekko <- function(sims, df_res, idx_min_sums, idx_max_sums) {
   cases <- list(
-    list(idx = idx_min_means, mode = "means",
-         label = glue("Lowest diff (household − clan means) [sim {idx_min_means}]")),
-    list(idx = idx_max_means, mode = "means",
-         label = glue("Highest diff (household − clan means) [sim {idx_max_means}]")),
-    list(idx = idx_min_sums, mode = "sums",
-         label = glue("Lowest diff (household − clan sums) [sim {idx_min_sums}]")),
-    list(idx = idx_max_sums, mode = "sums",
-         label = glue("Highest diff (household − clan sums) [sim {idx_max_sums}]"))
+    list(idx = idx_min_sums, label = glue("Lowest diff (household − clan sums) [sim {idx_min_sums}]")),
+    list(idx = idx_max_sums, label = glue("Highest diff (household − clan sums) [sim {idx_max_sums}]"))
   )
 
-  build_case_df <- function(case) {
-    out <- mekko_df(sims[[case$idx]], case$mode)
+  long_df <- purrr::map_dfr(cases, function(case) {
+    out <- mekko_df(sims[[case$idx]])
     out$df |>
       dplyr::mutate(
         facet   = case$label,
-        y_label = if (case$mode == "means") "Clan mean income/wealth" else "Clan total income/wealth",
         g_house = out$g_house,
-        g_clan  = out$g_clan,
-        mode    = case$mode
+        g_clan  = out$g_clan
       )
-  }
-
-  long_df <- purrr::map_dfr(cases, build_case_df)
+  })
 
   long_df <- long_df |>
-    dplyr::group_by(facet, mode, y_label) |>
+    dplyr::group_by(facet) |>
     dplyr::mutate(
       subtitle = glue(
         "Gini (Households) = {sprintf('%.3f', dplyr::first(g_house))}   |   ",
-        "Gini (Clans - {if (dplyr::first(mode)=='means') 'means' else 'sums'}) = {sprintf('%.3f', dplyr::first(g_clan))}   |   ",
+        "Gini (Clans - sums) = {sprintf('%.3f', dplyr::first(g_clan))}   |   ",
         "Difference = {sprintf('%.3f', dplyr::first(g_house) - dplyr::first(g_clan))}"
       )
     ) |>
@@ -375,7 +319,7 @@ make_four_mekko <- function(sims, df_res,
       x = "Cumulative share of households (by clan width)",
       y = NULL,
       title = "Scenario summaries (variable-width by clan size)",
-      subtitle = "Each panel orders clans by the plotted statistic; width = households per clan; height = clan mean (means panels) or clan total (sums panels)."
+      subtitle = "Each panel orders clans by clan total; width = households per clan; height = clan total."
     ) +
     theme_minimal(base_size = 12) +
     theme(panel.grid.minor = element_blank(),
@@ -390,7 +334,7 @@ make_four_mekko <- function(sims, df_res,
 }
 
 # ===============================================================
-# Main (minimal, editable)
+# Main (minimal, editable) — SUMS ONLY
 # ===============================================================
 
 set.seed(123)
@@ -400,87 +344,92 @@ sims <- run_many_sims(
   n_sims = 100,
   n_clans = 5,
   hh_per_clan = 10,
-  dist = "lognormal", # 'lognormal', 'normal', or 'two_sided_lognormal'
+  dist = "lognormal",
   dist_params = list(meanlog = 0, sdlog = 1),
-  clan_size_scenario = "rich_big"   # try "equal", "random", "rich_small"
-  # , debug_every = 10               # uncomment to print clan sizes every 10 sims
+  clan_size_scenario = "rich_big"
 )
 
-# Build results and locate extremes
 df_res <- results_from_sims(sims)
 print(summary(df_res))
 
-ext <- extreme_indices(df_res)  # <-- you were missing this
+ext <- extreme_indices(df_res)
 
-# Lorenz curves (four extreme cases)
-p_means_min <- plot_lorenz_for_sim(
-  sims[[ext$idx_min_means]], mode = "means",
-  title_prefix = sprintf("Lowest diff (household − clan means) [sim %d]", ext$idx_min_means)
-)
-p_means_max <- plot_lorenz_for_sim(
-  sims[[ext$idx_max_means]], mode = "means",
-  title_prefix = sprintf("Highest diff (household − clan means) [sim %d]", ext$idx_max_means)
-)
+# Lorenz curves (two extreme cases)
 p_sums_min <- plot_lorenz_for_sim(
-  sims[[ext$idx_min_sums]], mode = "sums",
+  sims[[ext$idx_min_sums]],
   title_prefix = sprintf("Lowest diff (household − clan sums) [sim %d]", ext$idx_min_sums)
 )
 p_sums_max <- plot_lorenz_for_sim(
-  sims[[ext$idx_max_sums]], mode = "sums",
+  sims[[ext$idx_max_sums]],
   title_prefix = sprintf("Highest diff (household − clan sums) [sim %d]", ext$idx_max_sums)
 )
 
-print(p_means_min); print(p_means_max); print(p_sums_min); print(p_sums_max)
+# Export these!!!
+print(p_sums_min); print(p_sums_max)
 
-# Mekko (four extreme cases)
-p_mekko_four <- make_four_mekko(
-  sims, df_res,
-  ext$idx_min_means, ext$idx_max_means,
-  ext$idx_min_sums,  ext$idx_max_sums
-)
-print(p_mekko_four) # <-- This is what you look at for understanding which variables create extreme values!
+# Mekko (two extreme cases)
+p_mekko_two <- make_two_mekko(sims, df_res, ext$idx_min_sums, ext$idx_max_sums)
+# Export this!
+print(p_mekko_two)
 
-# ---- Example B: Wealth with negatives ----
-sims_w <- run_many_sims(
-  n_sims = 100,
-  n_clans = 5,
-  hh_per_clan = 10,
-  dist = "two_sided_lognormal",
-  dist_params = list(
-    meanlog_pos = 1.0, sdlog_pos = 1.0,  # assets
-    p_debt = 0.35,                        # share with debt
-    meanlog_debt = 0.8, sdlog_debt = 0.9 # debt magnitude
-  ),
-  clan_size_scenario = "rich_big"
-)
-df_res_w <- results_from_sims(sims_w)
-print(summary(df_res_w))
 
-# Lorenz curves (four extreme cases)
-p_means_min_w <- plot_lorenz_for_sim(
-  sims_w[[ext$idx_min_means]], mode = "means",
-  title_prefix = sprintf("Lowest diff (household − clan means) [sim %d]", ext$idx_min_means)
-)
-p_means_max_w <- plot_lorenz_for_sim(
-  sims_w[[ext$idx_max_means]], mode = "means",
-  title_prefix = sprintf("Highest diff (household − clan means) [sim %d]", ext$idx_max_means)
-)
-p_sums_min_w <- plot_lorenz_for_sim(
-  sims_w[[ext$idx_min_sums]], mode = "sums",
-  title_prefix = sprintf("Lowest diff (household − clan sums) [sim %d]", ext$idx_min_sums)
-)
-p_sums_max_w <- plot_lorenz_for_sim(
-  sims_w[[ext$idx_max_sums]], mode = "sums",
-  title_prefix = sprintf("Highest diff (household − clan sums) [sim %d]", ext$idx_max_sums)
-)
+# install.packages(c("officer","rvg"))
+library(officer)
+library(rvg)
 
-print(p_means_min_w); print(p_means_max_w); print(p_sums_min_w); print(p_sums_max_w)
+out_docx <- "appendixa.docx"
 
-# Mekko (four extreme cases)
-p_mekko_four_w <- make_four_mekko(
-  sims_w, df_res,
-  ext$idx_min_means, ext$idx_max_means,
-  ext$idx_min_sums,  ext$idx_max_sums
-)
-print(p_mekko_four_w) # <-- This is what you look at for understanding which variables create extreme values!
+doc <- read_docx()
 
+# --- Lorenz plots ---
+doc <- doc |>
+  body_add_par("Lorenz curves — extreme cases (clan sums)", style = "heading 1") |>
+  body_add_par(sprintf("Lowest diff (sim %d)", ext$idx_min_sums), style = "heading 2") |>
+  body_add(dml(ggobj = p_sums_min), width = 6.5, height = 4.5) |>
+  body_add_par("") |>
+  body_add_par(sprintf("Highest diff (sim %d)", ext$idx_max_sums), style = "heading 2") |>
+  body_add(dml(ggobj = p_sums_max), width = 6.5, height = 4.5) |>
+  body_add_par("")
+
+# --- Mekko panel ---
+doc <- doc |>
+  body_add_par("Mekko summaries — extreme cases (clan sums)", style = "heading 1") |>
+  body_add(dml(ggobj = p_mekko_two), width = 6.5, height = 6)
+
+print(doc, target = out_docx)
+message("Saved: ", out_docx)
+
+
+# TOGGLING THIS SECTION OFF FOR NOW BECAUSE OUR MAIN RESULTS DON'T HAVE NEGATIVE VALUES IN THEM
+# # ---- Example B: Wealth with negatives ----
+# sims_w <- run_many_sims(
+#   n_sims = 100,
+#   n_clans = 5,
+#   hh_per_clan = 10,
+#   dist = "two_sided_lognormal",
+#   dist_params = list(
+#     meanlog_pos = 1.0, sdlog_pos = 1.0,
+#     p_debt = 0.35,
+#     meanlog_debt = 0.8, sdlog_debt = 0.9
+#   ),
+#   clan_size_scenario = "rich_big"
+# )
+
+# df_res_w <- results_from_sims(sims_w)
+# print(summary(df_res_w))
+
+# ext_w <- extreme_indices(df_res_w)
+
+# p_sums_min_w <- plot_lorenz_for_sim(
+#   sims_w[[ext_w$idx_min_sums]],
+#   title_prefix = sprintf("Lowest diff (household − clan sums) [sim %d]", ext_w$idx_min_sums)
+# )
+# p_sums_max_w <- plot_lorenz_for_sim(
+#   sims_w[[ext_w$idx_max_sums]],
+#   title_prefix = sprintf("Highest diff (household − clan sums) [sim %d]", ext_w$idx_max_sums)
+# )
+
+# print(p_sums_min_w); print(p_sums_max_w)
+
+# p_mekko_two_w <- make_two_mekko(sims_w, df_res_w, ext_w$idx_min_sums, ext_w$idx_max_sums)
+# print(p_mekko_two_w)

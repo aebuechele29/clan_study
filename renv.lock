@@ -1173,6 +1173,39 @@
       "Maintainer": "Hadley Wickham <hadley@rstudio.com>",
       "Repository": "CRAN"
     },
+    "convey": {
+      "Package": "convey",
+      "Version": "1.0.1",
+      "Source": "Repository",
+      "Title": "Income Concentration Analysis with Complex Survey Samples",
+      "Date": "2024-10-16",
+      "Authors@R": "c(person(\"Djalma\", \"Pessoa\", role = \"aut\"), person(\"Anthony\", \"Damico\", email= \"ajdamico@gmail.com\", role= c(\"aut\",\"cre\")), person(\"Guilherme\", \"Jacob\", email= \"guilhermejacob91@gmail.com\", role= \"aut\"))",
+      "URL": "https://www.convey-r.org/",
+      "BugReports": "https://github.com/ajdamico/convey/issues",
+      "Description": "Variance estimation on indicators of income concentration and poverty using complex sample survey designs. Wrapper around the 'survey' package.",
+      "Depends": [
+        "R (>= 4.0.0)"
+      ],
+      "Imports": [
+        "survey (>= 4.2-1)",
+        "methods"
+      ],
+      "License": "GPL-3",
+      "Suggests": [
+        "testthat",
+        "knitr",
+        "rmarkdown",
+        "vardpoor",
+        "laeken",
+        "DBI",
+        "RSQLite"
+      ],
+      "RoxygenNote": "7.3.2",
+      "NeedsCompilation": "no",
+      "Author": "Djalma Pessoa [aut], Anthony Damico [aut, cre], Guilherme Jacob [aut]",
+      "Maintainer": "Anthony Damico <ajdamico@gmail.com>",
+      "Repository": "CRAN"
+    },
     "cowplot": {
       "Package": "cowplot",
       "Version": "1.1.3",
@@ -4705,6 +4738,45 @@
       "NeedsCompilation": "no",
       "Author": "Hadley Wickham [aut, cre], Posit Software, PBC [cph, fnd]",
       "Maintainer": "Hadley Wickham <hadley@posit.co>",
+      "Repository": "CRAN"
+    },
+    "rvg": {
+      "Package": "rvg",
+      "Version": "0.4.0",
+      "Source": "Repository",
+      "Type": "Package",
+      "Title": "R Graphics Devices for 'Office' Vector Graphics Output",
+      "Authors@R": "c( person(\"David\", \"Gohel\", , \"david.gohel@ardata.fr\", role = c(\"aut\", \"cre\")), person(\"ArData\", role = \"cph\"), person(\"Bob\", \"Rudis\", role = \"ctb\", comment = \"the javascript code used by function set_attr\"), person(\"Francois\", \"Brunetti\", , \"francois.brunetti@lysis-consultants.fr\", role = \"ctb\", comment = \"clipping algorithms\") )",
+      "Description": "Vector Graphics devices for 'Microsoft PowerPoint' and 'Microsoft Excel'. Functions extending package 'officer' are provided to embed 'DrawingML' graphics into 'Microsoft PowerPoint' presentations and 'Microsoft Excel' workbooks.",
+      "License": "GPL-3",
+      "URL": "https://ardata-fr.github.io/officeverse/, https://davidgohel.github.io/rvg/",
+      "BugReports": "https://github.com/davidgohel/rvg/issues",
+      "Depends": [
+        "R (>= 3.0)"
+      ],
+      "Imports": [
+        "gdtools (>= 0.3.3)",
+        "grDevices",
+        "officer (>= 0.6.2)",
+        "Rcpp (>= 0.12.12)",
+        "rlang",
+        "systemfonts",
+        "xml2 (>= 1.0.0)"
+      ],
+      "Suggests": [
+        "grid",
+        "testthat"
+      ],
+      "LinkingTo": [
+        "Rcpp",
+        "systemfonts"
+      ],
+      "Encoding": "UTF-8",
+      "RoxygenNote": "7.3.3",
+      "SystemRequirements": "libpng",
+      "NeedsCompilation": "yes",
+      "Author": "David Gohel [aut, cre], ArData [cph], Bob Rudis [ctb] (the javascript code used by function set_attr), Francois Brunetti [ctb] (clipping algorithms)",
+      "Maintainer": "David Gohel <david.gohel@ardata.fr>",
       "Repository": "CRAN"
     },
     "sass": {

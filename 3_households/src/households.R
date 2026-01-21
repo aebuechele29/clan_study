@@ -30,14 +30,10 @@ id_vars <- c("year", "fam_id")
 fam_vars <- c(
   "ind_top_inc_all", "ind_top_inc_tax_hs", "ind_top_inc_tax_o",
   "ind_top_inc_trans_hs", "ind_top_inc_trans_o1", "ind_top_inc_trans_o2",
-  "ind_top_wealth_nohouse", "ind_top_wealth", "ind_top_wealth_farmbus",
-  "ind_top_wealth_checking", "ind_top_wealth_debt", "ind_top_wealth_re",
-  "ind_top_wealth_stocks", "ind_top_wealth_vehicles", "ind_top_wealth_other",
-  "ind_top_wealth_home", "ind_top_student_loans",
+  "ind_top_wealth_nohouse", "ind_top_wealth", "ind_top_wealth_home",
   "inc_all", "inc_tax_hs", "inc_tax_o", "inc_trans_hs", "inc_trans_o1", "inc_trans_o2",
-  "wealth_nohouse", "wealth", "wealth_farmbus", "wealth_checking", "wealth_debt",
-  "wealth_re", "wealth_stocks", "wealth_vehicles", "wealth_other", "wealth_home",
-  "student_loans", "release", "numfu", "fam_weight"
+  "wealth_nohouse", "wealth", "wealth_home",
+  "release", "numfu", "fam_weight"
 )
 
 ind_vars <- c(
