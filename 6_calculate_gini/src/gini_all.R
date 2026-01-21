@@ -1,6 +1,17 @@
 library(here)
 library(dplyr)
 library(purrr)
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(purrr)
+library(rlang)
+library(flextable)
+library(officer)
+library(survey)
+library(convey)
+
+
 
 # LOAD DATA ------------------------------------------------------------------
 # Main data

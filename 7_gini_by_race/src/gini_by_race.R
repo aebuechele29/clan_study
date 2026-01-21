@@ -1,6 +1,14 @@
 library(here)
 library(dplyr)
 library(purrr)
+library(tidyr)
+library(tibble)
+library(rlang)
+library(flextable)
+library(officer)
+library(survey)
+library(convey)
+
 
 # LOAD DATA ------------------------------------------------------------------
 hh <- readRDS(here("3_households", "output", "households.rds"))

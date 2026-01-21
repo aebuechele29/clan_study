@@ -10,14 +10,14 @@ packages <- c(
   "tidyverse","dplyr","purrr","data.table","openxlsx","psidR","here","readxl",
   "gridExtra","ggplot2","scales","lme4","performance","knitr","kableExtra",
   "patchwork","ineq","showtext","tibble","tidyr","survey","acid","convey",
-  "rlang","gt","flextable","officer","cowplot","reldist"
+  "rlang","gt","flextable","officer","cowplot","reldist", "rvg"
 )
 
 packages <- unique(packages) 
 pacman::p_load(char = packages)
 
 # Updates the lock file
-renv::snapshot(prompt = TRUE)
+renv::snapshot(prompt = FALSE)
 renv::status()
 
 here::i_am("1_build_panel/src/build_panel.R")
@@ -133,21 +133,21 @@ vars <- list(
   list(name = "fam_income1", varname = "inc_all", var = "V81"), # Total family income [all years]
   list(name = "fam_income2", varname = "inc_tax_hs", var = "V76"), # Total taxable income, head and spouse [all years]
   list(name = "fam_income3", varname = "inc_tax_o", var = "V79"), # Total taxable income, others in FU [all years]
-  list(name = "fam_transfer1", varname = "inc_trans_hs", var = "V1220"), # Amount of total transfers, private + public for household heads and spouses [1970-2021]
+  list(name = "fam_transfer1", varname = "inc_trans_hs", var = "V1220"), # Amount of total transfers, private + public for household heads and spouses [1970-2023]
   list(name = "fam_transfer3", varname = "inc_trans_o1", var = "V527"), # Amount of total transfers, private + public for others in FU, pro-rated [1969-1993]
-  list(name = "fam_transfer4", varname = "inc_trans_o2", var = "V11576"), # Amount of total transfers, private + public for others in FU, not pro-rated [1985-2021]
+  list(name = "fam_transfer4", varname = "inc_trans_o2", var = "V11576"), # Amount of total transfers, private + public for others in FU, not pro-rated [1985-2023]
   
   # WEALTH ------------------------------------------------------------------
   list(name = "fam_wealth_nohouse", varname = "wealth_nohouse", var = "S116"), # Family imputed wealth excluding house equity [all wealth supplement years]
   list(name = "fam_wealth", varname = "wealth", var = "S117"), # Family imputed wealth including house equity [all wealth supplement years]
-  list(name = "fam_farmbus", varname = "wealth_farmbus", var = "S103"), # Imputed Value of farm and business assets [all wealth supplement years]
-  list(name = "fam_checking", varname = "wealth_checking", var = "S105"), # Imputed value of checking and savings [1984-2017]
-  list(name = "fam_debt", varname = "wealth_debt", var = "S107"), # Imputed Debt value [all wealth supplement years]
-  list(name = "fam_real_estate", varname = "wealth_re", var = "S109"), # Imputed real estate value, excluding home [1984-2011]
-  list(name = "fam_stocks", varname = "wealth_stocks", var = "S111"), # Imputed stock values [all wealth supplement years]
-  list(name = "fam_vehicle", varname = "wealth_vehicles", var = "S113"), # Vehicle value [all wealth supplement years]
-  list(name = "fam_other_assets", varname = "wealth_other", var = "S115"), # Bonds, insurance, and other collectible values [all wealth supplement years]
-  list(name = "fam_student_loans", varname = "student_loans", var = "ER48945"), # Student loan value [2011 - 2021]
+  # list(name = "fam_farmbus", varname = "wealth_farmbus", var = "S103"), # Imputed Value of farm and business assets [all wealth supplement years]
+  # list(name = "fam_checking", varname = "wealth_checking", var = "S105"), # Imputed value of checking and savings [1984-2017]
+  # list(name = "fam_debt", varname = "wealth_debt", var = "S107"), # Imputed Debt value [all wealth supplement years]
+  # list(name = "fam_real_estate", varname = "wealth_re", var = "S109"), # Imputed real estate value, excluding home [1984-2011]
+  # list(name = "fam_stocks", varname = "wealth_stocks", var = "S111"), # Imputed stock values [all wealth supplement years]
+  # list(name = "fam_vehicle", varname = "wealth_vehicles", var = "S113"), # Vehicle value [all wealth supplement years]
+  # list(name = "fam_other_assets", varname = "wealth_other", var = "S115"), # Bonds, insurance, and other collectible values [all wealth supplement years]
+  # list(name = "fam_student_loans", varname = "student_loans", var = "ER48945"), # Student loan value [2011 - 2021]
   list(name = "fam_home_equity", varname = "wealth_home", var = "S120"), # Home equity value [all wealth supplement years]
 
   
@@ -161,18 +161,18 @@ vars <- list(
   
   # FAMILY RACE -------------------------------------------------------------
   list(name = "fam_headrace", varname = "race1_head", var = "V181"), # Race of household head [1968-2021]
-  list(name = "fam_head2race", varname = "race2_head", var = "V11939"), # Race of household head 2 [1985-2021]
-  list(name = "fam_head3race", varname = "race3_head", var = "ER3946"), # Race of household head 3 [1994-2021]
-  list(name = "fam_head4race", varname = "race4_head", var = "ER11851"), # Race of household head 4 [1997-2021]
-  list(name = "fam_wiferace", varname = "race1_wife", var = "V12293"), # Race of household "wife" [1985-2021]
-  list(name = "fam_wife2race", varname = "race2_wife", var = "V12294"), # Race of household "wife" 2 [1985-2021]
-  list(name = "fam_wife3race", varname = "race3_wife", var = "ER3885"), # Race of household "wife" 3 [1994-2021]
-  list(name = "fam_wife4race", varname = "race4_wife", var = "ER11763"), # Race of household "wife" 4 [1997-2021]
+  list(name = "fam_head2race", varname = "race2_head", var = "V11939"), # Race of household head 2 [1985-2023]
+  list(name = "fam_head3race", varname = "race3_head", var = "ER3946"), # Race of household head 3 [1994-2023]
+  list(name = "fam_head4race", varname = "race4_head", var = "ER11851"), # Race of household head 4 [1997-2023]
+  list(name = "fam_wiferace", varname = "race1_wife", var = "V12293"), # Race of household "wife" [1985-2023]
+  list(name = "fam_wife2race", varname = "race2_wife", var = "V12294"), # Race of household "wife" 2 [1985-2023]
+  list(name = "fam_wife3race", varname = "race3_wife", var = "ER3885"), # Race of household "wife" 3 [1994-2023]
+  list(name = "fam_wife4race", varname = "race4_wife", var = "ER11763"), # Race of household "wife" 4 [1997-2023]
   
  # FAMILY WEIGHTS -----------------------------------------------------------
   list(name = "fam_longweight1", varname = "fam_longweight_68_92", var = "V439"), # Longitudinal family weight [1968-1989]
   list(name = "fam_longweight2", varname = "fam_longweight_93_96", var = "V23361"), # Longitudinal family weight [1993-1996]
-  list(name = "fam_longweight3", varname = "fam_longweight_97_21", var = "ER12084") # Longitudinal family weight [1997-2021]
+  list(name = "fam_longweight3", varname = "fam_longweight_97_23", var = "ER12084") # Longitudinal family weight [1997-2023]
 )
 
 # Process Variables Using the CWF File ------------------------------------------

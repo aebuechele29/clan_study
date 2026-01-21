@@ -1,11 +1,8 @@
-# ============================================================
-# PACKAGES
-# ============================================================
 library(here)
 library(dplyr)
-library(tidyr)     # pivot_longer
+library(tidyr)     
 library(tibble)
-library(purrr)     # map_dfr
+library(purrr)     
 library(readr)
 library(ggplot2)
 library(flextable)
@@ -13,9 +10,21 @@ library(officer)
 library(grid)
 library(gridExtra)
 
-# ============================================================
-# GLOBAL STYLES
-# ============================================================
+# Load data
+dir.create(here("9_figures", "output"), recursive = TRUE, showWarnings = FALSE)
+r_hh    <- readRDS(here("3_households", "output", "robust_households.rds"))
+r_clans <- readRDS(here("4_clans", "output", "robust_clans.rds"))
+
+wealth_years <- c(1984, 1989, 1994, seq(1999, 2023, by = 2))
+r_hh_wealth    <- r_hh    %>% filter(year %in% wealth_years)
+r_clans_wealth <- r_clans %>% filter(year %in% wealth_years)
+
+inc_by_year    <- read_csv(here("6_calculate_gini", "output", "income.csv"), show_col_types = FALSE)
+wealth_by_year <- read_csv(here("6_calculate_gini", "output", "wealth_nohouse.csv"), show_col_types = FALSE)
+summary        <- read_csv(here("5_summary", "output", "summary_statistics.csv"), show_col_types = FALSE)
+
+
+# Global styles
 base_family     <- "serif"
 base_size       <- 18
 title_size      <- 22
@@ -26,14 +35,10 @@ table_width_npc <- 0.62
 theme_set(theme_minimal(base_size = base_size, base_family = base_family))
 note_style <- fp_text(italic = TRUE, font.size = note_size)
 
-# ============================================================
-# FUNCTIONS 
-# ============================================================
-
-# Purpose: format estimate and standard error for table display
+# Function to format estimate and standard error for table display
 fmt_se <- function(x, se) sprintf("%.3f\n(SE = %.3f)", x, se)
 
-# Purpose: compute Lorenz curve points for values x with weights w
+# Function to compute Lorenz curve points for values x with weights w
 lorenz_tbl <- function(x, w) {
   stopifnot(length(x) == length(w))
   keep <- is.finite(x) & is.finite(w) & w > 0
@@ -46,7 +51,7 @@ lorenz_tbl <- function(x, w) {
   tibble(p = c(0, cum_w), L = c(0, cum_xw))
 }
 
-# Purpose: compute weighted Lorenz curves by year for a given unit/weight
+# Function to compute weighted Lorenz curves by year for a given unit/weight
 get_lorenz_weighted <- function(df, value_var, weight_var, years, unit_label) {
   base <- df %>%
     filter(year %in% years, is.finite(.data[[value_var]])) %>%
@@ -64,7 +69,7 @@ get_lorenz_weighted <- function(df, value_var, weight_var, years, unit_label) {
     })
 }
 
-# Purpose: plot Gini over time with clean "pretty" x-axis ticks + always show final year; no end labels
+# Function to plot Gini over time with clean "pretty" x-axis ticks + always show final year; no end labels
 make_gini_plot <- function(by_year_df, hh_col, cl_col, ylab, n_breaks = 6) {
 
   yearly_plot <- by_year_df %>%
@@ -101,7 +106,7 @@ make_gini_plot <- function(by_year_df, hh_col, cl_col, ylab, n_breaks = 6) {
     theme(legend.position = "bottom", plot.title = element_blank())
 }
 
-# Purpose: make Lorenz plot (household vs clan) for selected years
+# Function to make Lorenz plot (household vs clan) for selected years
 make_lorenz_plot <- function(df_hh, df_cl, value_var, years, ylab, colors) {
   hh <- get_lorenz_weighted(df_hh, value_var, "fam_weight", years, "Household")
   cl <- get_lorenz_weighted(df_cl, value_var, "clan_weight", years, "Clan")
@@ -124,7 +129,7 @@ make_lorenz_plot <- function(df_hh, df_cl, value_var, years, ylab, colors) {
     theme(legend.position = "bottom", plot.title = element_blank())
 }
 
-# Purpose: pull household-years, clan-years, and unique clans from summary stats
+# Function to  pull household-years, clan-years, and unique clans from summary stats
 get_year_counts <- function(sum_df) {
   tibble(
     hh_years = sum_df %>% filter(Unit == "Household") %>% pull(N) %>% first(),
@@ -133,7 +138,7 @@ get_year_counts <- function(sum_df) {
   )
 }
 
-# Purpose: get a specific Gini from a "by year" file (ignores the "ALL" row)
+# Function to  get a specific Gini from a "by year" file (ignores the "ALL" row)
 get_gini_at <- function(df, year_value, col) {
   df %>%
     filter(year != "ALL") %>%
@@ -143,13 +148,13 @@ get_gini_at <- function(df, year_value, col) {
     first()
 }
 
-# Purpose: percent change helper
+# Function to  percent change helper
 pct_change <- function(start, end) 100 * (end - start) / start
 
-# Purpose: wrap long note text for PDFs
+# Function to  wrap long note text for PDFs
 wrap_note <- function(x, width = 110) paste(strwrap(x, width = width), collapse = "\n")
 
-# Purpose: weighted mean + weighted median income for Figure 3 note
+# Function to  weighted mean + weighted median income for Figure 3 note
 wtd_mean <- function(x, w) {
   keep <- is.finite(x) & is.finite(w) & w > 0
   x <- x[keep]; w <- w[keep]
@@ -167,51 +172,31 @@ wtd_median <- function(x, w) {
 
 fmt_money0 <- function(x) format(round(x, 0), big.mark = ",")
 
-# Purpose: format integers with commas
+# Function to  format integers with commas
 fmt_int <- function(x) format(round(as.numeric(x), 0), big.mark = ",")
 
-# ============================================================
-# OUTPUT DIR
-# ============================================================
-dir.create(here("9_figures", "output"), recursive = TRUE, showWarnings = FALSE)
-
-# ============================================================
-# LOAD DATA
-# ============================================================
-r_hh    <- readRDS(here("3_households", "output", "robust_households.rds"))
-r_clans <- readRDS(here("4_clans", "output", "robust_clans.rds"))
-
-wealth_years <- c(1984, 1989, 1994, seq(1999, 2021, by = 2))
-r_hh_wealth    <- r_hh    %>% filter(year %in% wealth_years)
-r_clans_wealth <- r_clans %>% filter(year %in% wealth_years)
-
-inc_by_year    <- read_csv(here("6_calculate_gini", "output", "income.csv"), show_col_types = FALSE)
-wealth_by_year <- read_csv(here("6_calculate_gini", "output", "wealth_nohouse.csv"), show_col_types = FALSE)
-summary        <- read_csv(here("5_summary", "output", "summary_statistics.csv"), show_col_types = FALSE)
-
+# Figure notes
 # Precompute counts used in Figure 1 note
 inc_counts    <- get_year_counts(summary %>% filter(Table == "Income", Unit %in% c("Household","Clan")))
 wealth_counts <- get_year_counts(summary %>% filter(Table == "Wealth", Unit %in% c("Household","Clan")))
 
 # Precompute endpoint ginis + percent changes used in Figure 2 note
 inc_hh_1969 <- get_gini_at(inc_by_year,    1969, r_hh_w_inc)
-inc_hh_2021 <- get_gini_at(inc_by_year,    2021, r_hh_w_inc)
+inc_hh_2023 <- get_gini_at(inc_by_year,    2023, r_hh_w_inc)
 inc_cl_1969 <- get_gini_at(inc_by_year,    1969, r_cl_w_inc)
-inc_cl_2021 <- get_gini_at(inc_by_year,    2021, r_cl_w_inc)
+inc_cl_2023 <- get_gini_at(inc_by_year,    2023, r_cl_w_inc)
 
 w_hh_1984   <- get_gini_at(wealth_by_year, 1984, r_hh_w_wealth)
-w_hh_2021   <- get_gini_at(wealth_by_year, 2021, r_hh_w_wealth)
+w_hh_2023   <- get_gini_at(wealth_by_year, 2023, r_hh_w_wealth)
 w_cl_1984   <- get_gini_at(wealth_by_year, 1984, r_cl_w_wealth)
-w_cl_2021   <- get_gini_at(wealth_by_year, 2021, r_cl_w_wealth)
+w_cl_2023   <- get_gini_at(wealth_by_year, 2023, r_cl_w_wealth)
 
-inc_hh_pct <- pct_change(inc_hh_1969, inc_hh_2021)
-inc_cl_pct <- pct_change(inc_cl_1969, inc_cl_2021)
-w_hh_pct   <- pct_change(w_hh_1984,   w_hh_2021)
-w_cl_pct   <- pct_change(w_cl_1984,   w_cl_2021)
+inc_hh_pct <- pct_change(inc_hh_1969, inc_hh_2023)
+inc_cl_pct <- pct_change(inc_cl_1969, inc_cl_2023)
+w_hh_pct   <- pct_change(w_hh_1984,   w_hh_2023)
+w_cl_pct   <- pct_change(w_cl_1984,   w_cl_2023)
 
-# ============================================================
-# FIGURE 1 (DOCX TABLE)
-# ============================================================
+# Figure 1
 fig1_tbl <- tribble(
   ~Unit, ~Households, ~Clans, ~Difference,
   "Income",
@@ -231,7 +216,7 @@ fig1_tbl <- tribble(
 )
 
 ft1 <- flextable(fig1_tbl) |>
-  set_caption("Table 1. Average Gini Coefficients for Households and Clans, 1969–2021") |>
+  set_caption("Table 1. Average Gini Coefficients for Households and Clans, 1969–2023") |>
   theme_vanilla() |>
   bold(part = "header") |>
   align(align = "center", part = "all") |>
@@ -268,12 +253,10 @@ doc1 <- read_docx() |>
     )
   )
 
-print(doc1, target = here("9_figures", "output", "Table1.docx"))
-message("Saved: ", here("9_figures", "output", "Table1.docx"))
+print(doc1, target = here("9_figures", "output", "table1.docx"))
+message("Saved: ", here("9_figures", "output", "table1.docx"))
 
-# ============================================================
-# FIGURE 2 (PDF: INCOME & WEALTH GINI OVER TIME, SIDE-BY-SIDE)
-# ============================================================
+# Figure 2
 out2 <- here("9_figures", "output", "figure2.pdf")
 
 income_sum <- summary %>% filter(Table == "Income", Unit %in% c("Household", "Clan"))
@@ -289,19 +272,19 @@ note2_text <- sprintf(
     "Note: Gini coefficients are estimated from weighted data using PSID family and clan weights. ",
     "Weighted mean income is %s for households and %s for clans. ",
     "Weighted mean wealth is %s for households and %s for clans (wealth excludes home equity). ",
-    "The Gini coefficient for income for households rose by %.1f%% (%.2f in 1969 and %.2f in 2021). ",
-    "The Gini coefficient for income for clans rose by %.1f%% (%.2f in 1969 and %.2f in 2021). ",
-    "The Gini coefficient for wealth for households rose by %.1f%% (%.2f in 1984 and %.2f in 2021). ",
-    "The Gini coefficient for wealth for clans rose by %.1f%% (%.2f in 1984 and %.2f in 2021)."
+    "The Gini coefficient for income for households rose by %.1f%% (%.2f in 1969 and %.2f in 2023). ",
+    "The Gini coefficient for income for clans rose by %.1f%% (%.2f in 1969 and %.2f in 2023). ",
+    "The Gini coefficient for wealth for households rose by %.1f%% (%.2f in 1984 and %.2f in 2023). ",
+    "The Gini coefficient for wealth for clans rose by %.1f%% (%.2f in 1984 and %.2f in 2023)."
   ),
   format(round(inc_mean_hh_w, 0), big.mark = ","),
   format(round(inc_mean_cl_w, 0), big.mark = ","),
   format(round(w_mean_hh_w,   0), big.mark = ","),
   format(round(w_mean_cl_w,   0), big.mark = ","),
-  inc_hh_pct, inc_hh_1969, inc_hh_2021,
-  inc_cl_pct, inc_cl_1969, inc_cl_2021,
-  w_hh_pct,   w_hh_1984,   w_hh_2021,
-  w_cl_pct,   w_cl_1984,   w_cl_2021
+  inc_hh_pct, inc_hh_1969, inc_hh_2023,
+  inc_cl_pct, inc_cl_1969, inc_cl_2023,
+  w_hh_pct,   w_hh_1984,   w_hh_2023,
+  w_cl_pct,   w_cl_1984,   w_cl_2023
 )
 
 p2_gini_inc <- make_gini_plot(inc_by_year, r_hh_w_inc, r_cl_w_inc, "Gini Coefficient", n_breaks = 5)
@@ -312,10 +295,10 @@ title2 <- textGrob(
   x = unit(0, "npc"), just = "left",
   gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)
 )
-sub2L <- textGrob("Panel A: Income inequality from 1969 to 2021",
+sub2L <- textGrob("Panel A: Income inequality from 1969 to 2023",
                   x = unit(0, "npc"), just = "left",
                   gp = gpar(fontfamily = base_family, fontsize = sub_size))
-sub2R <- textGrob("Panel B: Wealth inequality from 1984 to 2021",
+sub2R <- textGrob("Panel B: Wealth inequality from 1984 to 2023",
                   x = unit(0, "npc"), just = "left",
                   gp = gpar(fontfamily = base_family, fontsize = sub_size))
 
@@ -333,24 +316,22 @@ fig2 <- arrangeGrob(title2, plots2, note2, ncol = 1, heights = c(0.10, 0.78, 0.1
 ggsave(out2, fig2, width = 14, height = 9)
 message("Saved: ", out2)
 
-# ============================================================
-# FIGURE 3 (PDF: INCOME & WEALTH LORENZ CURVES, SIDE-BY-SIDE)
-# ============================================================
+# Figure 3
 out3 <- here("9_figures", "output", "figure3.pdf")
 
 p3_lor_inc <- make_lorenz_plot(
-  r_hh, r_clans, "inc_all", years = c(1984, 2021),
+  r_hh, r_clans, "inc_all", years = c(1984, 2023),
   ylab = "Cumulative Proportion of Income",
-  colors = c("1984" = "#4a71c7", "2021" = "#E66101")
+  colors = c("1984" = "#4a71c7", "2023" = "#E66101")
 )
 p3_lor_w <- make_lorenz_plot(
-  r_hh_wealth, r_clans_wealth, "wealth_nohouse", years = c(1984, 2021),
+  r_hh_wealth, r_clans_wealth, "wealth_nohouse", years = c(1984, 2023),
   ylab = "Cumulative Proportion of Wealth",
-  colors = c("1984" = "#4a71c7", "2021" = "#E66101")
+  colors = c("1984" = "#4a71c7", "2023" = "#E66101")
 )
 
 inc_stats_hh <- r_hh %>%
-  filter(year %in% c(1984, 2021), is.finite(inc_all), is.finite(fam_weight), fam_weight > 0) %>%
+  filter(year %in% c(1984, 2023), is.finite(inc_all), is.finite(fam_weight), fam_weight > 0) %>%
   group_by(year) %>%
   summarise(
     mean = wtd_mean(inc_all, fam_weight),
@@ -359,7 +340,7 @@ inc_stats_hh <- r_hh %>%
   )
 
 inc_stats_cl <- r_clans %>%
-  filter(year %in% c(1984, 2021), is.finite(inc_all), is.finite(clan_weight), clan_weight > 0) %>%
+  filter(year %in% c(1984, 2023), is.finite(inc_all), is.finite(clan_weight), clan_weight > 0) %>%
   group_by(year) %>%
   summarise(
     mean = wtd_mean(inc_all, clan_weight),
@@ -372,10 +353,10 @@ hh_1984_med  <- fmt_money0(inc_stats_hh$med [inc_stats_hh$year == 1984])
 cl_1984_mean <- fmt_money0(inc_stats_cl$mean[inc_stats_cl$year == 1984])
 cl_1984_med  <- fmt_money0(inc_stats_cl$med [inc_stats_cl$year == 1984])
 
-hh_2021_mean <- fmt_money0(inc_stats_hh$mean[inc_stats_hh$year == 2021])
-hh_2021_med  <- fmt_money0(inc_stats_hh$med [inc_stats_hh$year == 2021])
-cl_2021_mean <- fmt_money0(inc_stats_cl$mean[inc_stats_cl$year == 2021])
-cl_2021_med  <- fmt_money0(inc_stats_cl$med [inc_stats_cl$year == 2021])
+hh_2023_mean <- fmt_money0(inc_stats_hh$mean[inc_stats_hh$year == 2023])
+hh_2023_med  <- fmt_money0(inc_stats_hh$med [inc_stats_hh$year == 2023])
+cl_2023_mean <- fmt_money0(inc_stats_cl$mean[inc_stats_cl$year == 2023])
+cl_2023_med  <- fmt_money0(inc_stats_cl$med [inc_stats_cl$year == 2023])
 
 title3 <- textGrob(
   "Figure 3. Lorenz Curves at the Household and Clan Levels",
@@ -383,10 +364,10 @@ title3 <- textGrob(
   gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)
 )
 
-sub3L <- textGrob("Panel A: Distribution of income in 1984 and 2021",
+sub3L <- textGrob("Panel A: Distribution of income in 1984 and 2023",
                   x = unit(0, "npc"), just = "left",
                   gp = gpar(fontfamily = base_family, fontsize = sub_size))
-sub3R <- textGrob("Panel B: Distribution of wealth in 1984 and 2021",
+sub3R <- textGrob("Panel B: Distribution of wealth in 1984 and 2023",
                   x = unit(0, "npc"), just = "left",
                   gp = gpar(fontfamily = base_family, fontsize = sub_size))
 
@@ -395,10 +376,10 @@ note3_text <- sprintf(
     "Note: Lorenz curves are estimated from weighted data using PSID family and clan weights. ",
     "Wealth is measured excluding home equity. ",
     "For income in 1984, the weighted mean (median) is %s (%s) for households and %s (%s) for clans. ",
-    "For income in 2021, the weighted mean (median) is %s (%s) for households and %s (%s) for clans."
+    "For income in 2023, the weighted mean (median) is %s (%s) for households and %s (%s) for clans."
   ),
   hh_1984_mean, hh_1984_med, cl_1984_mean, cl_1984_med,
-  hh_2021_mean, hh_2021_med, cl_2021_mean, cl_2021_med
+  hh_2023_mean, hh_2023_med, cl_2023_mean, cl_2023_med
 )
 
 note3 <- textGrob(
@@ -416,10 +397,7 @@ ggsave(out3, fig3, width = 14, height = 9)
 message("Saved: ", out3)
 
 
-# ============================================================
-# TABLE 4 (DOCX TABLE)  -- UPDATED NOTE WITH N's + UNIQUE CLANS
-#   Counts are calculated like Table 1: separately for income vs wealth samples
-# ============================================================
+# Figure 4
 inc_race <- read_csv(here("7_gini_by_race", "output", "income_race.csv"), show_col_types = FALSE) %>%
   filter(year == "ALL")
 w_race <- read_csv(here("7_gini_by_race", "output", "wealth_nohouse_race.csv"), show_col_types = FALSE) %>%
@@ -472,7 +450,7 @@ w_cl_counts <- r_clans_wealth %>%
     w_uniq_nonblack_clans = n_distinct(id1968[black_clan == 0])
   )
 
-# --- Unique clan totals (match Table 1 sample definition) + overlap across race
+# Unique clan totals (match Table 1 sample definition) + overlap across race
 
 # INCOME sample: total unique clans (Table 1 style)
 inc_total_uniq_clans <- r_clans %>%

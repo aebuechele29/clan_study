@@ -2,10 +2,19 @@ library(here)
 library(dplyr)
 library(tidyr)
 library(tibble)
+library(openxlsx)
 
 # LOAD DATA ------------------------------------------------------------------
 # Each row represents a person-year, data is collected for the individual or the family
 build <- readRDS(here("1_build_panel", "output", "build.rds"))
+
+# Load Inflation Data -----------------------------------------------------
+  # This file contains annual consumer price index (CPI) data for inflation adjustment from the Bureau of Labor Statistics
+cpi <- openxlsx::read.xlsx(here("0_data", "cpi", "cpi.xlsx")) %>%
+  as_tibble() %>%
+  rename(inflation_value = Jan, year = Year) %>%
+  select(year, inflation_value) %>%
+  filter(year >= 1967)
 
 # LIMIT TO THOSE PRESENT IN THE FU EACH YEAR -------------------------------------------------
 build <- build %>%
@@ -74,49 +83,49 @@ topcode_rules <- tribble(
   "inc_all",         1984,        1985,      999999,
   "inc_all",         1986,        1993,      9999999,
   "inc_all",         1994,        1997,      9999998,
-  "inc_all",         1999,        2021,      9999999,
+  "inc_all",         1999,        2023,      9999999,
 
   "inc_tax_hs",      1969,        1978,      99999,
   "inc_tax_hs",      1979,        1980,      999999,
   "inc_tax_hs",      1982,        1996,      9999999,
-  "inc_tax_hs",      1999,        2021,      9999999,
+  "inc_tax_hs",      1999,        2023,      9999999,
 
   "inc_tax_o",       1969,        1983,      99999,
   "inc_tax_o",       1984,        1993,      999999,
-  "inc_tax_o",       1994,        2021,      9999998,
+  "inc_tax_o",       1994,        2023,      9999998,
 
   "inc_trans_hs",    1970,        1992,      99999,
   "inc_trans_hs",    1993,        1993,      999999,
   "inc_trans_hs",    1994,        1996,      9999998,
   "inc_trans_hs",    1997,        1997,      999999,
   "inc_trans_hs",    1999,        2009,      9999998,
-  "inc_trans_hs",    2011,        2021,      9999997,
+  "inc_trans_hs",    2011,        2023,      9999997,
 
   "inc_trans_o1",    1970,        1992,      99999,
   "inc_trans_o1",    1993,        1993,      999999,
   "inc_trans_o1",    1994,        1996,      9999998,
   "inc_trans_o1",    1997,        1997,      999999,
   "inc_trans_o1",    1999,        2009,      9999998,
-  "inc_trans_o1",    2011,        2021,      9999997,
+  "inc_trans_o1",    2011,        2023,      9999997,
 
   "inc_trans_o2",    1970,        1992,      99999,
   "inc_trans_o2",    1993,        1993,      999999,
   "inc_trans_o2",    1994,        1996,      9999998,
   "inc_trans_o2",    1997,        1997,      999999,
   "inc_trans_o2",    1999,        2009,      9999998,
-  "inc_trans_o2",    2011,        2021,      9999997,
+  "inc_trans_o2",    2011,        2023,      9999997,
 
   "wealth_nohouse",  1984,        2005,      999999998,
   "wealth_nohouse",  2007,        2009,      999999996,
-  "wealth_nohouse",  2011,        2021,      999999997,
+  "wealth_nohouse",  2011,        2023,      999999997,
 
   "wealth",          1984,        2005,      999999998,
   "wealth",          2007,        2009,      999999996,
-  "wealth",          2011,        2021,      999999997,
+  "wealth",          2011,        2023,      999999997,
 
   "wealth_farmbus",  1984,        2005,      999999998,
   "wealth_farmbus",  2007,        2009,      999999996,
-  "wealth_farmbus",  2011,        2021,      999999997,
+  "wealth_farmbus",  2011,        2023,      999999997,
 
   "wealth_checking", 1984,        2003,      999999998,
   "wealth_checking", 2005,        2005,      999999999,
@@ -125,26 +134,26 @@ topcode_rules <- tribble(
 
   "wealth_re",       1984,        2005,      999999998,
   "wealth_re",       2007,        2009,      999999996,
-  "wealth_re",       2011,        2021,      999999997,
+  "wealth_re",       2011,        2023,      999999997,
 
   "wealth_stocks",   1984,        2005,      999999998,
   "wealth_stocks",   2007,        2009,      999999996,
-  "wealth_stocks",   2011,        2021,      999999997,
+  "wealth_stocks",   2011,        2023,      999999997,
 
   "wealth_vehicles", 1984,        2005,      999999998,
   "wealth_vehicles", 2007,        2009,      999999996,
-  "wealth_vehicles", 2011,        2021,      999999997,
+  "wealth_vehicles", 2011,        2023,      999999997,
 
   "wealth_other",    1984,        2005,      999999998,
   "wealth_other",    2007,        2009,      999999996,
-  "wealth_other",    2011,        2021,      999999997,
+  "wealth_other",    2011,        2023,      999999997,
 
   "wealth_debt",     1984,        2005,      999999999,
   "wealth_debt",     2007,        2009,      999999997,
 
-  "wealth_home",     1984,        2021,      999999997,
+  "wealth_home",     1984,        2023,      999999997,
 
-  "student_loans",   2011,        2021,      9999997
+  "student_loans",   2011,        2023,      9999997
   
 )
 
@@ -162,12 +171,11 @@ topcodes_wide <- topcodes %>%
 build <- build %>%
   left_join(topcodes_wide, by = "year")
 
+# Removed money vars that aren't being used on 20260121
 money_vars <- c(
   "inc_all", "inc_tax_hs", "inc_tax_o",
   "inc_trans_hs", "inc_trans_o1", "inc_trans_o2",
-  "wealth_nohouse", "wealth", "wealth_farmbus", "wealth_checking", "wealth_debt",
-  "wealth_re", "wealth_stocks", "wealth_vehicles", "wealth_other",
-  "wealth_home", "student_loans"
+  "wealth_nohouse", "wealth", "wealth_home"
 )
 
 for (var in money_vars) {
@@ -317,7 +325,7 @@ build <- build %>%
     fam_weight = case_when(
       year >= 1968 & year <= 1992 ~ fam_longweight_68_92,
       year >= 1993 & year <= 1996 ~ fam_longweight_93_96,
-      year >= 1997 & year <= 2021 ~ fam_longweight_97_21,
+      year >= 1997 & year <= 2023 ~ fam_longweight_97_23,
       TRUE ~ NA_real_
     ) 
   )

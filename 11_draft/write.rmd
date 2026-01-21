@@ -1,0 +1,60 @@
+---
+title: "An Extended Family Approach to Income and Wealth Inequality in the U.S."
+author: "Author Name(s)"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+keywords: ["put keywords here"]
+bibliography: bibliography_clan.bib
+csl: council-of-science-editors-brackets.csl
+output:
+  pdf_document:
+    number_sections: true
+    extra_dependencies:
+      - float
+      - graphicx
+      - codehigh
+      - ulem
+      - siunitx
+header-includes:
+  - \usepackage{tabularray}
+  - \UseTblrLibrary{booktabs}
+  - \UseTblrLibrary{siunitx}
+  - \newcommand{\tinytableTabularrayUnderline}[1]{\underline{#1}}
+  - \newcommand{\tinytableTabularrayStrikeout}[1]{\sout{#1}}
+  - \NewTableCommand{\tinytableDefineColor}[3]{\definecolor{#1}{#2}{#3}}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  fig.pos = "H"
+)
+
+# Artifacts produced by your pipeline (Makefile checks these exist)
+fig_dir <- file.path("..", "9_figures", "output")
+
+fig2 <- file.path(fig_dir, "figure2.pdf")
+fig3 <- file.path(fig_dir, "figure3.pdf")
+
+tab1_docx <- file.path(fig_dir, "table1.docx")
+tab4_docx <- file.path(fig_dir, "table4.docx")
+
+stop_if_missing <- function(p) {
+  if (!file.exists(p)) stop("Missing required file: ", p)
+}
+
+# Fail fast for figures (tables are docx and can't be embedded in PDF directly)
+stop_if_missing(fig2)
+stop_if_missing(fig3)
+```
+
+# Abstract
+# Significance Statement
+# Introduction
+knitr::include_graphics(fig2)
+knitr::include_graphics(fig3)
+
+# Discussion
+# Materials and Methods
+
