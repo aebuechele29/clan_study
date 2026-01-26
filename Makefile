@@ -3,6 +3,7 @@
 # - Runs each step in a fresh R session
 # - Uses file targets when outputs are stable
 # - Uses stamp (.done) targets when outputs can vary (prefix-based)
+# - Always builds appendix for pipeline + paper
 # - Renders 11_draft/write.rmd with CSL + bib
 # ============================================================
 
@@ -45,30 +46,32 @@ STEP10_SCRIPT := 10_appendix/src/appendix.R
 STEP1_OUT := 1_build_panel/output/build.rds
 STEP2_OUT := 2_clean_panel/output/clean.rds
 
-# Step 3/4 have variable/expanding outputs (and step 4 uses prefix),
-# so we use stamp files to avoid guessing filenames.
+# Step 3/4 have variable/expanding outputs (and step 4 uses prefix)
 STEP3_DONE := 3_households/output/.done
 STEP4_DONE := 4_clans/output/.done
 
-# Step 5+ have stable outputs (based on your file listing)
+# Step 5 stable outputs
 STEP5_OUTS := \
   5_summary/output/summary_statistics.csv \
   5_summary/output/income_quartiles.docx \
   5_summary/output/wealth_quartiles.docx
 STEP5_PRIMARY := 5_summary/output/summary_statistics.csv
 
+# Step 6 stable outputs
 STEP6_OUTS := \
   6_calculate_gini/output/income.csv \
   6_calculate_gini/output/wealth_nohouse.csv \
   6_calculate_gini/output/wealth_withhome.csv
 STEP6_PRIMARY := 6_calculate_gini/output/income.csv
 
+# Step 7 stable outputs
 STEP7_OUTS := \
   7_gini_by_race/output/income_race.csv \
   7_gini_by_race/output/wealth_nohouse_race.csv \
   7_gini_by_race/output/wealth_withhome_race.csv
 STEP7_PRIMARY := 7_gini_by_race/output/income_race.csv
 
+# Step 8 stable outputs
 STEP8_OUTS := \
   8_nuclear_family/output/income_C123.csv \
   8_nuclear_family/output/wealth_nohouse_C123.csv
@@ -85,25 +88,31 @@ FIG_OUTS := \
 TABLE1_CANON := $(FIG_DIR)/Table1.docx
 TABLE1_ALT   := $(FIG_DIR)/table1.docx
 
+# Step 10 appendix output
+APPENDIX_OUT := 10_appendix/output/appendices.docx
+
 # ----------------
 # Phony targets
 # ----------------
-.PHONY: all pipeline figures paper check-data check-scripts clean veryclean table1
+.PHONY: all pipeline figures appendix paper paper-only check-data check-scripts clean veryclean table1
 
 all: paper
-pipeline: $(STEP8_PRIMARY)
+
+# Pipeline now includes appendix (Step 10)
+pipeline: $(APPENDIX_OUT)
+
 figures: $(FIG_OUTS) table1
+appendix: $(APPENDIX_OUT)
+
+# Paper ALWAYS depends on appendix (and figures)
 paper: $(PAPER_PDF)
 
-.PHONY: paper-only
-
-paper-only: check-data $(RMD) $(CSL) $(BIB)
+paper-only: check-data $(APPENDIX_OUT) $(RMD) $(CSL) $(BIB)
 	@mkdir -p 11_draft/output
-	@echo "==> Rendering paper ONLY (no pipeline)"
+	@echo "==> Rendering paper ONLY (no pipeline except appendix)"
 	@$(R) -e "rmarkdown::render('$(RMD)', output_file='paper.pdf', output_dir='11_draft/output')"
 	@test -f $(PAPER_PDF)
 	@echo "==> Wrote: $(PAPER_PDF)"
-
 
 # ----------------
 # Sanity checks
@@ -146,7 +155,7 @@ $(STEP1_OUT): check-data check-scripts $(DATA_DEPS) $(FUNCS) $(STEP1_SCRIPT)
 	$(call run_step,1_build_panel,$(STEP1_SCRIPT))
 	@test -f $(STEP1_OUT)
 
-# Step 2 produces a stable output file (and your script now correctly loads CPI itself)
+# Step 2 produces a stable output file
 $(STEP2_OUT): check-data check-scripts $(STEP1_OUT) $(FUNCS) $(STEP2_SCRIPT)
 	$(call run_step,2_clean_panel,$(STEP2_SCRIPT))
 	@test -f $(STEP2_OUT)
@@ -164,13 +173,13 @@ $(STEP4_DONE): check-data check-scripts $(STEP3_DONE) $(FUNCS) $(STEP4_SCRIPT)
 	@touch $(STEP4_DONE)
 
 # Step 5+: stable outputs
-$(STEP5_PRIMARY): check-data check-scripts $(STEP4_DONE) $(FUNCS) $(STEP5_SCRIPT)
-	$(call run_step,5_summary,$(STEP5_SCRIPT))
-	@for f in $(STEP5_OUTS); do test -f $$f; done
-
-$(STEP6_PRIMARY): check-data check-scripts $(STEP5_PRIMARY) $(FUNCS) $(STEP6_SCRIPT)
+$(STEP6_PRIMARY): check-data check-scripts $(STEP4_DONE) $(FUNCS) $(STEP6_SCRIPT)
 	$(call run_step,6_calculate_gini,$(STEP6_SCRIPT))
 	@for f in $(STEP6_OUTS); do test -f $$f; done
+
+$(STEP5_PRIMARY): check-data check-scripts $(STEP6_PRIMARY) $(FUNCS) $(STEP5_SCRIPT)
+	$(call run_step,5_summary,$(STEP5_SCRIPT))
+	@for f in $(STEP5_OUTS); do test -f $$f; done
 
 $(STEP7_PRIMARY): check-data check-scripts $(STEP6_PRIMARY) $(FUNCS) $(STEP7_SCRIPT)
 	$(call run_step,7_gini_by_race,$(STEP7_SCRIPT))
@@ -202,10 +211,15 @@ table1: check-data check-scripts $(STEP8_PRIMARY) $(FUNCS) $(STEP9_SCRIPT)
 		exit 1; \
 	fi
 
+# Step 10 appendix: stable output docx
+$(APPENDIX_OUT): check-data check-scripts $(STEP8_PRIMARY) $(STEP6_PRIMARY) $(FUNCS) $(STEP10_SCRIPT)
+	$(call run_step,10_appendix,$(STEP10_SCRIPT))
+	@test -f $(APPENDIX_OUT)
+
 # ----------------
-# Render paper
+# Render paper (ALWAYS includes appendix)
 # ----------------
-$(PAPER_PDF): check-data $(FIG_OUTS) table1 $(RMD) $(CSL) $(BIB)
+$(PAPER_PDF): check-data $(FIG_OUTS) table1 $(APPENDIX_OUT) $(RMD) $(CSL) $(BIB)
 	@mkdir -p 11_draft/output
 	@echo "==> Rendering paper"
 	@$(R) -e "rmarkdown::render('$(RMD)', output_file='paper.pdf', output_dir='11_draft/output')"
@@ -225,3 +239,5 @@ veryclean: clean
 	@rm -f $(STEP3_DONE) $(STEP4_DONE)
 	@rm -f $(STEP5_OUTS) $(STEP6_OUTS) $(STEP7_OUTS) $(STEP8_OUTS)
 	@rm -f $(FIG_OUTS) $(TABLE1_CANON) $(TABLE1_ALT)
+	@rm -f $(APPENDIX_OUT)
+
