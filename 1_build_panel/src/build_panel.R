@@ -26,15 +26,6 @@ here::i_am("1_build_panel/src/build_panel.R")
   # This file indexes variable names across years, provided by the PSID
 cwf <- openxlsx::read.xlsx(here("0_data", "psid.xlsx"))
 
-# Load Inflation Data -----------------------------------------------------
-  # This file contains annual consumer price index (CPI) data for inflation adjustment from the Bureau of Labor Statistics
-cpi <- read.xlsx(here("0_data", "cpi", "cpi.xlsx")) %>%
-  as_tibble() %>%
-  rename(inflation_value = Jan, year = Year) %>%
-  select(year, inflation_value) %>%
-  filter(year >= 1967)
-
-
 # Load PSID Data ----------------------------------------------------------
   # This data is downloaded from the PSID website using the cross-year selection tool
 file.remove(list.files(here("1_build_panel", "output"), pattern = "\\.rds$", full.names = TRUE)) # Output directory needs to be empty
@@ -53,27 +44,13 @@ psid_data <- readRDS(psid_file)
 # Define Variables to Extract Lists -----------------------------------------
 extract_psid_vartables <- function(var_object) {
   tmp <- getNamesPSID(var_object[["var"]], cwf, years = NULL)
-  
-  if (var_object[["varname"]] == "wealth") {
-    tmp <-
-      tmp %>%
-      mutate(
-        variable =
-          case_when(
-            str_detect(variable, "ER") ~ variable,
-            TRUE ~ NA_character_
-          )
-      )
-  }
-  # Add time-invariant varibles here 
+
   if (grepl("sample|stratum|cluster", var_object[["varname"]])) {
-    tmp <-
-      tmp %>%
-      fill(variable, .direction = "up")
+    tmp <- tmp %>% fill(variable, .direction = "up")
   }
-  
+
   var_object[["df"]] <- tmp
-  return(var_object)
+  var_object
 }
 
 # Define Function to Remove "Y" from Year Var Name ----------------------------
