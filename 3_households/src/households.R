@@ -130,7 +130,6 @@ households <- households %>%
       id1968 != id1968_spouse
     ) 
   
-  saveRDS(mismatched, here("3_households", "output", "mismatched.rds"))
 
 # Duplicate mismatched cases to assign to both clans
 households_keep <- households %>%
@@ -243,6 +242,7 @@ households <- households %>%
 
 # SAVE (households with bounded values for income and wealth)
 saveRDS(households, here("3_households", "output", "households.rds"))
+saveRDS(mismatched, here("3_households", "output", "mismatched.rds"))
 
 # Clean Up Temporary Files --------------------------------------------------
-rm(clean, data, dt, fam_wide, ind_wide, long_dt, mismatched)
+rm(clean, data, dt, fam_wide, ind_wide, long_dt)
