@@ -30,9 +30,9 @@ header-includes:
   - \captionsetup[table]{labelformat=empty}
 knit: (function(input, ...) {
   rmarkdown::render(input, ..., output_format = "pdf_document",
-    output_file = here::here("11_draft", "output", "write.pdf"));
+    output_file = here::here("10_draft", "output", "write.pdf"));
   rmarkdown::render(input, ..., output_format = "word_document",
-    output_file = here::here("11_draft", "output", "write.docx"))
+    output_file = here::here("10_draft", "output", "write.docx"))
   })
 ---
 
