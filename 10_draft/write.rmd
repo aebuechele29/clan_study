@@ -160,7 +160,7 @@ For income, the difference between household and clan Gini coefficients is `r fm
 
 Values for income and wealth exclude negative values. Therefore, Gini coefficients presented here underestimate the extent of inequality at both the household and clan levels. When negative values are included, the difference in equality at the clan and household levels widens (see Appendix Table C1 and C2).
 
-The measures of wealth employed in our results excludes home equity. As a sensitivity analysis, we compare Gini coefficients for measures of wealth including and excluding home equity (see Appendix Table D). When wealth is measured including home equity, estimated inequality is higher at both the household and clan level, therefore estimates presented here are conservative, potentially understating differences in inequality between households and clans. 
+The measures of wealth employed in our results include home equity. As a sensitivity analysis, we compare Gini coefficients for measures of wealth including and excluding home equity (see Appendix Table D). When wealth is measured excluding home equity, estimated inequality is lower at both the household and clan level, but the difference between household and clan-level Gini coefficients is about the same.
 
 Additionally, although all households belong to a clan, not all extended family members are observed in the PSID in every year. In some cases, clans consist of only a single observed household, rendering household and clan-level measures identical. These observations are excluded from the main analyses because they do not capture extended family dynamics and are a result of survey limitations, rather than social reality. Including these single household clans eliminates the household–clan inequality gap for income but not for wealth (see Appendix Tables E1 and E2), further underscoring the importance of extended family networks in measuring wealth inequality in particular.^[Add single-HH clan footnote]
 
@@ -181,7 +181,7 @@ The PSID defines two linked units of analysis: households and clans. Households 
 
 The PSID has collected income data since its inception but began collecting wealth data only in 1984. As a result, analytic samples differ: income analyses include `r fmt0(inc_hh_years)` household-years and `r fmt0(inc_cl_years)` clan-years, representing `r fmt0 (inc_uniq_clans)` unique clans; wealth analyses include `r fmt0(w_hh_years)` household-years and `r fmt0(w_cl_years)` clan-years, representing `r fmt0(w_uniq_clans)` unique clans
 
-**Measures of income and wealth.** We measure both income and wealth to capture distinct dimensions of economic inequality. This choice follows from research identifying divergent patterns depending on choice of financial indicator because mechanisms driving wealth inequality are distinct from those driving income inequality [@killewald_wealth_2017; @pfeffer_determinants_2017; @hallsten_grand_2017]. The PSID began collecting wealth data in 1984, so our wealth analyses cover 1984 to 2023. Aggregate measures for income and wealth are provided by the PSID. Income includes earnings, asset income, transfers, and income from farming and gardening. Wealth includes non-primary real estate, business equity, stocks, bonds, vehicles, retirement accounts, and bank accounts, and excludes home equity. 
+**Measures of income and wealth.** We measure both income and wealth to capture distinct dimensions of economic inequality. This choice follows from research identifying divergent patterns depending on choice of financial indicator because mechanisms driving wealth inequality are distinct from those driving income inequality [@killewald_wealth_2017; @pfeffer_determinants_2017; @hallsten_grand_2017]. The PSID began collecting wealth data in 1984, so our wealth analyses cover 1984 to 2023. Aggregate measures for income and wealth are provided by the PSID. Income includes earnings, asset income, transfers, and income from farming and gardening. Wealth includes non-primary real estate, business equity, stocks, bonds, vehicles, retirement accounts, and bank accounts, and includes home equity. 
 
 Missing data for components of income and wealth are imputed by the PSID. Concerns about measurement error, especially for wealth, are minimal, as imputation methods utilized by the PSID explain little of the variation in wealth over time [@pfeffer_determinants_2017; @si_multiple_2021]. All income and wealth values are adjusted for inflation. Additionally, analyses set negative values of income and wealth to zero so that Gini coefficients remain in the 0 to 1 range. Including negative values for income and wealth does not change the results (see Appendix Table C1 and C2). To construct clan-level measures, we aggregate household income and wealth for all households in a clan within each clan-year. 
 
@@ -208,11 +208,11 @@ wealth_withhome <- read_gini(here("6_calculate_gini", "output", "wealth_withhome
 
 income_all <- read_csv(here("6_calculate_gini", "output", "income.csv"), show_col_types = FALSE) %>%
   mutate(year = suppressWarnings(as.integer(as.character(year))))
-wealth_all <- read_csv(here("6_calculate_gini", "output", "wealth_nohouse.csv"), show_col_types = FALSE) %>%
+wealth_all <- read_csv(here("6_calculate_gini", "output", "wealth_withhome.csv"), show_col_types = FALSE) %>%
   mutate(year = suppressWarnings(as.integer(as.character(year))))
 
 inc_c123 <- read_csv(here("8_nuclear_family", "output", "income_C123.csv"),         show_col_types = FALSE)
-wnh_c123 <- read_csv(here("8_nuclear_family", "output", "wealth_nohouse_C123.csv"), show_col_types = FALSE)
+wnh_c123 <- read_csv(here("8_nuclear_family", "output", "wealth_C123.csv"), show_col_types = FALSE)
 ```
 
 ## Appendix A: Simulating Gini Coefficients
@@ -332,7 +332,7 @@ make_two_panel_flextable(
 \newpage
 ```{r appendix-c2}
 make_two_panel_flextable(
-  df = wealth_nohouse,
+  df = wealth_withhome,
   title = "Appendix C2. Wealth Gini coefficients with and without negative values",
   year_col = year, left_hh = r_hh_w_wealth, left_clans = r_cl_w_wealth,
   right_hh = neg_r_hh_wealth, right_clans = neg_r_cl_wealth,
@@ -346,7 +346,7 @@ make_two_panel_flextable(
 \newpage
 
 ## Appendix D: Sensitivity to Home Equity
-Results presented in the main text exclude home equity for measures of wealth. Appendix D shows Gini coefficients when home equity is included, and report the difference between Gini coefficients at the household and clan levels. The last column shows how the gap between household and clan-level Gini coefficients changes when home equity is included. Including home equity makes estimated inequality higher and magnifies the observed difference between household and clan Gini coefficients. Therefore, the difference in estimated inequality at the household versus clan level reported in the main paper is conservative. 
+Results presented in the main text include home equity for measures of wealth. Appendix D shows Gini coefficients when home equity is excluded, and report the difference between Gini coefficients at the household and clan levels. The last column shows how the gap between household and clan-level Gini coefficients changes when home equity is excluded. Excluding home equity makes estimated inequality lower and minimizes the observed difference between household and clan Gini coefficients. 
 ```{r appendix-d}
 appendix_d_df <- wealth_nohouse %>%
   select(year, r_hh_w_wealth_nohouse = r_hh_w_wealth, r_cl_w_wealth_nohouse = r_cl_w_wealth) %>%
@@ -360,9 +360,9 @@ make_two_panel_flextable(
   df = appendix_d_df,
   title = "Appendix D. Wealth Gini coefficients with and without home equity",
   year_col = year,
-  left_hh = r_hh_w_wealth_nohouse,  left_clans = r_cl_w_wealth_nohouse,
-  right_hh = r_hh_w_wealth_withhome, right_clans = r_cl_w_wealth_withhome,
-  left_label = "Excluding Home Equity", right_label = "Including Home Equity",
+  left_hh = r_hh_w_wealth_withhome, left_clans = r_cl_w_wealth_withhome,
+  right_hh = r_hh_w_wealth_nohouse,  right_clans = r_cl_w_wealth_nohouse,
+  right_label = "Excluding Home Equity", left_label = "Including Home Equity",
   diff_label         = "HH - Clan",      
   overall_label      = "Change in Gap", 
   overall_diff_label = "Excl. - Incl."   
@@ -389,7 +389,7 @@ make_two_panel_flextable(
 \newpage
 ```{r appendix-e2}
 make_two_panel_flextable(
-  df = wealth_nohouse,
+  df = wealth_withhome,
   title = "Appendix E2. Wealth Gini coefficients with and without single-household clans",
   year_col = year, left_hh = r_hh_w_wealth, left_clans = r_cl_w_wealth,
   right_hh = hh_w_wealth, right_clans = cl_w_wealth,
@@ -421,9 +421,9 @@ if (all(c("r_hh_unw_inc", "r_cl_unw_inc") %in% names(income))) {
 
 
 ```{r appendix-f2}
-if (all(c("r_hh_unw_wealth", "r_cl_unw_wealth") %in% names(wealth_nohouse))) {
+if (all(c("r_hh_unw_wealth", "r_cl_unw_wealth") %in% names(wealth_withhome))) {
   make_two_panel_flextable(
-    df = wealth_nohouse,
+    df = wealth_withhome,
     title = "Appendix F2. Wealth Gini coefficients weighted and unweighted",
     year_col = year, left_hh = r_hh_w_wealth, left_clans = r_cl_w_wealth,
     right_hh = r_hh_unw_wealth, right_clans = r_cl_unw_wealth,
@@ -468,5 +468,84 @@ flextable(C123_tbl) %>%
   fit_to_width(max_width = 6.5)
 ```
 
+## Appendix H: Sensitivity to Household and Clan Size
+
+Appendix H compares Gini coefficients from the main analyses with two size-standardized alternatives. Method 1 divides income or wealth by the number of people in the household or number of households in the clan. Method 2 divides by the square root of the number of people in the household or clan, following equivalence scale conventions. Results are shown separately for income and wealth. Across all specifications, estimated inequality remains lower at the clan level than at the household level.
+```{r appendix-h-load}
+inc_std_tbl    <- read_csv(here("9_figures", "output", "income_size_standardized.csv"),  show_col_types = FALSE)
+wealth_std_tbl <- read_csv(here("9_figures", "output", "wealth_size_standardized.csv"), show_col_types = FALSE)
+```
+```{r appendix-h1}
+inc_std_tbl %>%
+  mutate(
+    across(-year, ~ round(as.numeric(.x), 3)),
+    `HH - Clan (Current)`  = current_hh - current_clan,
+    `HH - Clan (Method 1)` = m1_hh      - m1_clan,
+    `HH - Clan (Method 2)` = m2_hh      - m2_clan
+  ) %>%
+  rename(
+    Year              = year,
+    `HH (Current)`    = current_hh,
+    `Clan (Current)`  = current_clan,
+    `HH (Method 1)`   = m1_hh,
+    `Clan (Method 1)` = m1_clan,
+    `HH (Method 2)`   = m2_hh,
+    `Clan (Method 2)` = m2_clan
+  ) %>%
+  select(Year,
+         `HH (Current)`, `Clan (Current)`, `HH - Clan (Current)`,
+         `HH (Method 1)`, `Clan (Method 1)`, `HH - Clan (Method 1)`,
+         `HH (Method 2)`, `Clan (Method 2)`, `HH - Clan (Method 2)`) %>%
+  flextable() %>%
+  set_caption(caption = "Appendix H1. Income Gini coefficients: unstandardized and size-standardized",
+              autonum = FALSE) %>%
+  add_header_row(
+    values     = c("", "Current (Unstandardized)", "Method 1 (divide by Size)", "Method 2 (divide by sqrt people)"),
+    colwidths  = c(1, 3, 3, 3)
+  ) %>%
+  theme_vanilla() %>%
+  bold(part = "header") %>%
+  align(align = "center", part = "all") %>%
+  fontsize(size = 9, part = "all") %>%
+  fontsize(size = 8, part = "body") %>%
+  fit_to_width(max_width = 6.5)
+```
+
+\newpage
+```{r appendix-h2}
+wealth_std_tbl %>%
+  mutate(
+    across(-year, ~ round(as.numeric(.x), 3)),
+    `HH - Clan (Current)`  = current_hh - current_clan,
+    `HH - Clan (Method 1)` = m1_hh      - m1_clan,
+    `HH - Clan (Method 2)` = m2_hh      - m2_clan
+  ) %>%
+  rename(
+    Year              = year,
+    `HH (Current)`    = current_hh,
+    `Clan (Current)`  = current_clan,
+    `HH (Method 1)`   = m1_hh,
+    `Clan (Method 1)` = m1_clan,
+    `HH (Method 2)`   = m2_hh,
+    `Clan (Method 2)` = m2_clan
+  ) %>%
+  select(Year,
+         `HH (Current)`, `Clan (Current)`, `HH - Clan (Current)`,
+         `HH (Method 1)`, `Clan (Method 1)`, `HH - Clan (Method 1)`,
+         `HH (Method 2)`, `Clan (Method 2)`, `HH - Clan (Method 2)`) %>%
+  flextable() %>%
+  set_caption(caption = "Appendix H2. Wealth Gini coefficients: unstandardized and size-standardized",
+              autonum = FALSE) %>%
+  add_header_row(
+    values     = c("", "Current (Unstandardized)", "Method 1 (divide by Size)", "Method 2 (divide by sqrt people)"),
+    colwidths  = c(1, 3, 3, 3)
+  ) %>%
+  theme_vanilla() %>%
+  bold(part = "header") %>%
+  align(align = "center", part = "all") %>%
+  fontsize(size = 9, part = "all") %>%
+  fontsize(size = 8, part = "body") %>%
+  fit_to_width(max_width = 6.5)
+```
 
 # References

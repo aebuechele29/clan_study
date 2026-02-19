@@ -16,7 +16,7 @@ clear_output(
 make_clans <- function(
     households,
     prefix = "",  
-    wealth_years = c(1984, 1989, 1994, seq(1999, 2021, by = 2)),
+    wealth_years = c(1984, 1989, 1994, seq(1999, 2023, by = 2)),
     clans_dir = here("4_clans", "output"),
     hh_dir    = here("3_households", "output")) {
 

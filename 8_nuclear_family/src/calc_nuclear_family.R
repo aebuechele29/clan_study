@@ -52,12 +52,12 @@ clan_inc <- C123_by_year(r_clans, value_var = inc_all, weight = TRUE, weight_var
 inc      <- join_hh_clan(hh_inc, clan_inc, "income")
 
 # Wealth (no home equity)
-hh_wnh   <- C123_by_year(r_hh_wealth, value_var = wealth_nohouse, weight = TRUE, weight_var = "fam_weight")
-clan_wnh <- C123_by_year(r_clans_wealth, value_var = wealth_nohouse, weight = TRUE, weight_var = "clan_weight")
-wealth_nohouse <- join_hh_clan(hh_wnh, clan_wnh, "wealth_nohouse")
+hh_wnh   <- C123_by_year(r_hh_wealth, value_var = wealth, weight = TRUE, weight_var = "fam_weight")
+clan_wnh <- C123_by_year(r_clans_wealth, value_var = wealth, weight = TRUE, weight_var = "clan_weight")
+wealth <- join_hh_clan(hh_wnh, clan_wnh, "wealth")
 
 # Wealth (incl home equity)
-## hh_w   <- C123_by_year(r_hh_wealth, value_var = wealth, weight = TRUE, weight_var = "fam_weight")
-## clan_w <- C123_by_year(r_clans_wealth, value_var = wealth, weight = TRUE, weight_var = "clan_weight")
-## wealth <- join_hh_clan(hh_w, clan_w, "wealth")
+hh_w   <- C123_by_year(r_hh_wealth, value_var = wealth, weight = TRUE, weight_var = "fam_weight")
+clan_w <- C123_by_year(r_clans_wealth, value_var = wealth, weight = TRUE, weight_var = "clan_weight")
+wealth <- join_hh_clan(hh_w, clan_w, "wealth")
 

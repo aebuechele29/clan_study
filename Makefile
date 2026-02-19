@@ -1,14 +1,27 @@
 # ============================================================
 # Makefile for clan_project (robust to variable output prefixes)
-# - Runs each step in a fresh R session
-# - Uses file targets when outputs are stable
-# - Uses stamp (.done) targets when outputs can vary (prefix-based)
-# - Appendix is built inside write.rmd (no separate step)
-# - Renders 10_draft/write.rmd with CSL + bib
+# ============================================================
+# NOTE: This Makefile is written for Unix-style environments.
+# It works on macOS, Linux, and Windows Git Bash. It will NOT
+# work in the native Windows Command Prompt or PowerShell.
 # ============================================================
 
 SHELL := /bin/bash
 R := Rscript
+
+# ----------------
+# Auto-detect PSID data files
+# (filenames vary by user/extract; we match on extension only)
+# ----------------
+PSID_DO  := $(wildcard 0_data/fam_ind/*.do)
+PSID_TXT := $(wildcard 0_data/fam_ind/*.txt)
+
+ifeq ($(PSID_DO),)
+  $(error No .do file found in 0_data/fam_ind/ — did you place your PSID extract there?)
+endif
+ifeq ($(PSID_TXT),)
+  $(error No .txt file found in 0_data/fam_ind/ — did you place your PSID extract there?)
+endif
 
 # ----------------
 # Project inputs
@@ -23,8 +36,9 @@ PAPER_PDF := 10_draft/output/paper.pdf
 DATA_DEPS := \
   0_data/psid.xlsx \
   0_data/cpi/cpi.xlsx \
-  0_data/fam_ind/J357217.do \
-  0_data/fam_ind/J357217.txt
+  $(PSID_DO) \
+  $(PSID_TXT)
+
 
 # ----------------
 # Step scripts
@@ -81,7 +95,9 @@ FIG_DIR  := 9_figures/output
 FIG_OUTS := \
   $(FIG_DIR)/figure1.pdf \
   $(FIG_DIR)/figure2.pdf \
-  $(FIG_DIR)/table1.docx
+  $(FIG_DIR)/table1.docx \
+  $(FIG_DIR)/income_size_standardized.csv \
+  $(FIG_DIR)/wealth_size_standardized.csv
 
 # ----------------
 # Phony targets
