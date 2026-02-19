@@ -11,6 +11,9 @@ library(officer)
 library(grid)
 library(gridExtra)
 
+# Load external functions
+source(here::here("functions", "functions.R"))
+
 # Load data
 # Set SAVE_FILES <- FALSE before sourcing from paper.Rmd to skip ggsave calls
 if (!exists("SAVE_FILES")) SAVE_FILES <- TRUE
@@ -39,7 +42,7 @@ w_cl_years        <- nrow(r_clans_wealth)
 w_uniq_clans      <- n_distinct(r_clans_wealth$id1968)
 
 inc_by_year    <- read_csv(here("6_calculate_gini", "output", "income.csv"),              show_col_types = FALSE)
-wealth_by_year <- read_csv(here("6_calculate_gini", "output", "wealth_nohouse.csv"),      show_col_types = FALSE)
+wealth_by_year <- read_csv(here("6_calculate_gini", "output", "wealth_withhome.csv"),      show_col_types = FALSE)
 summary        <- read_csv(here("5_summary",         "output", "summary_statistics.csv"), show_col_types = FALSE)
 
 # Global styles
@@ -210,7 +213,7 @@ fig1_note <- sprintf(
   paste0(
     "Note: Gini coefficients are estimated from weighted data using PSID family and clan weights. ",
     "Weighted mean income is $%s for households and $%s for clans. ",
-    "Weighted mean wealth is $%s for households and $%s for clans (wealth excludes home equity). ",
+    "Weighted mean wealth is $%s for households and $%s for clans (wealth includes home equity). ",
     "The Gini coefficient for income for households rose by %.1f%% (%.2f in 1969 and %.2f in 2023). ",
     "The Gini coefficient for income for clans rose by %.1f%% (%.2f in 1969 and %.2f in 2023). ",
     "The Gini coefficient for wealth for households rose by %.1f%% (%.2f in 1984 and %.2f in 2023). ",
@@ -275,7 +278,7 @@ fig2_inc <- make_lorenz_plot(
   ylab = "Cumulative Proportion of Income", colors = c("1984" = "#4a71c7", "2023" = "#E66101")
 )
 fig2_w <- make_lorenz_plot(
-  r_hh_wealth, r_clans_wealth, "wealth_nohouse", years = c(1984, 2023),
+  r_hh_wealth, r_clans_wealth, "wealth", years = c(1984, 2023),
   ylab = "Cumulative Proportion of Wealth", colors = c("1984" = "#4a71c7", "2023" = "#E66101")
 )
 
@@ -292,7 +295,7 @@ inc_stats_cl <- r_clans %>%
 fig2_note <- sprintf(
   paste0(
     "Note: Lorenz curves are estimated from weighted data using PSID family and clan weights. ",
-    "Wealth is measured excluding home equity. ",
+    "Wealth is measured including home equity. ",
     "For income in 1984, the weighted mean (median) is $%s ($%s) for households and $%s ($%s) for clans. ",
     "For income in 2023, the weighted mean (median) is $%s ($%s) for households and $%s ($%s) for clans."
   ),
@@ -339,7 +342,7 @@ if (SAVE_FILES) {
 
 # Table 1
 inc_race <- read_csv(here("7_gini_by_race", "output", "income_race.csv"),         show_col_types = FALSE) %>% filter(year == "ALL")
-w_race   <- read_csv(here("7_gini_by_race", "output", "wealth_nohouse_race.csv"), show_col_types = FALSE) %>% filter(year == "ALL")
+w_race   <- read_csv(here("7_gini_by_race", "output", "wealth_withhome_race.csv"), show_col_types = FALSE) %>% filter(year == "ALL")
 
 # Race-specific Gini scalars for inline text
 inc_diff_black    <- inc_race$r_hh_w_inc_black    - inc_race$r_cl_w_inc_black
@@ -359,11 +362,11 @@ inc_cl_counts <- r_clans %>%
   )
 
 w_hh_counts <- r_hh_wealth %>%
-  filter(is.finite(wealth_nohouse), is.finite(fam_weight), fam_weight > 0, !is.na(black_head)) %>%
+  filter(is.finite(wealth), is.finite(fam_weight), fam_weight > 0, !is.na(black_head)) %>%
   summarise(black = sum(black_head == 1), nonblack = sum(black_head == 0))
 
 w_cl_counts <- r_clans_wealth %>%
-  filter(is.finite(wealth_nohouse), is.finite(clan_weight), clan_weight > 0, !is.na(black_clan)) %>%
+  filter(is.finite(wealth), is.finite(clan_weight), clan_weight > 0, !is.na(black_clan)) %>%
   summarise(
     black = sum(black_clan == 1), nonblack = sum(black_clan == 0),
     uniq_black = n_distinct(id1968[black_clan == 1]), uniq_nonblack = n_distinct(id1968[black_clan == 0])
@@ -374,9 +377,9 @@ inc_black_ids    <- r_clans %>% filter(is.finite(inc_all), is.finite(clan_weight
 inc_nonblack_ids <- r_clans %>% filter(is.finite(inc_all), is.finite(clan_weight), clan_weight > 0, black_clan == 0) %>% distinct(id1968)
 inc_overlap      <- nrow(inner_join(inc_black_ids, inc_nonblack_ids, by = "id1968"))
 
-w_total_clans  <- r_clans_wealth %>% filter(is.finite(wealth_nohouse), is.finite(clan_weight), clan_weight > 0) %>% summarise(n = n_distinct(id1968)) %>% pull(n)
-w_black_ids    <- r_clans_wealth %>% filter(is.finite(wealth_nohouse), is.finite(clan_weight), clan_weight > 0, black_clan == 1) %>% distinct(id1968)
-w_nonblack_ids <- r_clans_wealth %>% filter(is.finite(wealth_nohouse), is.finite(clan_weight), clan_weight > 0, black_clan == 0) %>% distinct(id1968)
+w_total_clans  <- r_clans_wealth %>% filter(is.finite(wealth), is.finite(clan_weight), clan_weight > 0) %>% summarise(n = n_distinct(id1968)) %>% pull(n)
+w_black_ids    <- r_clans_wealth %>% filter(is.finite(wealth), is.finite(clan_weight), clan_weight > 0, black_clan == 1) %>% distinct(id1968)
+w_nonblack_ids <- r_clans_wealth %>% filter(is.finite(wealth), is.finite(clan_weight), clan_weight > 0, black_clan == 0) %>% distinct(id1968)
 w_overlap      <- nrow(inner_join(w_black_ids, w_nonblack_ids, by = "id1968"))
 
 tbl1 <- tribble(
@@ -410,7 +413,7 @@ tbl1_note <- sprintf(
     "Note: Gini coefficients reported are averages across all years using weighted data. ",
     "Income data were collected annually until 1997, and biennially thereafter. ",
     "Wealth data were collected every five years from 1984 to 1999, and every other year thereafter. ",
-    "Both income and wealth are adjusted for inflation. Wealth is measured excluding home equity. ",
+    "Both income and wealth are adjusted for inflation. Wealth is measured including home equity. ",
     "Standard errors are shown in parentheses. ",
     "Income estimates use %s Black household-years and %s Black clan-years, and %s Non-Black household-years and %s Non-Black clan-years, ",
     "with %s unique clans in total; %s clans ever classified as Black and %s clans ever classified as Non-Black, ",
@@ -446,4 +449,69 @@ doc1 <- read_docx() %>%
 if (SAVE_FILES) {
   print(doc1, target = here("9_figures", "output", "table1.docx"))
   message("Saved: table1.docx")
+}
+
+
+# Size Standardization 
+options(survey.lonely.psu = "adjust")
+
+inc_current <- inc_by_year %>%
+  filter(year != "ALL") %>%
+  mutate(year = as.numeric(year)) %>%
+  select(year, current_hh = r_hh_w_inc, current_clan = r_cl_w_inc)
+
+wealth_current <- wealth_by_year %>%
+  filter(year != "ALL") %>%
+  mutate(year = as.numeric(year)) %>%
+  select(year, current_hh = r_hh_w_wealth, current_clan = r_cl_w_wealth)
+
+# Method 1: divide by size (numfu for HH; numclan for clans)
+r_hh_m1         <- r_hh          %>% mutate(inc_std    = inc_all          / numfu)
+r_clans_m1      <- r_clans       %>% mutate(inc_std    = inc_all          / numclan)
+r_hh_wealth_m1  <- r_hh_wealth   %>% mutate(wealth_std = wealth_nohouse   / numfu)
+r_clans_wealth_m1 <- r_clans_wealth %>% mutate(wealth_std = wealth_nohouse / numclan)
+
+# Method 2: divide by sqrt of people (numfu for HH; num_clan_people for clans)
+r_hh_m2         <- r_hh          %>% mutate(inc_std    = inc_all          / sqrt(numfu))
+r_clans_m2      <- r_clans       %>% mutate(inc_std    = inc_all          / sqrt(num_clan_people))
+r_hh_wealth_m2  <- r_hh_wealth   %>% mutate(wealth_std = wealth_nohouse   / sqrt(numfu))
+r_clans_wealth_m2 <- r_clans_wealth %>% mutate(wealth_std = wealth_nohouse / sqrt(num_clan_people))
+
+# Compute Ginis for each standardized series
+inc_std <- reduce(
+  list(
+    run_gini(r_hh_m1,    "inc_std", "fam_weight",  FALSE, FALSE, "m1_hh"),
+    run_gini(r_clans_m1, "inc_std", "clan_weight", FALSE, FALSE, "m1_clan"),
+    run_gini(r_hh_m2,    "inc_std", "fam_weight",  FALSE, FALSE, "m2_hh"),
+    run_gini(r_clans_m2, "inc_std", "clan_weight", FALSE, FALSE, "m2_clan")
+  ),
+  full_join, by = "year"
+)
+
+wealth_std <- reduce(
+  list(
+    run_gini(r_hh_wealth_m1,    "wealth_std", "fam_weight",  FALSE, FALSE, "m1_hh"),
+    run_gini(r_clans_wealth_m1, "wealth_std", "clan_weight", FALSE, FALSE, "m1_clan"),
+    run_gini(r_hh_wealth_m2,    "wealth_std", "fam_weight",  FALSE, FALSE, "m2_hh"),
+    run_gini(r_clans_wealth_m2, "wealth_std", "clan_weight", FALSE, FALSE, "m2_clan")
+  ),
+  full_join, by = "year"
+)
+
+# Join with current (unstandardized) estimates
+inc_size_tbl <- inc_current %>%
+  left_join(inc_std, by = "year") %>%
+  select(year, m1_hh, m1_clan, m2_hh, m2_clan, current_hh, current_clan) %>%
+  arrange(year)
+
+wealth_size_tbl <- wealth_current %>%
+  left_join(wealth_std, by = "year") %>%
+  select(year, m1_hh, m1_clan, m2_hh, m2_clan, current_hh, current_clan) %>%
+  arrange(year)
+
+if (SAVE_FILES) {
+  write.csv(inc_size_tbl,    here("9_figures", "output", "income_size_standardized.csv"),  row.names = FALSE)
+  write.csv(wealth_size_tbl, here("9_figures", "output", "wealth_size_standardized.csv"),  row.names = FALSE)
+  message("Saved: income_size_standardized.csv")
+  message("Saved: wealth_size_standardized.csv")
 }
