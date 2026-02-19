@@ -10,7 +10,7 @@ clear_output(here("4_clans", "output"))
 
 clear_output(
   here("3_households", "output"),
-  keep = c("households.rds", "neg_households.rds")
+  keep = c("households.rds", "neg_households.rds", "mismatched.rds")
 )
 
 make_clans <- function(

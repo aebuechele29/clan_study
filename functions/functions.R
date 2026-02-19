@@ -129,6 +129,67 @@ make_two_panel_table <- function(
   doc
 }
 
+make_two_panel_flextable <- function(
+  df,
+  title,
+  year_col = year,
+  left_hh, left_clans,
+  right_hh, right_clans,
+  left_label,
+  right_label,
+  diff_label = "HH - Clan",
+  overall_label = "Difference Overall",
+  overall_diff_label = "Diff"
+) {
+  year_col    <- ensym(year_col)
+  left_hh     <- ensym(left_hh)
+  left_clans  <- ensym(left_clans)
+  right_hh    <- ensym(right_hh)
+  right_clans <- ensym(right_clans)
+
+  tbl <- df |>
+    mutate(
+      year_chr = as.character(!!year_col),
+      year_num = suppressWarnings(as.integer(year_chr)),
+      ord      = ifelse(year_chr == "ALL", -Inf, year_num)
+    ) |>
+    arrange(ord) |>
+    transmute(
+      Year               = year_chr,
+      HH_left            = !!left_hh,
+      Clans_left         = !!left_clans,
+      Diff_left          = (!!left_hh) - (!!left_clans),
+      HH_right           = !!right_hh,
+      Clans_right        = !!right_clans,
+      Diff_right         = (!!right_hh) - (!!right_clans),
+      Difference_Overall = Diff_left - Diff_right
+    ) |>
+    mutate(across(-Year, ~ round(.x, 3)))
+
+  flextable(tbl) |>
+    add_header_row(
+      values    = c("", left_label, right_label, overall_label),
+      colwidths = c(1, 3, 3, 1)
+    ) |>
+    set_header_labels(
+      Year               = "Year",
+      HH_left            = "HH",
+      Clans_left         = "Clans",
+      Diff_left          = diff_label,
+      HH_right           = "HH",
+      Clans_right        = "Clans",
+      Diff_right         = diff_label,
+      Difference_Overall = overall_diff_label
+    ) |>
+    set_caption(title, autonum = FALSE) |>
+    theme_vanilla() |>
+    bold(part = "header") |>
+    align(align = "center", part = "all") |>
+    fontsize(size = 9, part = "all") |>
+    fontsize(size = 8, part = "body") |>
+    fit_to_width(max_width = 6.5)
+}
+
 # Gini functions (survey design dependencies assumed loaded elsewhere in pipeline)
 gini_by_year_svy <- function(df, value_var, weight_var = NULL, simple_design = FALSE, with_se = FALSE) {
   v <- rlang::as_name(rlang::enquo(value_var))
