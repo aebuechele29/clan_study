@@ -452,8 +452,8 @@ if (SAVE_FILES) {
 }
 
 
-# Size Standardization 
-options(survey.lonely.psu = "adjust")
+# Size Standardization for Appendix H
+options(survey.lonely.psu = "adjust")# ── Size Standardization ─────────────────────────────────────────────────────
 
 inc_current <- inc_by_year %>%
   filter(year != "ALL") %>%
@@ -465,19 +465,18 @@ wealth_current <- wealth_by_year %>%
   mutate(year = as.numeric(year)) %>%
   select(year, current_hh = r_hh_w_wealth, current_clan = r_cl_w_wealth)
 
-# Method 1: divide by size (numfu for HH; numclan for clans)
-r_hh_m1         <- r_hh          %>% mutate(inc_std    = inc_all          / numfu)
-r_clans_m1      <- r_clans       %>% mutate(inc_std    = inc_all          / numclan)
-r_hh_wealth_m1  <- r_hh_wealth   %>% mutate(wealth_std = wealth_nohouse   / numfu)
+# Method 1: divide by size
+r_hh_m1          <- r_hh          %>% mutate(inc_std    = inc_all        / numfu)
+r_clans_m1        <- r_clans       %>% mutate(inc_std    = inc_all        / numclan)
+r_hh_wealth_m1    <- r_hh_wealth   %>% mutate(wealth_std = wealth_nohouse / numfu)
 r_clans_wealth_m1 <- r_clans_wealth %>% mutate(wealth_std = wealth_nohouse / numclan)
 
-# Method 2: divide by sqrt of people (numfu for HH; num_clan_people for clans)
-r_hh_m2         <- r_hh          %>% mutate(inc_std    = inc_all          / sqrt(numfu))
-r_clans_m2      <- r_clans       %>% mutate(inc_std    = inc_all          / sqrt(num_clan_people))
-r_hh_wealth_m2  <- r_hh_wealth   %>% mutate(wealth_std = wealth_nohouse   / sqrt(numfu))
+# Method 2: divide by sqrt of people
+r_hh_m2          <- r_hh          %>% mutate(inc_std    = inc_all        / sqrt(numfu))
+r_clans_m2        <- r_clans       %>% mutate(inc_std    = inc_all        / sqrt(num_clan_people))
+r_hh_wealth_m2    <- r_hh_wealth   %>% mutate(wealth_std = wealth_nohouse / sqrt(numfu))
 r_clans_wealth_m2 <- r_clans_wealth %>% mutate(wealth_std = wealth_nohouse / sqrt(num_clan_people))
 
-# Compute Ginis for each standardized series
 inc_std <- reduce(
   list(
     run_gini(r_hh_m1,    "inc_std", "fam_weight",  FALSE, FALSE, "m1_hh"),
@@ -498,7 +497,6 @@ wealth_std <- reduce(
   full_join, by = "year"
 )
 
-# Join with current (unstandardized) estimates
 inc_size_tbl <- inc_current %>%
   left_join(inc_std, by = "year") %>%
   select(year, m1_hh, m1_clan, m2_hh, m2_clan, current_hh, current_clan) %>%
@@ -509,9 +507,133 @@ wealth_size_tbl <- wealth_current %>%
   select(year, m1_hh, m1_clan, m2_hh, m2_clan, current_hh, current_clan) %>%
   arrange(year)
 
+# if (SAVE_FILES) {
+#   write.csv(inc_size_tbl,    here("9_figures", "output", "income_size_standardized.csv"),  row.names = FALSE)
+#   write.csv(wealth_size_tbl, here("9_figures", "output", "wealth_size_standardized.csv"),  row.names = FALSE)
+#   message("Saved: income_size_standardized.csv")
+#   message("Saved: wealth_size_standardized.csv")
+# }
+
+# ── Appendix H figure ────────────────────────────────────────────────────────
+
+method_colors <- c(
+  "Current (unadjusted)"      = "#333333",
+  "Method 1 (divide by size)" = "#E66101",
+  "Method 2 (divide by sqrt)" = "#4a71c7"
+)
+method_linetypes <- c(
+  "Current (unadjusted)"      = "solid",
+  "Method 1 (divide by size)" = "dashed",
+  "Method 2 (divide by sqrt)" = "longdash"
+)
+
+prep_figH <- function(tbl) {
+  tbl %>%
+    mutate(
+      gap_current = current_hh - current_clan,
+      gap_m1      = m1_hh      - m1_clan,
+      gap_m2      = m2_hh      - m2_clan
+    ) %>%
+    pivot_longer(-year, names_to = "series", values_to = "gini") %>%
+    mutate(
+      unit = case_when(
+        grepl("^current_hh$|^m[12]_hh$", series)    ~ "Household",
+        grepl("^current_clan$|^m[12]_clan$", series) ~ "Clan",
+        grepl("^gap_", series)                        ~ "Gap (HH - Clan)"
+      ),
+      method = case_when(
+        grepl("current", series) ~ "Current (unadjusted)",
+        grepl("m1",      series) ~ "Method 1 (divide by size)",
+        grepl("m2",      series) ~ "Method 2 (divide by sqrt)"
+      )
+    ) %>%
+    filter(!is.na(unit), !is.na(method))
+}
+
+inc_long_H    <- prep_figH(inc_size_tbl)
+wealth_long_H <- prep_figH(wealth_size_tbl)
+
+make_size_panel <- function(dat, y_limits, show_legend = FALSE) {
+  min_yr <- min(dat$year, na.rm = TRUE)
+  max_yr <- max(dat$year, na.rm = TRUE)
+  br <- seq(ceiling(min_yr / 10) * 10, floor(max_yr / 10) * 10, by = 10)
+  br <- br[br > (min_yr + 4) & br < (max_yr - 4)]
+  br <- sort(unique(c(min_yr, br, max_yr)))
+
+  ggplot(dat, aes(x = year, y = gini, color = method, linetype = method, group = method)) +
+    geom_line(linewidth = 0.9) +
+    scale_color_manual(values = method_colors) +
+    scale_linetype_manual(values = method_linetypes) +
+    scale_y_continuous(limits = y_limits) +
+    scale_x_continuous(breaks = br, expand = expansion(mult = c(0.02, 0.02))) +
+    labs(x = "Year", y = "Gini Coefficient", color = NULL, linetype = NULL) +
+    theme(
+      legend.position  = if (show_legend) "bottom" else "none",
+      legend.key.width = unit(1.5, "cm"),
+      plot.title       = element_blank(),
+      axis.text.x      = element_text(angle = 45, hjust = 1)
+    ) +
+    guides(color    = guide_legend(nrow = 3),
+           linetype = guide_legend(nrow = 3))
+}
+
+inc_y <- {
+  v <- inc_long_H$gini[is.finite(inc_long_H$gini)]
+  c(floor(min(v) * 20) / 20, ceiling(max(v) * 20) / 20 + 0.05)
+}
+wealth_y <- {
+  v <- wealth_long_H$gini[is.finite(wealth_long_H$gini)]
+  c(floor(min(v) * 20) / 20, ceiling(max(v) * 20) / 20 + 0.05)
+}
+
+# Top row (income): no legend
+figH_inc_hh  <- make_size_panel(inc_long_H %>% filter(unit == "Household"),      inc_y, show_legend = FALSE)
+figH_inc_cl  <- make_size_panel(inc_long_H %>% filter(unit == "Clan"),            inc_y, show_legend = FALSE)
+figH_inc_gap <- make_size_panel(inc_long_H %>% filter(unit == "Gap (HH - Clan)"), inc_y, show_legend = FALSE)
+
+# Bottom row (wealth): legend only on leftmost panel
+figH_w_hh  <- make_size_panel(wealth_long_H %>% filter(unit == "Household"),      wealth_y, show_legend = TRUE)
+figH_w_cl  <- make_size_panel(wealth_long_H %>% filter(unit == "Clan"),            wealth_y, show_legend = FALSE)
+figH_w_gap <- make_size_panel(wealth_long_H %>% filter(unit == "Gap (HH - Clan)"), wealth_y, show_legend = FALSE)
+
+make_sub <- function(txt) textGrob(
+  txt, x = unit(0, "npc"), just = "left",
+  gp = gpar(fontfamily = base_family, fontsize = sub_size)
+)
+
+figH_title <- textGrob(
+  "Appendix H. Income and Wealth Inequality by Size Standardization Method",
+  x = unit(0, "npc"), just = "left",
+  gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)
+)
+
+figH <- arrangeGrob(
+  figH_title,
+  arrangeGrob(
+    make_sub("Household"), make_sub("Clan"), make_sub("Gap (HH - Clan)"),
+    arrangeGrob(make_sub("Panel A: Income"), figH_inc_hh,  ncol = 1, heights = c(1, 12)),
+    arrangeGrob(nullGrob(),                  figH_inc_cl,  ncol = 1, heights = c(1, 12)),
+    arrangeGrob(nullGrob(),                  figH_inc_gap, ncol = 1, heights = c(1, 12)),
+    arrangeGrob(make_sub("Panel B: Wealth"), figH_w_hh,   ncol = 1, heights = c(1, 12)),
+    arrangeGrob(nullGrob(),                  figH_w_cl,   ncol = 1, heights = c(1, 12)),
+    arrangeGrob(nullGrob(),                  figH_w_gap,  ncol = 1, heights = c(1, 12)),
+    ncol = 3,
+    heights = c(0.8, 13, 13)
+  ),
+  ncol = 1,
+  heights = unit(c(1.2, 13.8), "inches")
+)
+
+figH_note <- paste0(
+  "Note: Gini coefficients are estimated from weighted data using PSID family and clan weights. ",
+  "Current (unadjusted) estimates match those in Figure 1. ",
+  "Method 1 divides income or wealth by the number of people in the household or number of households in the clan. ",
+  "Method 2 divides by the square root of the number of people, following equivalence scale conventions. ",
+  "Gap panels show the difference between household and clan Gini coefficients (HH minus Clan) for each method. ",
+  "Legend shown in Panel B (Household) applies to all panels."
+)
+
 if (SAVE_FILES) {
-  write.csv(inc_size_tbl,    here("9_figures", "output", "income_size_standardized.csv"),  row.names = FALSE)
-  write.csv(wealth_size_tbl, here("9_figures", "output", "wealth_size_standardized.csv"),  row.names = FALSE)
-  message("Saved: income_size_standardized.csv")
-  message("Saved: wealth_size_standardized.csv")
+  ggsave(here("9_figures", "output", "figureH.pdf"), figH, width = 14, height = 15)
+  message("Saved: figureH.pdf")
 }
