@@ -28,17 +28,17 @@ endif
 # ----------------
 FUNCS := functions/functions.R
 
-RMD       := 10_draft/write.rmd
-CSL       := 10_draft/council-of-science-editors-brackets.csl
-BIB       := 10_draft/bibliography_clan.bib
-PAPER_PDF := 10_draft/output/paper.pdf
+RMD        := 10_draft/write.rmd
+CSL        := 10_draft/council-of-science-editors-brackets.csl
+BIB        := 10_draft/bibliography_clan.bib
+PAPER_PDF  := 10_draft/output/write.pdf
+PAPER_DOCX := 10_draft/output/write.docx
 
 DATA_DEPS := \
   0_data/psid.xlsx \
   0_data/cpi/cpi.xlsx \
   $(PSID_DO) \
   $(PSID_TXT)
-
 
 # ----------------
 # Step scripts
@@ -59,45 +59,38 @@ STEP9_SCRIPT := 9_figures/src/figures.R
 STEP1_OUT := 1_build_panel/output/build.rds
 STEP2_OUT := 2_clean_panel/output/clean.rds
 
-# Step 3/4 have variable/expanding outputs
 STEP3_DONE := 3_households/output/.done
 STEP4_DONE := 4_clans/output/.done
 
-# Step 5 stable outputs
 STEP5_OUTS := \
   5_summary/output/summary_statistics.csv \
   5_summary/output/income_quartiles.docx \
   5_summary/output/wealth_quartiles.docx
 STEP5_PRIMARY := 5_summary/output/summary_statistics.csv
 
-# Step 6 stable outputs
 STEP6_OUTS := \
   6_calculate_gini/output/income.csv \
   6_calculate_gini/output/wealth_nohouse.csv \
   6_calculate_gini/output/wealth_withhome.csv
 STEP6_PRIMARY := 6_calculate_gini/output/income.csv
 
-# Step 7 stable outputs
 STEP7_OUTS := \
   7_gini_by_race/output/income_race.csv \
   7_gini_by_race/output/wealth_nohouse_race.csv \
   7_gini_by_race/output/wealth_withhome_race.csv
 STEP7_PRIMARY := 7_gini_by_race/output/income_race.csv
 
-# Step 8 stable outputs
 STEP8_OUTS := \
   8_nuclear_family/output/income_C123.csv \
   8_nuclear_family/output/wealth_nohouse_C123.csv
 STEP8_PRIMARY := 8_nuclear_family/output/income_C123.csv
 
-# Step 9 figure outputs
 FIG_DIR  := 9_figures/output
 FIG_OUTS := \
   $(FIG_DIR)/figure1.pdf \
   $(FIG_DIR)/figure2.pdf \
   $(FIG_DIR)/table1.docx \
-  $(FIG_DIR)/income_size_standardized.csv \
-  $(FIG_DIR)/wealth_size_standardized.csv
+  $(FIG_DIR)/figureH.pdf
 
 # ----------------
 # Phony targets
@@ -110,14 +103,15 @@ pipeline: $(STEP8_PRIMARY) $(FIG_OUTS)
 
 figures: $(FIG_OUTS)
 
-paper: $(PAPER_PDF)
+paper: $(PAPER_PDF) $(PAPER_DOCX)
 
 paper-only: check-data $(RMD) $(CSL) $(BIB)
 	@mkdir -p 10_draft/output
 	@echo "==> Rendering paper ONLY (no pipeline)"
-	@$(R) -e "rmarkdown::render('$(RMD)', output_file='paper.pdf', output_dir='10_draft/output')"
+	@$(R) -e "rmarkdown::render('$(RMD)')"
 	@test -f $(PAPER_PDF)
-	@echo "==> Wrote: $(PAPER_PDF)"
+	@test -f $(PAPER_DOCX)
+	@echo "==> Wrote: $(PAPER_PDF) and $(PAPER_DOCX)"
 
 # ----------------
 # Sanity checks
@@ -193,21 +187,23 @@ $(FIG_OUTS): check-data check-scripts $(STEP8_PRIMARY) $(FUNCS) $(STEP9_SCRIPT)
 	@for f in $(FIG_OUTS); do test -f $$f; done
 
 # ----------------
-# Render paper (appendix built inside Rmd)
+# Render paper — both PDF and DOCX produced in one render call
+# via the knit: function defined in the Rmd header
 # ----------------
-$(PAPER_PDF): check-data $(FIG_OUTS) $(RMD) $(CSL) $(BIB)
+$(PAPER_PDF) $(PAPER_DOCX): check-data $(FIG_OUTS) $(RMD) $(CSL) $(BIB)
 	@mkdir -p 10_draft/output
-	@echo "==> Rendering paper (appendix built inside Rmd)"
-	@$(R) -e "rmarkdown::render('$(RMD)', output_file='paper.pdf', output_dir='10_draft/output')"
+	@echo "==> Rendering paper"
+	@$(R) -e "rmarkdown::render('$(RMD)')"
 	@test -f $(PAPER_PDF)
-	@echo "==> Wrote: $(PAPER_PDF)"
+	@test -f $(PAPER_DOCX)
+	@echo "==> Wrote: $(PAPER_PDF) and $(PAPER_DOCX)"
 
 # ----------------
 # Housekeeping
 # ----------------
 clean:
-	@echo "==> Removing paper PDF"
-	@rm -f $(PAPER_PDF)
+	@echo "==> Removing paper outputs"
+	@rm -f $(PAPER_PDF) $(PAPER_DOCX)
 
 veryclean: clean
 	@echo "==> Removing pipeline outputs + stamps (careful)"

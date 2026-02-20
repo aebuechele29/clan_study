@@ -158,7 +158,7 @@ cat("\\begingroup\\itshape\\small\n", tbl1_note, "\n\\endgroup")
 
 For income, the difference between household and clan Gini coefficients is `r fmt2(inc_diff_black)` for Black respondents and `r fmt2(inc_diff_nonblack)` for non-Black respondents (Table 1). For wealth, the difference between household and clan Gini coefficients is `r fmt2(w_diff_black)` for Black respondents and `r fmt2(w_diff_nonblack)` for non-Black respondents (Table 1). These differences indicate that the unit of analysis has a slightly larger effect on measured wealth inequality by race than on income inequality, with inequality lower when using clans as the unit of analysis, especially for Black respondents. Nonetheless, the direction of the difference is consistent across all sub-groups, with wealth inequality lower than income inequality.
 
-Values for income and wealth exclude negative values. Therefore, Gini coefficients presented here underestimate the extent of inequality at both the household and clan levels. When negative values are included, the difference in equality at the clan and household levels widens (see Appendix Table C1 and C2).
+Values for income and wealth exclude negative values. Therefore, Gini coefficients presented here underestimate the extent of inequality at both the household and clan levels. When negative values are included, the difference in inequality at the clan and household levels widens (see Appendix Table C1 and C2).
 
 The measures of wealth employed in our results include home equity. As a sensitivity analysis, we compare Gini coefficients for measures of wealth including and excluding home equity (see Appendix Table D). When wealth is measured excluding home equity, estimated inequality is lower at both the household and clan level, but the difference between household and clan-level Gini coefficients is about the same.
 
@@ -186,6 +186,8 @@ The PSID has collected income data since its inception but began collecting weal
 Missing data for components of income and wealth are imputed by the PSID. Concerns about measurement error, especially for wealth, are minimal, as imputation methods utilized by the PSID explain little of the variation in wealth over time [@pfeffer_determinants_2017; @si_multiple_2021]. All income and wealth values are adjusted for inflation. Additionally, analyses set negative values of income and wealth to zero so that Gini coefficients remain in the 0 to 1 range. Including negative values for income and wealth does not change the results (see Appendix Table C1 and C2). To construct clan-level measures, we aggregate household income and wealth for all households in a clan within each clan-year. 
 
 All results presented are weighted. Using weights does not meaningfully change results (see Appendix Table F1 and F2). Household-level weights are provided by the PSID. The PSID constructs family weights from individual weights using the fair shares method, which assumes that the probability of observing any individual within a family equals the probability of observing the family itself. We extend this approach to construct clan-level weights using the same fair shares principle. Clan weights assume that the probability of observing a family within a clan equals the probability of observing the clan itself. These weights are applied to total clan income or wealth (rather than mean income or wealth) to avoid double standardization by household counts. In effect, clan weights already incorporate the number of households within a clan. As a result, each clan’s influence reflects the representation of the average household within that clan, rather than scaling mechanically with the clan’s total number of households. 
+
+Household and clan measures are not adjusted for size. When income and wealth are scaled by the number of people in each unit, the difference between household and clan Gini coefficients grows larger (see Appendix H). The unadjusted estimates presented in the main text therefore understate the extent to which inequality differs across units of analysis.
 
 **Measures of race.** The PSID collects race data from household heads and, in some years, from spouses. If a respondent ever identifies as Black, then that value is imputed for all years that respondent appears in the data [@sayer_women_2004]. Black households are all households with a Black head of household. Black clans are clans in which more than half of the households within it identify as Black. Analyses by race and ethnicity are limited to Black and non-Black categories because there are relatively few clans in the PSID data (`r fmt0 (inc_uniq_clans)` for income and `r fmt0(w_uniq_clans)` for wealth). Additionally, the genealogical design of the PSID reflects the demographics of the United States at the time the survey began in 1968, which constrains analyses of clans for demographic groups that were not prominent at that time. Although the PSID incorporated additional samples over time to reflect the changing demographics of the United States in the PSID sample, ethnicity analyses remain limited because Hispanic/Latino households do not form consistent multigenerational lineages over the full panel and therefore have limited clans.
 
@@ -470,82 +472,10 @@ flextable(C123_tbl) %>%
 
 ## Appendix H: Sensitivity to Household and Clan Size
 
-Appendix H compares Gini coefficients from the main analyses with two size-standardized alternatives. Method 1 divides income or wealth by the number of people in the household or number of households in the clan. Method 2 divides by the square root of the number of people in the household or clan, following equivalence scale conventions. Results are shown separately for income and wealth. Across all specifications, estimated inequality remains lower at the clan level than at the household level.
-```{r appendix-h-load}
-inc_std_tbl    <- read_csv(here("9_figures", "output", "income_size_standardized.csv"),  show_col_types = FALSE)
-wealth_std_tbl <- read_csv(here("9_figures", "output", "wealth_size_standardized.csv"), show_col_types = FALSE)
-```
-```{r appendix-h1}
-inc_std_tbl %>%
-  mutate(
-    across(-year, ~ round(as.numeric(.x), 3)),
-    `HH - Clan (Current)`  = current_hh - current_clan,
-    `HH - Clan (Method 1)` = m1_hh      - m1_clan,
-    `HH - Clan (Method 2)` = m2_hh      - m2_clan
-  ) %>%
-  rename(
-    Year              = year,
-    `HH (Current)`    = current_hh,
-    `Clan (Current)`  = current_clan,
-    `HH (Method 1)`   = m1_hh,
-    `Clan (Method 1)` = m1_clan,
-    `HH (Method 2)`   = m2_hh,
-    `Clan (Method 2)` = m2_clan
-  ) %>%
-  select(Year,
-         `HH (Current)`, `Clan (Current)`, `HH - Clan (Current)`,
-         `HH (Method 1)`, `Clan (Method 1)`, `HH - Clan (Method 1)`,
-         `HH (Method 2)`, `Clan (Method 2)`, `HH - Clan (Method 2)`) %>%
-  flextable() %>%
-  set_caption(caption = "Appendix H1. Income Gini coefficients: unstandardized and size-standardized",
-              autonum = FALSE) %>%
-  add_header_row(
-    values     = c("", "Current (Unstandardized)", "Method 1 (divide by Size)", "Method 2 (divide by sqrt people)"),
-    colwidths  = c(1, 3, 3, 3)
-  ) %>%
-  theme_vanilla() %>%
-  bold(part = "header") %>%
-  align(align = "center", part = "all") %>%
-  fontsize(size = 9, part = "all") %>%
-  fontsize(size = 8, part = "body") %>%
-  fit_to_width(max_width = 6.5)
-```
-
-\newpage
-```{r appendix-h2}
-wealth_std_tbl %>%
-  mutate(
-    across(-year, ~ round(as.numeric(.x), 3)),
-    `HH - Clan (Current)`  = current_hh - current_clan,
-    `HH - Clan (Method 1)` = m1_hh      - m1_clan,
-    `HH - Clan (Method 2)` = m2_hh      - m2_clan
-  ) %>%
-  rename(
-    Year              = year,
-    `HH (Current)`    = current_hh,
-    `Clan (Current)`  = current_clan,
-    `HH (Method 1)`   = m1_hh,
-    `Clan (Method 1)` = m1_clan,
-    `HH (Method 2)`   = m2_hh,
-    `Clan (Method 2)` = m2_clan
-  ) %>%
-  select(Year,
-         `HH (Current)`, `Clan (Current)`, `HH - Clan (Current)`,
-         `HH (Method 1)`, `Clan (Method 1)`, `HH - Clan (Method 1)`,
-         `HH (Method 2)`, `Clan (Method 2)`, `HH - Clan (Method 2)`) %>%
-  flextable() %>%
-  set_caption(caption = "Appendix H2. Wealth Gini coefficients: unstandardized and size-standardized",
-              autonum = FALSE) %>%
-  add_header_row(
-    values     = c("", "Current (Unstandardized)", "Method 1 (divide by Size)", "Method 2 (divide by sqrt people)"),
-    colwidths  = c(1, 3, 3, 3)
-  ) %>%
-  theme_vanilla() %>%
-  bold(part = "header") %>%
-  align(align = "center", part = "all") %>%
-  fontsize(size = 9, part = "all") %>%
-  fontsize(size = 8, part = "body") %>%
-  fit_to_width(max_width = 6.5)
+Appendix H compares Gini coefficients from the main analyses with two size-standardized alternatives. Method 1 divides income or wealth by the number of people in the household, or number of households in the clan. Method 2 divides by the square root of the number of people in the household or clan, following equivalence scale conventions. Results are shown separately for income and wealth. Across all specifications, estimated inequality remains lower at the clan level than at the household level.
+```{r appendix-h, fig.width=14, fig.height=15}
+grid.newpage()
+grid.draw(figH)
 ```
 
 # References
