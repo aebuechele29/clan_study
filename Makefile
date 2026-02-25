@@ -89,7 +89,7 @@ FIG_DIR  := 9_figures/output
 FIG_OUTS := \
   $(FIG_DIR)/figure1.pdf \
   $(FIG_DIR)/figure2.pdf \
-  $(FIG_DIR)/table1.docx \
+  $(FIG_DIR)/figure3.pdf \
   $(FIG_DIR)/figureH.pdf
 
 # ----------------

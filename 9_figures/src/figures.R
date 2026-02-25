@@ -47,10 +47,10 @@ summary        <- read_csv(here("5_summary",         "output", "summary_statisti
 
 # Global styles
 base_family <- "serif"
-base_size   <- 18
-title_size  <- 22
-sub_size    <- 20
-note_size   <- 12
+base_size   <- 22
+title_size  <- 26
+sub_size    <- 24
+note_size   <- 14
 
 theme_set(theme_minimal(base_size = base_size, base_family = base_family))
 note_style <- fp_text(italic = TRUE, font.size = note_size)
@@ -138,14 +138,17 @@ make_gini_plot <- function(by_year_df, hh_col, cl_col, ylab, y_limits = NULL) {
   }
 
   ggplot(dat, aes(x = year)) +
-    geom_line(aes(y = {{ hh_col }}, linetype = "Household"), color = "#E66101", linewidth = 0.9) +
-    geom_line(aes(y = {{ cl_col }}, linetype = "Clan"),      color = "#FDB863", linewidth = 0.9) +
+    geom_line(aes(y = {{ hh_col }}, linetype = "Household"), color = "#E66101", linewidth = 1.7) +
+    geom_line(aes(y = {{ cl_col }}, linetype = "Clan"),      color = "#FDB863", linewidth = 1.7) +
     scale_y_continuous(limits = y_limits) +
     scale_x_continuous(breaks = br, expand = expansion(mult = c(0.02, 0.02))) +
     scale_linetype_manual(values = c("Household" = "solid", "Clan" = "dotted")) +
     labs(x = "Year", y = ylab, linetype = "Unit") +
     theme(legend.position = "bottom", plot.title = element_blank(),
-          axis.text.x = element_text(angle = 45, hjust = 1))
+          axis.text.x = element_text(angle = 45, hjust = 1)) +
+    guides(linetype = guide_legend(
+      override.aes = list(color = c("#FDB863", "#E66101"))
+    ))
 }
 
 # make_lorenz_plot: Lorenz curves by year for households vs clans
@@ -156,12 +159,63 @@ make_lorenz_plot <- function(df_hh, df_cl, value_var, years, ylab, colors) {
   )
   ggplot(dat, aes(x = p, y = L, color = factor(year), linetype = Unit,
                   group = interaction(year, Unit))) +
-    geom_line(linewidth = 0.75) +
+    geom_line(linewidth = 1) +
     geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "grey50") +
     scale_color_manual(values = colors) +
     scale_linetype_manual(values = c("Household" = "solid", "Clan" = "dotted")) +
     labs(x = "Cumulative Proportion of Units", y = ylab, color = "Year", linetype = "Unit") +
     theme(legend.position = "bottom", plot.title = element_blank())
+}
+
+# make_race_plot: line plot of Gini over time by race and unit (HH vs Clan)
+make_race_plot <- function(dat, hh_black, cl_black, hh_nonblack, cl_nonblack, ylab, y_limits = NULL) {
+
+  # Pivot to long format so one aesthetic drives the legend
+  hh_b  <- deparse(substitute(hh_black))
+  cl_b  <- deparse(substitute(cl_black))
+  hh_nb <- deparse(substitute(hh_nonblack))
+  cl_nb <- deparse(substitute(cl_nonblack))
+
+  long <- dat %>%
+    select(year, all_of(c(hh_b, cl_b, hh_nb, cl_nb))) %>%
+    pivot_longer(-year, names_to = "series", values_to = "gini") %>%
+    mutate(series = recode(series,
+      !!hh_b  := "Black: Household",
+      !!cl_b  := "Black: Clan",
+      !!hh_nb := "Non-Black: Household",
+      !!cl_nb := "Non-Black: Clan"
+    ))
+
+  if (is.null(y_limits)) {
+    vals <- long$gini[is.finite(long$gini)]
+    y_limits <- c(floor(min(vals) * 20) / 20, ceiling(max(vals) * 20) / 20 + 0.05)
+  }
+
+  min_yr <- min(long$year, na.rm = TRUE)
+  max_yr <- max(long$year, na.rm = TRUE)
+  br <- seq(ceiling(min_yr / 10) * 10, floor(max_yr / 10) * 10, by = 10)
+  br <- br[br > (min_yr + 4) & br < (max_yr - 4)]
+  br <- sort(unique(c(min_yr, br, max_yr)))
+
+  series_colors    <- c("Black: Household"     = "#4a71c7",
+                        "Black: Clan"          = "#4a71c7",
+                        "Non-Black: Household" = "#E66101",
+                        "Non-Black: Clan"      = "#E66101")
+  series_linetypes <- c("Black: Household"     = "solid",
+                        "Black: Clan"          = "dotted",
+                        "Non-Black: Household" = "solid",
+                        "Non-Black: Clan"      = "dotted")
+
+  ggplot(long, aes(x = year, y = gini, color = series, linetype = series, group = series)) +
+    geom_line(linewidth = 1.7) +
+    scale_color_manual(values = series_colors) +
+    scale_linetype_manual(values = series_linetypes) +
+    scale_y_continuous(limits = y_limits) +
+    scale_x_continuous(breaks = br, expand = expansion(mult = c(0.02, 0.02))) +
+    labs(x = "Year", y = ylab, color = NULL, linetype = NULL) +
+    theme(legend.position = "bottom", plot.title = element_blank(),
+          axis.text.x = element_text(angle = 45, hjust = 1)) +
+    guides(color = guide_legend(nrow = 2), linetype = guide_legend(nrow = 2))
 }
 
 # Precompute Gini endpoints and means for Figure 1 note
@@ -208,7 +262,8 @@ w_mean_hh_w   <- summary %>% filter(Table == "Wealth", Unit == "Household") %>% 
 w_mean_cl_w   <- summary %>% filter(Table == "Wealth", Unit == "Clan")      %>% pull(mean_val_w) %>% first()
 
 
-# Figure 1
+# Figure 1 ─────────────────────────────────────────────────────────────────
+
 fig1_note <- sprintf(
   paste0(
     "Note: Gini coefficients are estimated from weighted data using PSID family and clan weights. ",
@@ -264,15 +319,16 @@ fig1 <- arrangeGrob(
   fig1_title,
   arrangeGrob(fig1_panelA, fig1_panelB, ncol = 2),
   ncol = 1,
-  heights = unit(c(1.2, 7.8), "inches")
+  heights = unit(c(0.5, 9.8), "inches")
 )
 
 if (SAVE_FILES) {
-  ggsave(here("9_figures", "output", "figure1.pdf"), fig1, width = 14, height = 9)
+  ggsave(here("9_figures", "output", "figure1.pdf"), fig1, width = 14, height = 11)
   message("Saved: figure1.pdf")
 }
 
-# Figure 2
+# Figure 2 ─────────────────────────────────────────────────────────────────
+
 fig2_inc <- make_lorenz_plot(
   r_hh, r_clans, "inc_all", years = c(1984, 2023),
   ylab = "Cumulative Proportion of Income", colors = c("1984" = "#4a71c7", "2023" = "#E66101")
@@ -332,7 +388,7 @@ fig2 <- arrangeGrob(
   fig2_title,
   arrangeGrob(fig2_panelA, fig2_panelB, ncol = 2),
   ncol = 1,
-  heights = unit(c(1.2, 7.8), "inches")
+  heights = unit(c(0.5, 7.8), "inches")
 )
 
 if (SAVE_FILES) {
@@ -340,15 +396,111 @@ if (SAVE_FILES) {
   message("Saved: figure2.pdf")
 }
 
-# Table 1
-inc_race <- read_csv(here("7_gini_by_race", "output", "income_race.csv"),         show_col_types = FALSE) %>% filter(year == "ALL")
-w_race   <- read_csv(here("7_gini_by_race", "output", "wealth_withhome_race.csv"), show_col_types = FALSE) %>% filter(year == "ALL")
+# Figure 3: Race plots ──────────────────────────────────────────────────────
 
-# Race-specific Gini scalars for inline text
+# Load race data: by-year rows for plotting, ALL row for Table 1 scalars
+inc_race_yr <- read_csv(here("7_gini_by_race", "output", "income_race.csv"),
+                        show_col_types = FALSE) %>%
+  filter(year != "ALL") %>%
+  mutate(year = as.numeric(year))
+
+w_race_yr <- read_csv(here("7_gini_by_race", "output", "wealth_withhome_race.csv"),
+                      show_col_types = FALSE) %>%
+  filter(year != "ALL") %>%
+  mutate(year = as.numeric(year))
+
+inc_race <- read_csv(here("7_gini_by_race", "output", "income_race.csv"),
+                     show_col_types = FALSE) %>%
+  filter(year == "ALL")
+
+w_race <- read_csv(here("7_gini_by_race", "output", "wealth_withhome_race.csv"),
+                   show_col_types = FALSE) %>%
+  filter(year == "ALL")
+
+# Shared y-limits across both panels for comparability
+shared_y_race <- {
+  vals <- c(
+    inc_race_yr$r_hh_w_inc_black,     inc_race_yr$r_cl_w_inc_black,
+    inc_race_yr$r_hh_w_inc_nonblack,  inc_race_yr$r_cl_w_inc_nonblack,
+    w_race_yr$r_hh_w_wealth_black,    w_race_yr$r_cl_w_wealth_black,
+    w_race_yr$r_hh_w_wealth_nonblack, w_race_yr$r_cl_w_wealth_nonblack
+  )
+  vals <- vals[is.finite(vals)]
+  c(floor(min(vals) * 20) / 20, ceiling(max(vals) * 20) / 20 + 0.05)
+}
+
+fig3_inc <- make_race_plot(
+  inc_race_yr,
+  r_hh_w_inc_black, r_cl_w_inc_black,
+  r_hh_w_inc_nonblack, r_cl_w_inc_nonblack,
+  ylab     = "Gini Coefficient",
+  y_limits = shared_y_race
+)
+
+fig3_w <- make_race_plot(
+  w_race_yr,
+  r_hh_w_wealth_black, r_cl_w_wealth_black,
+  r_hh_w_wealth_nonblack, r_cl_w_wealth_nonblack,
+  ylab     = "Gini Coefficient",
+  y_limits = shared_y_race
+)
+
+# Race-specific Gini scalars for inline text (from ALL-year averages)
 inc_diff_black    <- inc_race$r_hh_w_inc_black    - inc_race$r_cl_w_inc_black
 inc_diff_nonblack <- inc_race$r_hh_w_inc_nonblack - inc_race$r_cl_w_inc_nonblack
 w_diff_black      <- w_race$r_hh_w_wealth_black   - w_race$r_cl_w_wealth_black
 w_diff_nonblack   <- w_race$r_hh_w_wealth_nonblack - w_race$r_cl_w_wealth_nonblack
+
+fig3_note <- sprintf(
+  paste0(
+    "Note: Gini coefficients are estimated from weighted data using PSID family and clan weights. ",
+    "Solid lines = households; dotted lines = clans. ",
+    "For income, the average Gini is %.3f (Black HH), %.3f (Black clans), and %.3f (Non-Black HH), %.3f (Non-Black clans). ",
+    "The average HH-clan difference is %.3f for Black and %.3f for Non-Black families. ",
+    "For wealth, the average Gini is %.3f (Black HH), %.3f (Black clans), and %.3f (Non-Black HH), %.3f (Non-Black clans). ",
+    "The average HH-clan difference is %.3f for Black and %.3f for Non-Black families. ",
+    "Wealth is measured including home equity."
+  ),
+  inc_race$r_hh_w_inc_black,    inc_race$r_cl_w_inc_black,
+  inc_race$r_hh_w_inc_nonblack, inc_race$r_cl_w_inc_nonblack,
+  inc_diff_black, inc_diff_nonblack,
+  w_race$r_hh_w_wealth_black,    w_race$r_cl_w_wealth_black,
+  w_race$r_hh_w_wealth_nonblack, w_race$r_cl_w_wealth_nonblack,
+  w_diff_black, w_diff_nonblack
+)
+
+fig3_title <- textGrob(
+  "Figure 3. Income and Wealth Inequality by Race Over Time",
+  x = unit(0, "npc"), just = "left",
+  gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)
+)
+fig3_subA <- textGrob(
+  "Panel A: Income inequality from 1969 to 2023",
+  x = unit(0, "npc"), just = "left",
+  gp = gpar(fontfamily = base_family, fontsize = sub_size)
+)
+fig3_subB <- textGrob(
+  "Panel B: Wealth inequality from 1984 to 2023",
+  x = unit(0, "npc"), just = "left",
+  gp = gpar(fontfamily = base_family, fontsize = sub_size)
+)
+
+fig3_panelA <- arrangeGrob(fig3_subA, fig3_inc, ncol = 1, heights = c(1, 12))
+fig3_panelB <- arrangeGrob(fig3_subB, fig3_w,   ncol = 1, heights = c(1, 12))
+
+fig3 <- arrangeGrob(
+  fig3_title,
+  arrangeGrob(fig3_panelA, fig3_panelB, ncol = 2),
+  ncol = 1,
+  heights = unit(c(0.5, 9.8), "inches")
+)
+
+if (SAVE_FILES) {
+  ggsave(here("9_figures", "output", "figure3.pdf"), fig3, width = 14, height = 11)
+  message("Saved: figure3.pdf")
+}
+
+# Table 1 ──────────────────────────────────────────────────────────────────
 
 inc_hh_counts <- r_hh %>%
   filter(is.finite(inc_all), is.finite(fam_weight), fam_weight > 0, !is.na(black_head)) %>%
@@ -446,14 +598,15 @@ doc1 <- read_docx() %>%
   ) %>%
   body_add_fpar(fpar(ftext(tbl1_note, prop = note_style), fp_p = fp_par(text.align = "center")))
 
-if (SAVE_FILES) {
-  print(doc1, target = here("9_figures", "output", "table1.docx"))
-  message("Saved: table1.docx")
-}
+# if (SAVE_FILES) {
+#   print(doc1, target = here("9_figures", "output", "table1.docx"))
+#   message("Saved: table1.docx")
+# }
 
 
-# Size Standardization for Appendix H
-options(survey.lonely.psu = "adjust")# ── Size Standardization ─────────────────────────────────────────────────────
+# Size Standardization for Appendix H ──────────────────────────────────────
+
+options(survey.lonely.psu = "adjust")
 
 inc_current <- inc_by_year %>%
   filter(year != "ALL") %>%
@@ -514,7 +667,7 @@ wealth_size_tbl <- wealth_current %>%
 #   message("Saved: wealth_size_standardized.csv")
 # }
 
-# ── Appendix H figure ────────────────────────────────────────────────────────
+# Appendix H figure ────────────────────────────────────────────────────────
 
 method_colors <- c(
   "Current (unadjusted)"      = "#333333",
@@ -621,7 +774,7 @@ figH <- arrangeGrob(
     heights = c(0.8, 13, 13)
   ),
   ncol = 1,
-  heights = unit(c(1.2, 13.8), "inches")
+  heights = unit(c(0.5, 13.8), "inches")
 )
 
 figH_note <- paste0(
