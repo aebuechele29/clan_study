@@ -237,6 +237,7 @@ saveRDS(households, here("3_households", "output", "neg_households.rds"))
 households <- households %>%
    mutate(
      wealth_nohouse = ifelse(wealth_nohouse < 0, 0, wealth_nohouse),
+     wealth = ifelse(wealth < 0, 0, wealth),
      inc_all        = ifelse(inc_all < 0, 0, inc_all)
    )
 
