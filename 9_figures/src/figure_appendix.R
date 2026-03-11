@@ -121,11 +121,6 @@ inc_dist_ft <- flextable(inc_dist_tbl) %>% style_dist_ft()
 w_dist_ft   <- flextable(w_dist_tbl)   %>% style_dist_ft()
 
 figB <- arrangeGrob(
-  textGrob(
-    "Appendix E. Distribution of Income and Wealth: Households vs. Clans",
-    x = unit(0, "npc"), just = "left",
-    gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)
-  ),
   textGrob("Panel A: Income",
            x = unit(0, "npc"), just = "left",
            gp = gpar(fontfamily = base_family, fontsize = sub_size)),
@@ -135,7 +130,7 @@ figB <- arrangeGrob(
            gp = gpar(fontfamily = base_family, fontsize = sub_size)),
   gen_grob(w_dist_ft, fit = "fixed", just = "center"),
   ncol    = 1,
-  heights = unit(c(0.4, 0.35, 4.5, 0.35, 4.5, 0.8), "inches")
+  heights = unit(c(0.35, 4.5, 0.35, 4.5), "inches")
 )
 
 if (SAVE_FILES) {
@@ -194,10 +189,6 @@ c123_legend_donor <- ggplot(
   guides(color = guide_legend(nrow = 1, override.aes = list(linewidth = 1.2)))
 
 appendix_c <- cowplot::plot_grid(
-  ggdraw() + draw_label(
-    "Appendix C. Alternative Inequality Measures (C1, C2, C3) Over Time",
-    x = 0, hjust = 0, fontface = "bold",
-    fontfamily = base_family, size = title_size),
   cowplot::plot_grid(
     make_sub_draw("Panel A: Income"),
     cowplot::plot_grid(inc_pHH, inc_pClan, inc_pDiff, nrow = 1),
@@ -206,7 +197,7 @@ appendix_c <- cowplot::plot_grid(
     ncol = 1, rel_heights = c(0.05, 1, 0.05, 1)
   ),
   cowplot::get_legend(c123_legend_donor),
-  ncol = 1, rel_heights = c(0.06, 1, 0.06)
+  ncol = 1, rel_heights = c(1, 0.06)
 )
 
 if (SAVE_FILES) {
@@ -234,7 +225,7 @@ sensitivity_gini_1 <- make_sensitivity_figure(
     main_hh = "r_hh_w_wealth",   main_cl = "r_cl_w_wealth",
     alt_hh  = "neg_r_hh_wealth", alt_cl  = "neg_r_cl_wealth",
     left_label = "Excl. negative values", right_label = "Incl. negative values"),
-  title_str = "Appendix D1. Sensitivity: Negative Values"
+  title_str = "Appendix D1. Sensitivity: Negative Values", show_title = FALSE
 )
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "appendixD1.pdf"),
@@ -256,7 +247,7 @@ sensitivity_gini_2 <- make_single_sensitivity_figure(
     main_hh = "r_hh_w_wealth",    main_cl = "r_cl_w_wealth",
     alt_hh  = "r_hh_w_wealth_nh", alt_cl  = "r_cl_w_wealth_nh",
     left_label = "Incl. home equity", right_label = "Excl. home equity"),
-  title_str = "Appendix D2. Sensitivity: Wealth With and Without Home Equity"
+  title_str = "Appendix D2. Sensitivity: Wealth With and Without Home Equity", show_title = FALSE
 )
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "appendixD2.pdf"),
@@ -274,7 +265,7 @@ sensitivity_gini_3 <- make_sensitivity_figure(
     main_hh = "r_hh_w_wealth", main_cl = "r_cl_w_wealth",
     alt_hh  = "hh_w_wealth",   alt_cl  = "cl_w_wealth",
     left_label = "Excl. single-HH clans", right_label = "Incl. single-HH clans"),
-  title_str = "Appendix D3. Sensitivity: Single-Household Clans"
+  title_str = "Appendix D3. Sensitivity: Single-Household Clans", show_title = FALSE
 )
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "appendixD3.pdf"),
@@ -292,7 +283,7 @@ sensitivity_gini_4 <- make_sensitivity_figure(
     main_hh = "r_hh_w_wealth",   main_cl = "r_cl_w_wealth",
     alt_hh  = "r_hh_unw_wealth", alt_cl  = "r_cl_unw_wealth",
     left_label = "Weighted", right_label = "Unweighted"),
-  title_str = "Appendix D4. Sensitivity: Weighting"
+  title_str = "Appendix D4. Sensitivity: Weighting", show_title = FALSE
 )
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "appendixD4.pdf"),
@@ -341,7 +332,7 @@ sensitivity_gini_5 <- make_sensitivity_figure(
     main_hh = "current_hh", main_cl = "current_clan",
     alt_hh  = "unadj_hh",   alt_cl  = "unadj_clan",
     left_label = "Size-standardised", right_label = "Unadjusted"),
-  title_str = "Appendix D5. Sensitivity: Size Standardization"
+  title_str = "Appendix D5. Sensitivity: Size Standardization", show_title = FALSE
 )
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "appendixD5.pdf"),
@@ -380,7 +371,7 @@ race6_w <- make_race_sensitivity_plot(
 
 sensitivity_gini_6 <- make_sensitivity_figure(
   race6_inc, race6_w,
-  title_str = "Appendix D6. Gini Coefficients by Race Subgroup",
+  title_str = "Appendix D6. Gini Coefficients by Race Subgroup", show_title = FALSE,
   sub_a = "Panel A: Income",
   sub_b = "Panel B: Wealth (incl. home equity)"
 )
@@ -424,7 +415,7 @@ sensitivity_ratio_1 <- make_ratio_sensitivity_figure(
     alt_hh  = "neg_r_hh_w_ratio", alt_cl  = "neg_r_cl_w_ratio",
     left_label = "Excl. negative values", right_label = "Incl. negative values",
     y_limits = shared_y_rsens, diff_limits = diff_e1),
-  title_str = "Appendix F1. Race Ratios: Negative Values"
+  title_str = "Appendix F1. Race Ratios: Negative Values", show_title = FALSE
 )
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "appendixF1.pdf"),
@@ -448,7 +439,7 @@ sensitivity_ratio_2 <- make_single_sensitivity_figure(
     alt_hh  = "r_hh_w_ratio_nh", alt_cl  = "r_cl_w_ratio_nh",
     left_label = "Incl. home equity", right_label = "Excl. home equity",
     y_limits = shared_y_rsens, diff_limits = diff_e2),
-  title_str = "Appendix F2. Race Ratios: Wealth With and Without Home Equity"
+  title_str = "Appendix F2. Race Ratios: Wealth With and Without Home Equity", show_title = FALSE
 )
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "appendixF2.pdf"),
@@ -470,7 +461,7 @@ sensitivity_ratio_3 <- make_ratio_sensitivity_figure(
     alt_hh  = "hh_w_ratio",   alt_cl  = "cl_w_ratio",
     left_label = "Excl. single-HH clans", right_label = "Incl. single-HH clans",
     y_limits = shared_y_rsens, diff_limits = diff_e3),
-  title_str = "Appendix F3. Race Ratios: Single-Household Clans"
+  title_str = "Appendix F3. Race Ratios: Single-Household Clans", show_title = FALSE
 )
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "appendixF3.pdf"),
@@ -492,11 +483,12 @@ sensitivity_ratio_4 <- make_ratio_sensitivity_figure(
     alt_hh  = "r_hh_u_ratio", alt_cl  = "r_cl_u_ratio",
     left_label = "Weighted", right_label = "Unweighted",
     y_limits = shared_y_rsens, diff_limits = diff_e4),
-  title_str = "Appendix F4. Race Ratios: Weighting"
+  title_str = "Appendix F4. Race Ratios: Weighting", show_title = FALSE
 )
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "appendixF4.pdf"),
          sensitivity_ratio_4, width = 14, height = 11)
   message("Saved: appendixF4.pdf")
 }
+
 

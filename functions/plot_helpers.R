@@ -222,7 +222,7 @@ make_sensitivity_plot <- function(df, main_hh, main_cl, alt_hh, alt_cl,
       values = c("Main (HH-Clan)" = main_hh_col,
                  "Alt (HH-Clan)"  = alt_hh_col)) +
     ggplot2::scale_linetype_manual(
-      values = c("Main (HH-Clan)" = "solid", "Alt (HH-Clan)" = "solid")) +
+      values = c("Main (HH-Clan)" = "dashed", "Alt (HH-Clan)" = "dashed")) +
     ggplot2::scale_y_continuous(limits = diff_limits) +
     ggplot2::scale_x_continuous(
       breaks = br, expand = ggplot2::expansion(mult = c(0.02, 0.02))) +
@@ -254,10 +254,8 @@ make_sensitivity_plot <- function(df, main_hh, main_cl, alt_hh, alt_cl,
 # Wrapper: title grob + Panel A row + Panel B row + shared legend
 make_sensitivity_figure <- function(plot_inc, plot_w, title_str,
                                      sub_a = "Panel A: Income",
-                                     sub_b = "Panel B: Wealth") {
-  title_grob <- cowplot::ggdraw() +
-    cowplot::draw_label(title_str, x = 0, hjust = 0, fontface = "bold",
-                        fontfamily = base_family, size = title_size)
+                                     sub_b = "Panel B: Wealth",
+                                     show_title = TRUE) {
   sub_a_grob <- cowplot::ggdraw() +
     cowplot::draw_label(sub_a, x = 0, hjust = 0,
                         fontfamily = base_family, size = sub_size)
@@ -265,19 +263,34 @@ make_sensitivity_figure <- function(plot_inc, plot_w, title_str,
     cowplot::draw_label(sub_b, x = 0, hjust = 0,
                         fontfamily = base_family, size = sub_size)
 
-  cowplot::plot_grid(
-    title_grob, sub_a_grob, plot_inc, sub_b_grob, plot_w, .hh_clan_legend(),
-    ncol = 1, rel_heights = c(0.08, 0.05, 1, 0.05, 1, 0.1)
-  )
+  if (show_title) {
+    title_grob <- cowplot::ggdraw() +
+      cowplot::draw_label(title_str, x = 0, hjust = 0, fontface = "bold",
+                          fontfamily = base_family, size = title_size)
+    cowplot::plot_grid(
+      title_grob, sub_a_grob, plot_inc, sub_b_grob, plot_w, .hh_clan_legend(),
+      ncol = 1, rel_heights = c(0.08, 0.05, 1, 0.05, 1, 0.1)
+    )
+  } else {
+    cowplot::plot_grid(
+      sub_a_grob, plot_inc, sub_b_grob, plot_w, .hh_clan_legend(),
+      ncol = 1, rel_heights = c(0.05, 1, 0.05, 1, 0.1)
+    )
+  }
 }
 
 # Wealth-only figure: just title + the single plot (no income panel, no panel label)
-make_single_sensitivity_figure <- function(plot_w, title_str) {
-  title_grob <- cowplot::ggdraw() +
-    cowplot::draw_label(title_str, x = 0, hjust = 0, fontface = "bold",
-                        fontfamily = base_family, size = title_size)
-  cowplot::plot_grid(title_grob, plot_w, .hh_clan_legend(),
-                     ncol = 1, rel_heights = c(0.08, 1, 0.1))
+make_single_sensitivity_figure <- function(plot_w, title_str, show_title = TRUE) {
+  if (show_title) {
+    title_grob <- cowplot::ggdraw() +
+      cowplot::draw_label(title_str, x = 0, hjust = 0, fontface = "bold",
+                          fontfamily = base_family, size = title_size)
+    cowplot::plot_grid(title_grob, plot_w, .hh_clan_legend(),
+                       ncol = 1, rel_heights = c(0.08, 1, 0.1))
+  } else {
+    cowplot::plot_grid(plot_w, .hh_clan_legend(),
+                       ncol = 1, rel_heights = c(1, 0.1))
+  }
 }
 
 # ── Appendix D6 style: race sensitivity (Black | Non-Black | diff) ───────────
@@ -373,7 +386,7 @@ make_race_sensitivity_plot <- function(dat,
     diff_dat,
     ggplot2::aes(x = year, y = Difference, color = Race, group = Race)
   ) +
-    ggplot2::geom_line(linewidth = 1.7) +
+    ggplot2::geom_line(linewidth = 1.7, linetype = "dashed") +
     ggplot2::geom_hline(yintercept = 0, linetype = "dotted", color = "grey60") +
     ggplot2::scale_color_manual(
       values = c("Black" = black_hh_col, "Non-Black" = nonblack_hh_col),
@@ -402,33 +415,63 @@ make_ratio_plot <- function(dat, ylab, y_limits = NULL, hline = 1) {
                   is.finite(r_hh_w_ratio),
                   is.finite(r_cl_w_ratio))
 
+  has_median <- all(c("r_hh_w_med_ratio", "r_cl_w_med_ratio") %in% names(d))
+
   br <- make_x_breaks(min(d$year, na.rm = TRUE), max(d$year, na.rm = TRUE))
 
   if (is.null(y_limits)) {
-    vals     <- c(d$r_hh_w_ratio, d$r_cl_w_ratio)
+    vals <- c(d$r_hh_w_ratio, d$r_cl_w_ratio)
+    if (has_median) vals <- c(vals, d$r_hh_w_med_ratio, d$r_cl_w_med_ratio)
+    vals     <- vals[is.finite(vals)]
     y_limits <- c(floor(min(vals, na.rm = TRUE) * 20) / 20,
                   ceiling(max(vals, na.rm = TRUE) * 20) / 20 + 0.05)
   }
 
-  ggplot2::ggplot(d, ggplot2::aes(x = year)) +
+  p <- ggplot2::ggplot(d, ggplot2::aes(x = year)) +
     ggplot2::geom_hline(yintercept = hline, linetype = "dotted", color = "grey60") +
-    ggplot2::geom_line(ggplot2::aes(y = r_hh_w_ratio, linetype = "Household"),
-                       color = ORANGE,      linewidth = 1.7) +
-    ggplot2::geom_line(ggplot2::aes(y = r_cl_w_ratio, linetype = "Clan"),
-                       color = PALE_ORANGE, linewidth = 1.7) +
+    # Mean lines (orange palette, solid = HH, dotted = Clan)
+    ggplot2::geom_line(ggplot2::aes(y = r_hh_w_ratio,     color = "HH Mean",   linetype = "HH Mean"),   linewidth = 1.7) +
+    ggplot2::geom_line(ggplot2::aes(y = r_cl_w_ratio,     color = "Clan Mean", linetype = "Clan Mean"), linewidth = 1.7)
+
+  if (has_median) {
+    p <- p +
+      ggplot2::geom_line(ggplot2::aes(y = r_hh_w_med_ratio, color = "HH Median",   linetype = "HH Median"),   linewidth = 1.7) +
+      ggplot2::geom_line(ggplot2::aes(y = r_cl_w_med_ratio, color = "Clan Median", linetype = "Clan Median"), linewidth = 1.7)
+  }
+
+  p +
+    ggplot2::scale_color_manual(
+      name   = NULL,
+      values = c(
+        "HH Mean"    = ORANGE,
+        "Clan Mean"  = PALE_ORANGE,
+        "HH Median"  = BLUE,
+        "Clan Median"= PALE_BLUE
+      )
+    ) +
+    ggplot2::scale_linetype_manual(
+      name   = NULL,
+      values = c(
+        "HH Mean"    = "solid",
+        "Clan Mean"  = "dotted",
+        "HH Median"  = "solid",
+        "Clan Median"= "dotted"
+      )
+    ) +
     ggplot2::scale_y_continuous(limits = y_limits) +
     ggplot2::scale_x_continuous(
       breaks = br, expand = ggplot2::expansion(mult = c(0.02, 0.02))) +
-    ggplot2::scale_linetype_manual(
-      values = c("Household" = "solid", "Clan" = "dotted")) +
-    ggplot2::labs(x = "Year", y = ylab, linetype = NULL) +
+    ggplot2::labs(x = "Year", y = ylab) +
     ggplot2::theme(
       legend.position = "bottom",
       plot.title      = ggplot2::element_blank(),
       axis.text.x     = ggplot2::element_text(angle = 45, hjust = 1)) +
-    ggplot2::guides(linetype = ggplot2::guide_legend(
-      override.aes = list(color = c(PALE_ORANGE, ORANGE), linewidth = 1.2)
-    ))
+    ggplot2::guides(
+      color    = ggplot2::guide_legend(
+        nrow = 2,
+        override.aes = list(linewidth = 1.2)),
+      linetype = ggplot2::guide_legend(nrow = 2)
+    )
 }
 
 # Ratio sensitivity style: 3-panel (main | alt | difference) ───────────────
@@ -510,7 +553,7 @@ make_ratio_sensitivity_plot <- function(dat,
     ggplot2::scale_color_manual(
       values = c("Main (HH-Clan)" = main_hh_col, "Alt (HH-Clan)" = alt_hh_col)) +
     ggplot2::scale_linetype_manual(
-      values = c("Main (HH-Clan)" = "solid", "Alt (HH-Clan)" = "solid")) +
+      values = c("Main (HH-Clan)" = "dashed", "Alt (HH-Clan)" = "dashed")) +
     ggplot2::scale_y_continuous(limits = diff_limits) +
     ggplot2::scale_x_continuous(
       breaks = br, expand = ggplot2::expansion(mult = c(0.02, 0.02))) +
@@ -524,20 +567,29 @@ make_ratio_sensitivity_plot <- function(dat,
 # Wrapper: title + Panel A (income) + Panel B (wealth) for ratio sensitivity
 make_ratio_sensitivity_figure <- function(plot_inc, plot_w, title_str,
                                            sub_a = "Panel A: Income",
-                                           sub_b = "Panel B: Wealth") {
-  title_grob <- cowplot::ggdraw() +
-    cowplot::draw_label(title_str, x = 0, hjust = 0, fontface = "bold",
-                        fontfamily = base_family, size = title_size)
+                                           sub_b = "Panel B: Wealth",
+                                           show_title = TRUE) {
   sub_a_grob <- cowplot::ggdraw() +
     cowplot::draw_label(sub_a, x = 0, hjust = 0,
                         fontfamily = base_family, size = sub_size)
   sub_b_grob <- cowplot::ggdraw() +
     cowplot::draw_label(sub_b, x = 0, hjust = 0,
                         fontfamily = base_family, size = sub_size)
-  cowplot::plot_grid(
-    title_grob, sub_a_grob, plot_inc, sub_b_grob, plot_w, .hh_clan_legend(),
-    ncol = 1, rel_heights = c(0.08, 0.05, 1, 0.05, 1, 0.1)
-  )
+
+  if (show_title) {
+    title_grob <- cowplot::ggdraw() +
+      cowplot::draw_label(title_str, x = 0, hjust = 0, fontface = "bold",
+                          fontfamily = base_family, size = title_size)
+    cowplot::plot_grid(
+      title_grob, sub_a_grob, plot_inc, sub_b_grob, plot_w, .hh_clan_legend(),
+      ncol = 1, rel_heights = c(0.08, 0.05, 1, 0.05, 1, 0.1)
+    )
+  } else {
+    cowplot::plot_grid(
+      sub_a_grob, plot_inc, sub_b_grob, plot_w, .hh_clan_legend(),
+      ncol = 1, rel_heights = c(0.05, 1, 0.05, 1, 0.1)
+    )
+  }
 }
 
 # Appendix C: C1/C2/C3 panel ───────────────────────────────────────────────
@@ -555,6 +607,8 @@ make_c123_panel <- function(dat, y_limits = NULL, show_unit,
     legend.position = "none",
     plot.title      = ggplot2::element_blank(),
     axis.text.x     = ggplot2::element_text(angle = 45, hjust = 1))
+  sub_t <- ggplot2::theme(
+    plot.subtitle = ggplot2::element_text(size = sub_size * 0.6, hjust = 0.5))
 
   if (show_unit == "Diff") {
     diff_dat <- dat %>%
@@ -577,15 +631,16 @@ make_c123_panel <- function(dat, y_limits = NULL, show_unit,
         ggplot2::aes(x = year, y = value,
                      color = Coefficient, group = Coefficient)
       ) +
-        ggplot2::geom_line(linewidth = 1.7) +
+        ggplot2::geom_line(linewidth = 1.7, linetype = "dashed") +
         ggplot2::geom_hline(yintercept = 0, linetype = "dotted",
                             color = "grey60") +
         ggplot2::scale_color_manual(values = coef_colors) +
         ggplot2::scale_y_continuous(limits = y_limits) +
         ggplot2::scale_x_continuous(
           breaks = br, expand = ggplot2::expansion(mult = c(0.02, 0.02))) +
-        ggplot2::labs(x = "Year", y = "HH \u2212 Clan", color = NULL) +
-        base_t
+        ggplot2::labs(x = "Year", y = "HH \u2212 Clan", color = NULL,
+                      subtitle = "HH \u2212 Clan Difference") +
+        base_t + sub_t
     )
   }
 
@@ -608,16 +663,20 @@ make_c123_panel <- function(dat, y_limits = NULL, show_unit,
                   ceiling(max(vals) * 20) / 20 + 0.05)
   }
 
+  panel_subtitle <- if (show_unit == "Household") "Households" else "Clans"
+  line_type      <- if (show_unit == "Clan") "dotted" else "solid"
+
   ggplot2::ggplot(
     long,
     ggplot2::aes(x = year, y = value,
                  color = Coefficient, group = Coefficient)
   ) +
-    ggplot2::geom_line(linewidth = 1.7) +
+    ggplot2::geom_line(linewidth = 1.7, linetype = line_type) +
     ggplot2::scale_color_manual(values = coef_colors) +
     ggplot2::scale_y_continuous(limits = y_limits) +
     ggplot2::scale_x_continuous(
       breaks = br, expand = ggplot2::expansion(mult = c(0.02, 0.02))) +
-    ggplot2::labs(x = "Year", y = ylab, color = NULL) +
-    base_t
+    ggplot2::labs(x = "Year", y = ylab, color = NULL,
+                  subtitle = panel_subtitle) +
+    base_t + sub_t
 }

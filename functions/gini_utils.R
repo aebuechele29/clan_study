@@ -25,6 +25,14 @@ run_gini <- function(df, value_var, weight_var = NULL,
       if (!weighted || is.null(weight_var)) {
         ineq::Gini(d[[value_var]])
       } else {
+        # "adjust" sets the variance contribution of singleton-PSU strata to
+        # zero (treats them as certainty-selected), which is the standard
+        # approach for PSID post-1999 where the refresher sample introduces
+        # strata with only one PSU.
+        old_opt <- getOption("survey.lonely.psu")
+        options(survey.lonely.psu = "adjust")
+        on.exit(options(survey.lonely.psu = old_opt), add = TRUE)
+
         des <- survey::svydesign(
           ids     = ~cluster,
           strata  = ~stratum,
@@ -73,6 +81,10 @@ run_gini_race <- function(black_df, nonblack_df,
             !!paste0(col_label, suffix, "_se") := NA_real_
           )
         } else {
+          old_opt <- getOption("survey.lonely.psu")
+          options(survey.lonely.psu = "adjust")
+          on.exit(options(survey.lonely.psu = old_opt), add = TRUE)
+
           des <- survey::svydesign(
             ids     = ~cluster,
             strata  = ~stratum,

@@ -158,9 +158,26 @@ Second, the Lorenz curves bring into focus the different scales of the differenc
 **How the unit of analysis affects the racial wealth gap** 
 ```{r figure3, out.width="\\linewidth"}
 knitr::include_graphics(here::here("9_figures","output","figure3.pdf"))
+```
 
 ```{r figure3-note, results="asis"}
 print_note(fig3_note)
+```
+
+```{r figure4, out.width="\\linewidth"}
+knitr::include_graphics(here::here("9_figures","output","figure4.pdf"))
+```
+
+```{r figure4-note, results="asis"}
+print_note(fig4_note)
+```
+
+```{r race-table}
+race_summary_ft
+```
+
+```{r race-table-note, results="asis"}
+print_note(fig4_table_note)
 ```
 
 
