@@ -340,28 +340,6 @@ diff_limits_for <- function(inc_dat, w_dat, hh_col, cl_col) {
   c(floor(min(vals) * 20) / 20, ceiling(max(vals) * 20) / 20 + 0.05)
 }
 
-# E1 — Race (Gini by race subgroup, mirroring C1) ─────────────────────────────
-# shared_y_race and shared_diff_race are already computed above for C1
-sensitivity_ratio_race <- make_sensitivity_figure(
-  make_race_sensitivity_plot(
-    inc_race_yr,
-    "r_hh_w_inc_black",    "r_cl_w_inc_black",
-    "r_hh_w_inc_nonblack", "r_cl_w_inc_nonblack",
-    y_limits = shared_y_race, diff_limits = shared_diff_race),
-  make_race_sensitivity_plot(
-    w_race_yr,
-    "r_hh_w_wealth_black",    "r_cl_w_wealth_black",
-    "r_hh_w_wealth_nonblack", "r_cl_w_wealth_nonblack",
-    y_limits = shared_y_race, diff_limits = shared_diff_race),
-  title_str = "Appendix E1. Gini Coefficients by Race Subgroup", show_title = FALSE,
-  sub_a = "Panel A: Income",
-  sub_b = "Panel B: Wealth (incl. home equity)"
-)
-if (SAVE_FILES) {
-  ggsave(here("9_figures", "output", "appendixE1.pdf"),
-         sensitivity_ratio_race, width = 14, height = 11)
-  message("Saved: appendixE1.pdf")
-}
 
 # E2 — Sample: single-household clans (ratio) ─────────────────────────────────
 diff_e2 <- diff_limits_for(inc_ratios, wealth_ratios, "hh_w_ratio", "cl_w_ratio")

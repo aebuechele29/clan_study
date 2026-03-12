@@ -359,6 +359,7 @@ flextable(b2) %>%
 # Appendix C: Sensitivity Analyses — Gini Coefficients {-}
 
 ## Appendix C1: Gini Coefficients by Race Subgroup {-}
+Graphs on the left side show Gini cofficients for Black households and clans. Graphs in the middle show Gini coefficients for non-Black households and clans. The graphs on the right side show the difference between household and clan (HH - Clan) Gini coefficients for each group. Both Black and non-Black clans have higher Gini coefficients than Black and non-Black households, indicating that inequaltiy is lower when estimated at the clan level. The differences between Gini coefficients at the household and clan level are not driven by racial subgroups.
 
 ```{r appendix-c1, fig.width=14, fig.height=11, out.width="100%"}
 sensitivity_gini_6
@@ -366,6 +367,7 @@ sensitivity_gini_6
 
 
 ## Appendix C2: Sensitivity — Single-Household Clans {-}
+In reality, all households belong to clans that consist of multiple households. However, due to the original PSID sample lacking clans by design, as well as attrition, some clans in the PSID comprise a single household in some years. Because this limitation is imposed by the survey design, not social reality, we exclude household-years where households are alone in their clans from both household and clan measurements. The graphs on the left side show this. When including these single-household clans, or “clanless” households, the difference in Gini coefficients at the household and clans levels is minimized but not eliminated. The graphs in the middle show Gini coefficients when single-household clans are included. The graphs on the right side show the difference between household and clan (HH - Clan) Gini coefficients for each group.
 
 ```{r appendix-c2, fig.width=14, fig.height=11, out.width="100%"}
 sensitivity_gini_3
@@ -373,6 +375,7 @@ sensitivity_gini_3
 
 
 ## Appendix C3: Sensitivity — Wealth With and Without Home Equity {-}
+Results presented in the main text include home equity for measures of wealth. Appendix C3 shows Gini coefficients when home equity is excluded (middle graphs), and report the difference between Gini coefficients at the household and clan levels (graphs on the right). Excluding home equity makes estimated inequality lower and minimizes the observed difference between household and clan Gini coefficients.
 
 ```{r appendix-c3, fig.width=14, fig.height=7, out.width="100%"}
 sensitivity_gini_2
@@ -380,13 +383,14 @@ sensitivity_gini_2
 
 
 ## Appendix C4: Sensitivity — Negative Values {-}
-
+Results presented in the main text exclude negative values for income and wealth. Appendix C4 show Gini coefficients when negative values are included (middle graphs), and report the difference between Gini coefficients at the household and clan levels (graphs on the right).  Including negative values does not change estimated Gini coefficients at the household or clan levels.
 ```{r appendix-c4, fig.width=14, fig.height=11, out.width="100%"}
 sensitivity_gini_1
 ```
 
 
 ## Appendix C5: Sensitivity — Size Standardization {-}
+Results in the main text standardize by household and clan size. Estimated inequality is higher when results are not standardized by size and the gap between household and clan Gini coefficients is smaller. However, Gini coefficients are higher at the clan versus household level irrespective of whether measurements are adjusted by size. 
 
 ```{r appendix-c5, fig.width=14, fig.height=11, out.width="100%"}
 sensitivity_gini_5
@@ -394,6 +398,7 @@ sensitivity_gini_5
 
 
 ## Appendix C6: Sensitivity — Weighting {-}
+All results presented in the main paper are weighted. Household-level Gini coefficients are weighted using PSID-provided family weights, while clan-level Gini coefficients are weighted using a constructed clan weight based on the PSID family weight. Weighting does not substantially change the results.
 
 ```{r appendix-c6, fig.width=14, fig.height=11, out.width="100%"}
 sensitivity_gini_4
@@ -401,6 +406,7 @@ sensitivity_gini_4
 
 
 # Appendix D: Alternative Inequality Measures {-}
+Appendix D shows three alternative measures of inequality proposed by Aaberge [@aaberge_ginis_2007]. C1 is the Bonferroni coefficient (greater weight on lower tail); C2 is the standard Gini coefficient; C3 places greater weight on the upper tail of the distribution. All estimates are weighted averages across all available years. Inequality is lower at the clan level using any measure of inequality. 
 
 ```{r appendix-d, fig.width=14, fig.height=13, out.width="100%"}
 appendix_c
