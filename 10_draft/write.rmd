@@ -1,6 +1,6 @@
 ---
 title: "An Extended Family Approach to Income and Wealth Inequality in the U.S."
-author: "Author Name(s)"
+author: "Names"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 keywords: ["put keywords here"]
 bibliography: bibliography_clan.bib
@@ -40,8 +40,10 @@ knit: (function(input, ...) {
 knitr::opts_chunk$set(
   echo    = FALSE,
   warning = FALSE,
-  message = FALSE
+  message = FALSE,
+  tidy    = FALSE
 )
+options(width = 10000)  # prevent R from wrapping long strings in output
 library(here)
 library(dplyr)
 library(flextable)
@@ -63,12 +65,13 @@ fmt1 <- function(x) format(round(x, 1), nsmall = 1)
 fmt0 <- function(x) format(round(x, 0), big.mark = ",")
 fmtp <- function(x) paste0(format(round(x, 2), nsmall = 2), "%")
 
-# Helper for adding notes to figures in .docx
+# Helper for adding notes to figures in .docx and .pdf
 print_note <- function(txt) {
   if (knitr::is_latex_output()) {
-    cat("\\begingroup\\itshape\\small\n", txt, "\n\\endgroup")
+    cat("\n\n\\begingroup\\itshape\\small\\par\n", txt, "\n\\endgroup\n\n")
   } else {
-    cat(paste0("*", txt, "*"))
+    # Word: blank lines ensure a new paragraph; txt wrapped in markdown italic
+    cat(paste0("\n\n*", txt, "*\n\n"))
   }
 }
 ```
@@ -156,6 +159,30 @@ print_note(fig2_note)
 Second, the Lorenz curves bring into focus the different scales of the differences between household inequality and clan inequality for income and wealth. For income inequality (Panel A), the difference between household and clan inequality appears smaller compared with changes in inequality between 1984 and 2023. That both 1984 curves are closer to the line of equality than both 2023 curves means that the increase of income inequality over time is starker than differences in unit of analysis. But for wealth inequality (Panel B) this is not the case. For wealth inequality, both clan (dotted) lines are closer to the line of equality than both household (solid) lines. This means that the difference across unit of measurement is starker than the change over time.
 
 **How the unit of analysis affects the racial wealth gap** 
+Scholars document a persistent racial wealth gap between Black and non-Black households [@killewald_wealth_2017; @oliver_black_2013], while also highlighting the unique role of kinship networks in shaping economic outcomes by race [@beckert_durable_2022; @obrien_structural_2020]. Given these findings, one might expect the choice of unit of analysis to affect inequality estimates differently across racial groups. While there is higher inequality among Black households and clans overall, the direction of the household–clan difference in Gini coefficients is consistent across racial groups (see Appendix C1).
+
+Measuring inequality at the clan-level reveals less inequality across racial subgroups. However, using clans as the unit of analysis does not eliminate racial wealth gaps between groups. Table 4 shows racial wealth gaps at both the household and clans levels for mean and median wealth. When using the mean, Black households hold `r fmt0(w_mean_ratio_hh * 100)` cents for every dollar of wealth held by non-Black households, and Black clans hold `r fmt0(w_mean_ratio_cl * 100)` cents for every dollar held by non-Black clans. A similar pattern appears when examining median wealth among clans, where Black clans hold `r fmt0(w_med_ratio_cl * 100)` cents for every dollar held by non-Black clans. However, the median reveals an even starker disparity at the household level: the typical Black household holds only `r fmt0(w_med_ratio_hh * 100)` cents for every dollar of wealth held by the typical non-Black household. These patterns suggest that while Black households hold substantially less wealth on average, wealth among them is also distributed with greater inequality. At both levels, inequality is about the same or lower between clans than between households, though Black clans hold considerably less wealth than non-Black ones.
+
+Examining the share of households and clans with zero wealth further illustrates the racial wealth gap at the household and clan levels and how this inequality appears lesser at the clan-level. Following [@oliver_black_2013], `r fmtp(zero_w_hh_black)` of Black households report no wealth, compared to just `r fmtp(zero_w_hh_nonblack)` of non-Black households. At the clan level, however, the share with zero wealth drops considerably. Non-Black clans exhibit extremely low levels of zero wealth, with only `r fmtp(zero_w_cl_nonblack)` reporting none, suggesting that most non-Black individuals have some wealth within their extended family networks. Black clans also experience a decline in zero-wealth, falling to `r fmtp(zero_w_cl_black)`. In percentage terms, the transition from the household to clan level represents a `r fmt1(zero_w_pct_red_black)`% reduction in zero-wealth for Black households and a `r fmt1(zero_w_pct_red_nonblack)`% reduction for non-Black households. As a result, the extent of inequality appears less stark when wealth is considered at the clan level rather than at the household level, though the decrease in inequality is higher for non-Black clans. 
+
+```{r race-table-wealth}
+race_wealth_ft
+```
+
+```{r race-table-note, results="asis"}
+print_note(fig4_table_note)
+```
+
+
+
+*We are really talking about the racial wealth, not income, gap. It would probably make sense to exclude the table below but it is here in case you want to see it. The race ratio for clans is **worse** than it is for households for income.*
+
+```{r race-table-income}
+race_income_ft
+```
+
+*Below are two figures that show the information in the tables. These (or a combination of these) could be used instead of tables. I (AEB) found the tables easier to interpret, so that's what I took a stab at first.*
+
 ```{r figure3, out.width="\\linewidth"}
 knitr::include_graphics(here::here("9_figures","output","figure3.pdf"))
 ```
@@ -172,16 +199,8 @@ knitr::include_graphics(here::here("9_figures","output","figure4.pdf"))
 print_note(fig4_note)
 ```
 
-```{r race-table}
-race_summary_ft
-```
 
-```{r race-table-note, results="asis"}
-print_note(fig4_table_note)
-```
-
-
-**Sensitivity of difference between household- and clan-level Gini coefficients.** Across all specifications, estimated inequality is lower when using clans rather than households as the unit of analysis. This finding is robust across race, different inclusion criteria for income and wealth measures, different samples, alternative measures of inequality, and when adjusting for household and clan size. Results from sensitivity analyses are available in Appendix C and D.
+**Sensitivity of difference between household- and clan-level Gini coefficients.** Across all specifications, estimated inequality is lower when using clans rather than households as the unit of analysis. This finding is robust across race, different inclusion criteria for income and wealth measures, different samples, alternative measures of inequality, and when adjusting for household and clan size. Results from sensitivity analyses are available in Appendix C and D. *This mini-section should change or be deleted.*
 
 
 # Discussion
@@ -196,17 +215,21 @@ Differences in historical patterns between households and clans may reflect chan
 
 The PSID facilitates two linked units of analysis: households and clans. Households consist of economically interdependent individuals living in the same dwelling, with one member reporting data on income and wealth for all members. Household composition changes over time with transitions such as divorce or childbirth; individuals who leave receive a new household identifier. As a result, unique households cannot be identified over time in the PSID. In contrast, clans include all descendants of households sampled in 1968, linked through a PSID-generated identifier, which we refer to as a clan identifier. Households added after 1968 receive their own clan identifier upon entry. Unlike household identifiers, clan membership remains fixed for individuals and can be compared over time. A small number of households (`r fmt0(n_mismatched)` household-years) contain couples belonging to different clans; these cases were assigned to both clans. 
 
+Additionally, although all households belong to a clan, not all extended family members are observed in the PSID in every year. In some cases (especially in earlier years)^[The prevalence of single-household clans dropped by 75% between 1969 and 1980. However, overall trends remain similar regardless of whether this earlier period is excluded.], PSID clans consist of only a single observed household, rendering household and clan-level measures identical. These observations are excluded from the main analyses because they do not capture extended family dynamics and are a result of survey limitations, rather than social reality. Including these single household clans reduces the household–clan inequality gap for income and wealth but does not eliminate it (see Appendix C2).
+
 The PSID has collected income data since its inception but began collecting wealth data only in 1984. As a result, analytic samples differ: income analyses include `r fmt0(inc_hh_years)` household-years and `r fmt0(inc_cl_years)` clan-years, representing `r fmt0 (inc_uniq_clans)` unique clans; wealth analyses include `r fmt0(w_hh_years)` household-years and `r fmt0(w_cl_years)` clan-years, representing `r fmt0(w_uniq_clans)` unique clans.
 
-**Measures of income and wealth.** We measure both income and wealth to capture distinct dimensions of economic inequality. This choice follows from research identifying divergent patterns depending on choice of financial indicator because mechanisms driving wealth inequality are distinct from those driving income inequality [@killewald_wealth_2017; @pfeffer_determinants_2017; @hallsten_grand_2017]. Aggregate measures for income and wealth are provided by the PSID. Income includes earnings, asset income, transfers, and income from farming and gardening. Wealth includes non-primary real estate, business equity, stocks, bonds, vehicles, retirement accounts, and bank accounts, and includes home equity. 
+**Measures of income and wealth.** We measure both income and wealth to capture distinct dimensions of economic inequality. This choice follows from research identifying divergent patterns depending on choice of financial indicator because mechanisms driving wealth inequality are distinct from those driving income inequality [@killewald_wealth_2017; @pfeffer_determinants_2017; @hallsten_grand_2017]. Aggregate measures for income and wealth are provided by the PSID. Income includes earnings, asset income, transfers, and income from farming and gardening. Wealth includes non-primary real estate, business equity, stocks, bonds, vehicles, retirement accounts, and bank accounts, and includes home equity. As a sensitivity analysis, we compare Gini coefficients for wealth measures that exclude home equity (see Appendix C3). When home equity  is excluded, estimated inequality is lower at both the household and clan level, but the difference between household and clan-level Gini coefficients remains similar.
 
-Missing data for components of income and wealth are imputed by the PSID. Concerns about measurement error, especially for wealth, are minimal, as imputation methods utilized by the PSID explain little of the variation in wealth over time [@pfeffer_determinants_2017; @si_multiple_2021]. All income and wealth values are adjusted for inflation. Additionally, analyses set negative values of income and wealth to zero so that Gini coefficients remain in the 0 to 1 range (see Appendix D1 and F1). To construct clan-level measures, we aggregate household income and wealth for all households in a clan within each clan-year. 
+Missing data for components of income and wealth are imputed by the PSID. Concerns about measurement error, especially for wealth, are minimal, as imputation methods utilized by the PSID explain little of the variation in wealth over time [@pfeffer_determinants_2017; @si_multiple_2021]. All income and wealth values are adjusted for inflation. Additionally, analyses set negative values of income and wealth to zero so that Gini coefficients are interpretable by remaining in the 0 to 1 range. When negative values are included, Gini coefficents are about the same (see Appendix C4). 
 
-All results presented are weighted. Using weights does not meaningfully change results (see Appendix D4 and F4). Household-level weights are provided by the PSID. The PSID constructs family weights from individual weights using the fair shares method, which assumes that the probability of observing any individual within a family equals the probability of observing the family itself. We extend this approach to construct clan-level weights using the same fair shares principle. Clan weights assume that the probability of observing a family within a clan equals the probability of observing the clan itself. These weights are applied to total clan income or wealth (rather than mean income or wealth) to avoid double standardization by household counts. In effect, clan weights already incorporate the number of households within a clan. As a result, each clan’s influence reflects the representation of the average household within that clan, rather than scaling mechanically with the clan’s total number of households. 
+To construct clan-level measures, we aggregate household income and wealth for all households in a clan within each clan-year. Measures are divided by the number of people in a household or number of households within a clan to standardize by household and clan size, respectively. Adjusting for size descreased inequality and magnifies the difference between household and clan Gini coefficients. Nonetheless, less inequality is estimated when clans are the unit of analysis whether income and wealth are adjusted for size or not (see Appendix C5).
+
+All results presented are weighted. Using weights does not meaningfully change results (see Appendix C6). Household-level weights are provided by the PSID. The PSID constructs family weights from individual weights using the fair shares method, which assumes that the probability of observing any individual within a family equals the probability of observing the family itself. We extend this approach to construct clan-level weights using the same fair shares principle. Clan weights assume that the probability of observing a family within a clan equals the probability of observing the clan itself. As a result, each clan’s influence reflects the representation of the average household within that clan, rather than scaling mechanically with the clan’s total number of households. 
 
 **Measures of race.** The PSID collects race data from household heads and, in some years, from spouses. If a respondent ever identifies as Black, then that value is imputed for all years that respondent appears in the data [@sayer_women_2004]. Black households are all households with a Black head of household. Black clans are clans in which more than half of the households within it identify as Black. Analyses by race and ethnicity are limited to Black and non-Black categories because there are relatively few clans in the PSID data (`r fmt0 (inc_uniq_clans)` for income and `r fmt0(w_uniq_clans)` for wealth). Additionally, the genealogical design of the PSID reflects the demographics of the United States at the time the survey began in 1968, which constrains analyses of clans for demographic groups that were not prominent at that time. Although the PSID incorporated additional samples over time to reflect the changing demographics of the United States in the PSID sample, ethnicity analyses remain limited because Hispanic/Latino households do not form consistent multigenerational lineages over the full panel and therefore have limited clans.
 
-**Indexing inequality with the Gini coefficient.** Inequality is measured using the standard Gini coefficient, which ranges from 0 (perfect equality) to 1 (perfect inequality). Although widely used, the Gini has well-known limitations: it cannot distinguish between different inequality patterns and is most sensitive to variation in the middle of the income or wealth distribution  [@de_maio_income_2007; @kawachi_relationship_1997; @aaberge_ginis_2007]. These features make it well suited to the PSID, which underrepresents wealthy households compared with surveys such as the Survey of Consumer Finance. 
+**Indexing inequality with the Gini coefficient.** Inequality is measured using the standard Gini coefficient, which ranges from 0 (perfect equality) to 1 (perfect inequality). While the Gini index is a widely-used measure of inequality, it has well-known limitations. First, the Gini places greater weight on differences around the middle of the income or wealth distribution, making it well suited to the PSID, which underrepresents wealthy households compared with surveys such as the Survey of Consumer Finance [@atkinson_measurement_1970; @de_maio_income_2007; @kawachi_relationship_1997]. To assess whether our results depend on where inequality is concentrated along the distribution, we also examine two related measures, referred to as the Gini’s “nuclear family” [@aaberge_ginis_2007]. Across all measures, we find that estimated inequality is consistently lower when measured at the clan level than at the household level for both income and wealth (see Appendix G). 
 
 Gini coefficients are calculated separately for income and wealth to reflect their distinct dimensions of inequality. Estimates of Gini coefficients in our data are comparable to estimates that other studies have found, though there is more variation in wealth coefficients, likely because the PSID excludes wealthy households (see Appendix B).
 
@@ -333,85 +356,54 @@ flextable(b2) %>%
 ```
 
 
-# Appendix C: Alternative Inequality Measures {-}
+# Appendix C: Sensitivity Analyses — Gini Coefficients {-}
 
-```{r appendix-c, fig.width=14, fig.height=13, out.width="100%"}
-appendix_c
-```
+## Appendix C1: Gini Coefficients by Race Subgroup {-}
 
-
-# Appendix D1: Sensitivity — Negative Values {-}
-
-```{r appendix-d1, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_gini_1
-```
-
-
-# Appendix D2: Sensitivity — Wealth With and Without Home Equity {-}
-
-```{r appendix-d2, fig.width=14, fig.height=7, out.width="100%"}
-sensitivity_gini_2
-```
-
-
-# Appendix D3: Sensitivity — Single-Household Clans {-}
-
-```{r appendix-d3, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_gini_3
-```
-
-
-# Appendix D4: Sensitivity — Weighting {-}
-
-```{r appendix-d4, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_gini_4
-```
-
-
-# Appendix D5: Sensitivity — Size Standardization {-}
-
-```{r appendix-d5, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_gini_5
-```
-
-
-# Appendix D6: Gini Coefficients by Race Subgroup {-}
-
-```{r appendix-d6, fig.width=14, fig.height=11, out.width="100%"}
+```{r appendix-c1, fig.width=14, fig.height=11, out.width="100%"}
 sensitivity_gini_6
 ```
 
 
-# Appendix E: Distribution of Income and Wealth {-}
+## Appendix C2: Sensitivity — Single-Household Clans {-}
 
-```{r appendix-e, fig.width=14, fig.height=11, out.width="100%"}
-grid.draw(figB)
+```{r appendix-c2, fig.width=14, fig.height=11, out.width="100%"}
+sensitivity_gini_3
 ```
 
 
-# Appendix F1: Race Ratios — Negative Values {-}
+## Appendix C3: Sensitivity — Wealth With and Without Home Equity {-}
 
-```{r appendix-f1, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_ratio_1
+```{r appendix-c3, fig.width=14, fig.height=7, out.width="100%"}
+sensitivity_gini_2
 ```
 
 
-# Appendix F2: Race Ratios — Wealth With and Without Home Equity {-}
+## Appendix C4: Sensitivity — Negative Values {-}
 
-```{r appendix-f2, fig.width=14, fig.height=7, out.width="100%"}
-sensitivity_ratio_2
+```{r appendix-c4, fig.width=14, fig.height=11, out.width="100%"}
+sensitivity_gini_1
 ```
 
 
-# Appendix F3: Race Ratios — Single-Household Clans {-}
+## Appendix C5: Sensitivity — Size Standardization {-}
 
-```{r appendix-f3, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_ratio_3
+```{r appendix-c5, fig.width=14, fig.height=11, out.width="100%"}
+sensitivity_gini_5
 ```
 
 
-# Appendix F4: Race Ratios — Weighting {-}
+## Appendix C6: Sensitivity — Weighting {-}
 
-```{r appendix-f4, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_ratio_4
+```{r appendix-c6, fig.width=14, fig.height=11, out.width="100%"}
+sensitivity_gini_4
 ```
+
+
+# Appendix D: Alternative Inequality Measures {-}
+
+```{r appendix-d, fig.width=14, fig.height=13, out.width="100%"}
+appendix_c
+```
+
+
