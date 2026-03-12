@@ -26,7 +26,7 @@ endif
 # ----------------
 # Project inputs
 # ----------------
-FUNCS := functions/functions.R
+FUNCS := functions/all_functions.R
 
 RMD        := 10_draft/write.rmd
 CSL        := 10_draft/council-of-science-editors-brackets.csl
@@ -51,7 +51,7 @@ STEP5_SCRIPT := 5_summary/src/summary.R
 STEP6_SCRIPT := 6_calculate_gini/src/gini_all.R
 STEP7_SCRIPT := 7_gini_by_race/src/gini_by_race.R
 STEP8_SCRIPT := 8_nuclear_family/src/calc_nuclear_family.R
-STEP9_SCRIPT := 9_figures/src/figures.R
+STEP9_SCRIPT := 9_figures/src/all_figures.R
 
 # ----------------
 # Outputs / stamps
@@ -77,20 +77,18 @@ STEP6_PRIMARY := 6_calculate_gini/output/income.csv
 STEP7_OUTS := \
   7_gini_by_race/output/income_race.csv \
   7_gini_by_race/output/wealth_nohouse_race.csv \
-  7_gini_by_race/output/wealth_withhome_race.csv
+  7_gini_by_race/output/wealth_withhome_race.csv \
+  7_gini_by_race/output/income_race_ratios.csv \
+  7_gini_by_race/output/wealth_withhome_race_ratios.csv \
+  7_gini_by_race/output/wealth_nohouse_race_ratios.csv
 STEP7_PRIMARY := 7_gini_by_race/output/income_race.csv
 
 STEP8_OUTS := \
   8_nuclear_family/output/income_C123.csv \
-  8_nuclear_family/output/wealth_nohouse_C123.csv
+  8_nuclear_family/output/wealth_C123.csv
 STEP8_PRIMARY := 8_nuclear_family/output/income_C123.csv
 
-FIG_DIR  := 9_figures/output
-FIG_OUTS := \
-  $(FIG_DIR)/figure1.pdf \
-  $(FIG_DIR)/figure2.pdf \
-  $(FIG_DIR)/figure3.pdf \
-  $(FIG_DIR)/figureH.pdf
+STEP9_DONE := 9_figures/output/.done
 
 # ----------------
 # Phony targets
@@ -99,9 +97,9 @@ FIG_OUTS := \
 
 all: paper
 
-pipeline: $(STEP8_PRIMARY) $(FIG_OUTS)
+pipeline: $(STEP8_PRIMARY) $(STEP9_DONE)
 
-figures: $(FIG_OUTS)
+figures: $(STEP9_DONE)
 
 paper: $(PAPER_PDF) $(PAPER_DOCX)
 
@@ -182,15 +180,16 @@ $(STEP8_PRIMARY): check-data check-scripts $(STEP7_PRIMARY) $(FUNCS) $(STEP8_SCR
 	$(call run_step,8_nuclear_family,$(STEP8_SCRIPT))
 	@for f in $(STEP8_OUTS); do test -f $$f; done
 
-$(FIG_OUTS): check-data check-scripts $(STEP8_PRIMARY) $(FUNCS) $(STEP9_SCRIPT)
+$(STEP9_DONE): check-data check-scripts $(STEP8_PRIMARY) $(FUNCS) $(STEP9_SCRIPT)
 	$(call run_step,9_figures,$(STEP9_SCRIPT))
-	@for f in $(FIG_OUTS); do test -f $$f; done
+	@mkdir -p 9_figures/output
+	@touch $(STEP9_DONE)
 
 # ----------------
 # Render paper — both PDF and DOCX produced in one render call
 # via the knit: function defined in the Rmd header
 # ----------------
-$(PAPER_PDF) $(PAPER_DOCX): check-data $(FIG_OUTS) $(RMD) $(CSL) $(BIB)
+$(PAPER_PDF) $(PAPER_DOCX): check-data $(STEP9_DONE) $(RMD) $(CSL) $(BIB)
 	@mkdir -p 10_draft/output
 	@echo "==> Rendering paper"
 	@$(R) -e "rmarkdown::render('$(RMD)')"
@@ -210,4 +209,4 @@ veryclean: clean
 	@rm -f $(STEP1_OUT) $(STEP2_OUT)
 	@rm -f $(STEP3_DONE) $(STEP4_DONE)
 	@rm -f $(STEP5_OUTS) $(STEP6_OUTS) $(STEP7_OUTS) $(STEP8_OUTS)
-	@rm -f $(FIG_OUTS)
+	@rm -f $(STEP9_DONE)
