@@ -550,10 +550,12 @@ if (SAVE_FILES) {
 }
 
 
-# ── Table below Figure 4 — Race summary ──────────────────────────────────────
-# Rows: Black, Non-Black, Ratio (Black / Non-Black)
-# Columns: Median Income HH | Median Income Clan | Median Wealth HH |
-#          Median Wealth Clan | HH with 0 Wealth | Clans with 0 Wealth
+# ── Table below Figure 4 — Race summary (two tables) ─────────────────────────
+# Table A: Wealth — columns: Mean HH, Mean Clan, Median HH, Median Clan,
+# Table B: Income — columns: Mean HH, Mean Clan, Median HH, Median Clan
+
+#                             HH with 0 Wealth, Clans with 0 Wealth
+# Rows for both: Black, Non-Black, Ratio (Black / Non-Black)
 
 # Weighted % with zero (or negative) wealth, by race group
 .pct_zero_wealth <- function(df, wealth_var, weight_var, race_var, race_val) {
@@ -576,18 +578,61 @@ zero_w_hh_nonblack <- .pct_zero_wealth(r_hhw_ss, "wealth", "fam_weight",  "black
 zero_w_cl_black    <- .pct_zero_wealth(r_clw_ss, "wealth", "clan_weight", "black_clan",  1)
 zero_w_cl_nonblack <- .pct_zero_wealth(r_clw_ss, "wealth", "clan_weight", "black_clan",  0)
 
-# Assemble the 3-row data frame
-race_summary_tbl <- tibble::tibble(
-  Group                  = c("Black", "Non-Black", "Ratio"),
-  `Median Income HH`     = c(
+# ── Table B: Income ───────────────────────────────────────────────────────────
+race_income_tbl <- tibble::tibble(
+  Group                = c("Black", "Non-Black", "Ratio"),
+  `Mean Income HH`     = c(
+    fmt_money0(inc_race_hh$black),
+    fmt_money0(inc_race_hh$nonblack),
+    sprintf("%.2f", inc_race_hh$black / inc_race_hh$nonblack)
+  ),
+  `Mean Income Clan`   = c(
+    fmt_money0(inc_race_cl$black),
+    fmt_money0(inc_race_cl$nonblack),
+    sprintf("%.2f", inc_race_cl$black / inc_race_cl$nonblack)
+  ),
+  `Median Income HH`   = c(
     fmt_money0(inc_med_hh$black),
     fmt_money0(inc_med_hh$nonblack),
     sprintf("%.2f", inc_med_hh$black / inc_med_hh$nonblack)
   ),
-  `Median Income Clan`   = c(
+  `Median Income Clan` = c(
     fmt_money0(inc_med_cl$black),
     fmt_money0(inc_med_cl$nonblack),
     sprintf("%.2f", inc_med_cl$black / inc_med_cl$nonblack)
+  )
+)
+
+race_income_ft <- flextable::flextable(race_income_tbl) %>%
+  flextable::set_caption(
+    caption = "Table B. Mean and Median Income by Race: Households vs. Clans",
+    autonum = FALSE
+  ) %>%
+  flextable::bold(part = "header") %>%
+  flextable::bold(j = "Group") %>%
+  flextable::bg(part = "header", bg = GREY_HDR) %>%
+  flextable::bg(i = 3, bg = GREY_HDR) %>%
+  flextable::hline(i = 2, part = "body",
+                   border = officer::fp_border(color = "grey60", width = 0.5)) %>%
+  flextable::align(align = "center", part = "all") %>%
+  flextable::align(j = "Group", align = "left", part = "body") %>%
+  flextable::fontsize(size = 10, part = "all") %>%
+  flextable::font(fontname = base_family, part = "all") %>%
+  flextable::padding(padding = 5, part = "all") %>%
+  flextable::fit_to_width(max_width = 6.5)
+
+# ── Table A: Wealth ───────────────────────────────────────────────────────────
+race_wealth_tbl <- tibble::tibble(
+  Group                  = c("Black", "Non-Black", "Ratio"),
+  `Mean Wealth HH`       = c(
+    fmt_money0(w_race_hh$black),
+    fmt_money0(w_race_hh$nonblack),
+    sprintf("%.2f", w_race_hh$black / w_race_hh$nonblack)
+  ),
+  `Mean Wealth Clan`     = c(
+    fmt_money0(w_race_cl$black),
+    fmt_money0(w_race_cl$nonblack),
+    sprintf("%.2f", w_race_cl$black / w_race_cl$nonblack)
   ),
   `Median Wealth HH`     = c(
     fmt_money0(w_med_hh$black),
@@ -611,10 +656,9 @@ race_summary_tbl <- tibble::tibble(
   )
 )
 
-# Flextable rendered directly in Rmd (use race_summary_ft in a code chunk)
-race_summary_ft <- flextable::flextable(race_summary_tbl) %>%
+race_wealth_ft <- flextable::flextable(race_wealth_tbl) %>%
   flextable::set_caption(
-    caption = "Table 1. Median Income and Wealth by Race: Households vs. Clans",
+    caption = "Table A. Mean and Median Wealth by Race: Households vs. Clans",
     autonum = FALSE
   ) %>%
   flextable::bold(part = "header") %>%
@@ -637,4 +681,17 @@ fig4_table_note <- paste0(
   "Ratio row shows Black / Non-Black."
 )
 
+# ── Inline scalars for racial wealth gap paragraph ────────────────────────────
+
+# Mean wealth ratios (Black / Non-Black)
+w_mean_ratio_hh   <- w_race_hh$black  / w_race_hh$nonblack
+w_mean_ratio_cl   <- w_race_cl$black  / w_race_cl$nonblack
+
+# Median wealth ratios (Black / Non-Black)
+w_med_ratio_hh    <- w_med_hh$black   / w_med_hh$nonblack
+w_med_ratio_cl    <- w_med_cl$black   / w_med_cl$nonblack
+
+# % reduction in zero-wealth share moving from HH to Clan level
+zero_w_pct_red_black    <- 100 * (zero_w_hh_black    - zero_w_cl_black)    / zero_w_hh_black
+zero_w_pct_red_nonblack <- 100 * (zero_w_hh_nonblack - zero_w_cl_nonblack) / zero_w_hh_nonblack
 
