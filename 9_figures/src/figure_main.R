@@ -15,7 +15,6 @@ source(here::here("functions", "all_functions.R"))
 if (!exists("SAVE_FILES")) SAVE_FILES <- TRUE
 dir.create(here("9_figures", "output"), recursive = TRUE, showWarnings = FALSE)
 
-
 # Global styles
 base_family <- "serif"
 base_size   <- 22
@@ -44,8 +43,6 @@ inc_by_year    <- read_csv(here("6_calculate_gini", "output", "income.csv"),
 wealth_by_year <- read_csv(here("6_calculate_gini", "output", "wealth_withhome.csv"),
                            show_col_types = FALSE)
 summary_stats  <- read_csv(here("5_summary",         "output", "summary_statistics.csv"),
-                           show_col_types = FALSE)
-inc_ratios     <- read_csv(here("7_gini_by_race",    "output", "income_race_ratios.csv"),
                            show_col_types = FALSE)
 wealth_ratios  <- read_csv(here("7_gini_by_race",    "output", "wealth_withhome_race_ratios.csv"),
                            show_col_types = FALSE)
@@ -102,28 +99,32 @@ w_mean_hh_w   <- summary_stats %>%
 w_mean_cl_w   <- summary_stats %>%
   filter(Table == "Wealth",  Unit == "Clan")      %>% pull(mean_val_w) %>% first()
 
-# Race ratio scalars
-inc_ratio_hh_first <- inc_ratios %>% arrange(year) %>% slice(1)   %>% pull(r_hh_w_ratio)
-inc_ratio_hh_last  <- inc_ratios %>% arrange(year) %>% slice(n()) %>% pull(r_hh_w_ratio)
-inc_ratio_cl_first <- inc_ratios %>% arrange(year) %>% slice(1)   %>% pull(r_cl_w_ratio)
-inc_ratio_cl_last  <- inc_ratios %>% arrange(year) %>% slice(n()) %>% pull(r_cl_w_ratio)
+# ── Figure 3 scalars: Mean wealth ratios ──────────────────────────────────────
+w_ratio_hh_first <- wealth_ratios %>% arrange(year) %>% slice(1)   %>% pull(r_hh_w_mean_ratio)
+w_ratio_hh_last  <- wealth_ratios %>% arrange(year) %>% slice(n()) %>% pull(r_hh_w_mean_ratio)
+w_ratio_cl_first <- wealth_ratios %>% arrange(year) %>% slice(1)   %>% pull(r_cl_w_mean_ratio)
+w_ratio_cl_last  <- wealth_ratios %>% arrange(year) %>% slice(n()) %>% pull(r_cl_w_mean_ratio)
 
-w_ratio_hh_first <- wealth_ratios %>% arrange(year) %>% slice(1)   %>% pull(r_hh_w_ratio)
-w_ratio_hh_last  <- wealth_ratios %>% arrange(year) %>% slice(n()) %>% pull(r_hh_w_ratio)
-w_ratio_cl_first <- wealth_ratios %>% arrange(year) %>% slice(1)   %>% pull(r_cl_w_ratio)
-w_ratio_cl_last  <- wealth_ratios %>% arrange(year) %>% slice(n()) %>% pull(r_cl_w_ratio)
+w_ratio_hh_pct <- 100 * (w_ratio_hh_last - w_ratio_hh_first) / abs(w_ratio_hh_first)
+w_ratio_cl_pct <- 100 * (w_ratio_cl_last - w_ratio_cl_first) / abs(w_ratio_cl_first)
+avg_w_ratio_gap <- round(mean(wealth_ratios$r_hh_w_mean_ratio - wealth_ratios$r_cl_w_mean_ratio,
+                              na.rm = TRUE), 3)
 
-inc_ratio_hh_pct  <- 100 * (inc_ratio_hh_last - inc_ratio_hh_first) / abs(inc_ratio_hh_first)
-inc_ratio_cl_pct  <- 100 * (inc_ratio_cl_last - inc_ratio_cl_first) / abs(inc_ratio_cl_first)
-w_ratio_hh_pct    <- 100 * (w_ratio_hh_last   - w_ratio_hh_first)   / abs(w_ratio_hh_first)
-w_ratio_cl_pct    <- 100 * (w_ratio_cl_last   - w_ratio_cl_first)   / abs(w_ratio_cl_first)
+w_first_yr <- wealth_ratios %>% arrange(year) %>% slice(1)   %>% pull(year)
+w_last_yr  <- wealth_ratios %>% arrange(year) %>% slice(n()) %>% pull(year)
 
-avg_inc_ratio_gap <- round(mean(inc_ratios$r_hh_w_ratio - inc_ratios$r_cl_w_ratio,
-                                na.rm = TRUE), 3)
-avg_w_ratio_gap   <- round(mean(wealth_ratios$r_hh_w_ratio - wealth_ratios$r_cl_w_ratio,
-                                na.rm = TRUE), 3)
+# ── Figure 3 scalars: Median wealth ratios ────────────────────────────────────
+w_med_ratio_hh_first <- wealth_ratios %>% arrange(year) %>% slice(1)   %>% pull(r_hh_w_median_ratio)
+w_med_ratio_hh_last  <- wealth_ratios %>% arrange(year) %>% slice(n()) %>% pull(r_hh_w_median_ratio)
+w_med_ratio_cl_first <- wealth_ratios %>% arrange(year) %>% slice(1)   %>% pull(r_cl_w_median_ratio)
+w_med_ratio_cl_last  <- wealth_ratios %>% arrange(year) %>% slice(n()) %>% pull(r_cl_w_median_ratio)
 
-# Race-stratified weighted means (pooled across all years, size-standardised)
+w_med_ratio_hh_pct <- 100 * (w_med_ratio_hh_last - w_med_ratio_hh_first) / abs(w_med_ratio_hh_first)
+w_med_ratio_cl_pct <- 100 * (w_med_ratio_cl_last - w_med_ratio_cl_first) / abs(w_med_ratio_cl_first)
+avg_w_med_ratio_gap <- round(mean(wealth_ratios$r_hh_w_median_ratio - wealth_ratios$r_cl_w_median_ratio,
+                                  na.rm = TRUE), 3)
+
+# ── Pooled race means and medians ─────────────────────────────────────────────
 .race_means <- function(df, value_var, weight_var, race_var) {
   df_s <- df %>% dplyr::filter(is.finite(.data[[value_var]]),
                                 is.finite(.data[[weight_var]]),
@@ -136,19 +137,26 @@ avg_w_ratio_gap   <- round(mean(wealth_ratios$r_hh_w_ratio - wealth_ratios$r_cl_
   )
 }
 
-inc_race_hh <- .race_means(r_hh    %>% dplyr::mutate(inc_all = inc_all / numfu),
-                            "inc_all", "fam_weight",  "black_head")
-inc_race_cl <- .race_means(r_clans %>% dplyr::mutate(inc_all = inc_all / numclan),
-                            "inc_all", "clan_weight", "black_clan")
-w_race_hh   <- .race_means(r_hh_wealth    %>% dplyr::mutate(wealth = wealth / numfu),
-                            "wealth", "fam_weight",  "black_head")
-w_race_cl   <- .race_means(r_clans_wealth %>% dplyr::mutate(wealth = wealth / numclan),
-                            "wealth", "clan_weight", "black_clan")
+.race_medians <- function(df, value_var, weight_var, race_var) {
+  df_s <- df %>% dplyr::filter(is.finite(.data[[value_var]]),
+                                is.finite(.data[[weight_var]]),
+                                .data[[weight_var]] > 0)
+  list(
+    black    = wtd_median(df_s[[value_var]][df_s[[race_var]] == 1],
+                          df_s[[weight_var]][df_s[[race_var]] == 1]),
+    nonblack = wtd_median(df_s[[value_var]][df_s[[race_var]] == 0],
+                          df_s[[weight_var]][df_s[[race_var]] == 0])
+  )
+}
 
-inc_first_yr <- inc_ratios    %>% arrange(year) %>% slice(1)   %>% pull(year)
-inc_last_yr  <- inc_ratios    %>% arrange(year) %>% slice(n()) %>% pull(year)
-w_first_yr   <- wealth_ratios %>% arrange(year) %>% slice(1)   %>% pull(year)
-w_last_yr    <- wealth_ratios %>% arrange(year) %>% slice(n()) %>% pull(year)
+w_race_hh <- .race_means(r_hh_wealth    %>% dplyr::mutate(wealth = wealth / numfu),
+                          "wealth", "fam_weight",  "black_head")
+w_race_cl <- .race_means(r_clans_wealth %>% dplyr::mutate(wealth = wealth / numclan),
+                          "wealth", "clan_weight", "black_clan")
+w_med_hh  <- .race_medians(r_hh_wealth    %>% dplyr::mutate(wealth = wealth / numfu),
+                             "wealth", "fam_weight",  "black_head")
+w_med_cl  <- .race_medians(r_clans_wealth %>% dplyr::mutate(wealth = wealth / numclan),
+                             "wealth", "clan_weight", "black_clan")
 
 
 # ── Figure 1 — Gini over time ─────────────────────────────────────────────────
@@ -293,73 +301,81 @@ if (SAVE_FILES) {
 }
 
 
-# ── Figure 3 — Black / Non-Black Mean Ratios ──────────────────────────────────
-all_ratio_vals <- c(inc_ratios$r_hh_w_ratio,   inc_ratios$r_cl_w_ratio,
-                    wealth_ratios$r_hh_w_ratio, wealth_ratios$r_cl_w_ratio)
-all_ratio_vals  <- all_ratio_vals[is.finite(all_ratio_vals)]
-shared_y_ratios <- c(floor(min(all_ratio_vals) * 20) / 20,
-                     ceiling(max(all_ratio_vals) * 20) / 20 + 0.05)
+# ── Figure 3 — Black / Non-Black Wealth Ratios (Mean and Median) ──────────────
+fig3_mean_dat <- wealth_ratios %>%
+  select(year,
+         r_hh_w_ratio = r_hh_w_mean_ratio,
+         r_cl_w_ratio = r_cl_w_mean_ratio)
 
-fig3_inc <- make_ratio_plot(
-  inc_ratios,
-  ylab     = "Black / Non-Black\nMean Income Ratio",
-  y_limits = shared_y_ratios
+fig3_med_dat <- wealth_ratios %>%
+  select(year,
+         r_hh_w_ratio = r_hh_w_median_ratio,
+         r_cl_w_ratio = r_cl_w_median_ratio)
+
+# Shared y limits across both panels
+fig3_all_vals <- c(fig3_mean_dat$r_hh_w_ratio, fig3_mean_dat$r_cl_w_ratio,
+                   fig3_med_dat$r_hh_w_ratio,  fig3_med_dat$r_cl_w_ratio)
+fig3_all_vals  <- fig3_all_vals[is.finite(fig3_all_vals)]
+shared_y_fig3  <- c(floor(min(fig3_all_vals) * 20) / 20,
+                    ceiling(max(fig3_all_vals) * 20) / 20 + 0.05)
+
+fig3_mean_plot <- make_ratio_plot(
+  fig3_mean_dat,
+  ylab     = "Black / Non-Black",
+  y_limits = shared_y_fig3
 )
-fig3_w <- make_ratio_plot(
-  wealth_ratios,
-  ylab     = "Black / Non-Black\nMean Wealth Ratio",
-  y_limits = shared_y_ratios
+fig3_med_plot <- make_ratio_plot(
+  fig3_med_dat,
+  ylab     = "Black / Non-Black",
+  y_limits = shared_y_fig3
 )
 
-fig3_note <- paste0(
-  sprintf(
-    paste0(
-      "Note: Lines show the ratio of weighted mean income (Panel A) or wealth (Panel B) ",
-      "for Black relative to Non-Black households and clans. ",
-      "Weighted mean income for Black HH is $%s, $%s for Non-Black HH, $%s for Black clans, and $%s for Non-Black clans. ",
-      "The income ratio changed by %.1f%% for households (%.2f in %d to %.2f in %d) ",
-      "and %.1f%% for clans (%.2f to %.2f). "
-    ),
-    fmt_money0(inc_race_hh$black), fmt_money0(inc_race_hh$nonblack),
-    fmt_money0(inc_race_cl$black), fmt_money0(inc_race_cl$nonblack),
-    inc_ratio_hh_pct, inc_ratio_hh_first, inc_first_yr, inc_ratio_hh_last, inc_last_yr,
-    inc_ratio_cl_pct, inc_ratio_cl_first, inc_ratio_cl_last
+fig3_note <- sprintf(
+  paste0(
+    "Note: Lines show the ratio of Black to Non-Black wealth for households and clans ",
+    "(includes home equity). Panel A uses weighted means; Panel B uses weighted medians. ",
+    "Weighted mean wealth: Black HH $%s, Non-Black HH $%s, Black clans $%s, Non-Black clans $%s. ",
+    "Mean ratio changed by %.1f%% for households (%.2f in %d to %.2f in %d) ",
+    "and %.1f%% for clans (%.2f to %.2f). ",
+    "On average across all years, the mean ratio is %.3f higher for households than clans. ",
+    "Weighted median wealth: Black HH $%s, Non-Black HH $%s, Black clans $%s, Non-Black clans $%s. ",
+    "Median ratio changed by %.1f%% for households (%.2f in %d to %.2f in %d) ",
+    "and %.1f%% for clans (%.2f to %.2f). ",
+    "On average across all years, the median ratio is %.3f higher for households than clans. ",
+    "Solid lines = households; dotted lines = clans."
   ),
-  sprintf(
-    paste0(
-      "Weighted mean wealth for Black HH is $%s, $%s for Non-Black HH, $%s for Black clans, and $%s for Non-Black clans (includes home equity). ",
-      "The wealth ratio changed by %.1f%% for households (%.2f in %d to %.2f in %d) ",
-      "and %.1f%% for clans (%.2f to %.2f). ",
-      "On average across all years, the income ratio is %.3f lower for households than clans, and ",
-      "the wealth ratio is %.3f higher for households than clans. ",
-      "Solid lines = households; dotted lines = clans."
-    ),
-    fmt_money0(w_race_hh$black), fmt_money0(w_race_hh$nonblack),
-    fmt_money0(w_race_cl$black), fmt_money0(w_race_cl$nonblack),
-    w_ratio_hh_pct, w_ratio_hh_first, w_first_yr, w_ratio_hh_last, w_last_yr,
-    w_ratio_cl_pct, w_ratio_cl_first, w_ratio_cl_last,
-    avg_inc_ratio_gap, avg_w_ratio_gap
-  )
+  # Mean scalars
+  fmt_money0(w_race_hh$black),   fmt_money0(w_race_hh$nonblack),
+  fmt_money0(w_race_cl$black),   fmt_money0(w_race_cl$nonblack),
+  w_ratio_hh_pct, w_ratio_hh_first, w_first_yr, w_ratio_hh_last, w_last_yr,
+  w_ratio_cl_pct, w_ratio_cl_first, w_ratio_cl_last,
+  avg_w_ratio_gap,
+  # Median scalars
+  fmt_money0(w_med_hh$black),    fmt_money0(w_med_hh$nonblack),
+  fmt_money0(w_med_cl$black),    fmt_money0(w_med_cl$nonblack),
+  w_med_ratio_hh_pct, w_med_ratio_hh_first, w_first_yr, w_med_ratio_hh_last, w_last_yr,
+  w_med_ratio_cl_pct, w_med_ratio_cl_first, w_med_ratio_cl_last,
+  avg_w_med_ratio_gap
 )
 
 fig3 <- arrangeGrob(
   textGrob(
-    "Figure 3. Black / Non-Black Mean Ratios: Households vs. Clans",
+    "Figure 3. Black / Non-Black Wealth Ratios: Households vs. Clans",
     x = unit(0, "npc"), just = "left",
     gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)
   ),
   arrangeGrob(
     arrangeGrob(
-      textGrob("Panel A: Income",
+      textGrob("Panel A: Mean wealth ratio",
                x = unit(0, "npc"), just = "left",
                gp = gpar(fontfamily = base_family, fontsize = sub_size)),
-      fig3_inc, ncol = 1, heights = c(1, 12)
+      fig3_mean_plot, ncol = 1, heights = c(1, 12)
     ),
     arrangeGrob(
-      textGrob("Panel B: Wealth",
+      textGrob("Panel B: Median wealth ratio",
                x = unit(0, "npc"), just = "left",
                gp = gpar(fontfamily = base_family, fontsize = sub_size)),
-      fig3_w, ncol = 1, heights = c(1, 12)
+      fig3_med_plot, ncol = 1, heights = c(1, 12)
     ),
     ncol = 2
   ),
@@ -372,326 +388,5 @@ if (SAVE_FILES) {
 }
 
 
-# ── Figure 4 — Black / Non-Black Median Ratios Over Time ─────────────────────
 
-.median_ratio_by_year <- function(df, value_var, weight_var, race_var) {
-  df %>%
-    dplyr::filter(is.finite(.data[[value_var]]),
-                  is.finite(.data[[weight_var]]),
-                  .data[[weight_var]] > 0) %>%
-    dplyr::group_by(year) %>%
-    dplyr::summarise(
-      med_black    = wtd_median(
-        .data[[value_var]][.data[[race_var]] == 1],
-        .data[[weight_var]][.data[[race_var]] == 1]),
-      med_nonblack = wtd_median(
-        .data[[value_var]][.data[[race_var]] == 0],
-        .data[[weight_var]][.data[[race_var]] == 0]),
-      .groups = "drop"
-    ) %>%
-    dplyr::mutate(r_hh_w_ratio = med_black / med_nonblack)
-}
-
-fig4_inc_hh <- .median_ratio_by_year(
-  r_hh    %>% dplyr::mutate(inc_all = inc_all / numfu),
-  "inc_all", "fam_weight", "black_head"
-) %>% dplyr::mutate(unit = "Household")
-
-fig4_inc_cl <- .median_ratio_by_year(
-  r_clans %>% dplyr::mutate(inc_all = inc_all / numclan),
-  "inc_all", "clan_weight", "black_clan"
-) %>% dplyr::rename(r_cl_w_ratio = r_hh_w_ratio) %>%
-  dplyr::mutate(unit = "Clan")
-
-fig4_inc_dat <- dplyr::full_join(
-  fig4_inc_hh %>% dplyr::select(year, r_hh_w_ratio),
-  fig4_inc_cl %>% dplyr::select(year, r_cl_w_ratio),
-  by = "year"
-)
-
-fig4_w_hh <- .median_ratio_by_year(
-  r_hh_wealth    %>% dplyr::mutate(wealth = wealth / numfu),
-  "wealth", "fam_weight", "black_head"
-) %>% dplyr::mutate(unit = "Household")
-
-fig4_w_cl <- .median_ratio_by_year(
-  r_clans_wealth %>% dplyr::mutate(wealth = wealth / numclan),
-  "wealth", "clan_weight", "black_clan"
-) %>% dplyr::rename(r_cl_w_ratio = r_hh_w_ratio) %>%
-  dplyr::mutate(unit = "Clan")
-
-fig4_w_dat <- dplyr::full_join(
-  fig4_w_hh %>% dplyr::select(year, r_hh_w_ratio),
-  fig4_w_cl %>% dplyr::select(year, r_cl_w_ratio),
-  by = "year"
-)
-
-# Shared y limits
-fig4_all_vals <- c(fig4_inc_dat$r_hh_w_ratio, fig4_inc_dat$r_cl_w_ratio,
-                   fig4_w_dat$r_hh_w_ratio,   fig4_w_dat$r_cl_w_ratio)
-fig4_all_vals <- fig4_all_vals[is.finite(fig4_all_vals)]
-shared_y_fig4 <- c(floor(min(fig4_all_vals) * 20) / 20,
-                   ceiling(max(fig4_all_vals) * 20) / 20 + 0.05)
-
-fig4_inc_plot <- make_ratio_plot(
-  fig4_inc_dat,
-  ylab     = "Black / Non-Black\nMedian Income Ratio",
-  y_limits = shared_y_fig4
-)
-fig4_w_plot <- make_ratio_plot(
-  fig4_w_dat,
-  ylab     = "Black / Non-Black\nMedian Wealth Ratio",
-  y_limits = shared_y_fig4
-)
-
-# Scalars for fig4 note
-inc4_hh_first <- fig4_inc_dat %>% dplyr::arrange(year) %>% dplyr::slice(1)   %>% dplyr::pull(r_hh_w_ratio)
-inc4_hh_last  <- fig4_inc_dat %>% dplyr::arrange(year) %>% dplyr::slice(n()) %>% dplyr::pull(r_hh_w_ratio)
-inc4_cl_first <- fig4_inc_dat %>% dplyr::arrange(year) %>% dplyr::slice(1)   %>% dplyr::pull(r_cl_w_ratio)
-inc4_cl_last  <- fig4_inc_dat %>% dplyr::arrange(year) %>% dplyr::slice(n()) %>% dplyr::pull(r_cl_w_ratio)
-w4_hh_first   <- fig4_w_dat   %>% dplyr::arrange(year) %>% dplyr::slice(1)   %>% dplyr::pull(r_hh_w_ratio)
-w4_hh_last    <- fig4_w_dat   %>% dplyr::arrange(year) %>% dplyr::slice(n()) %>% dplyr::pull(r_hh_w_ratio)
-w4_cl_first   <- fig4_w_dat   %>% dplyr::arrange(year) %>% dplyr::slice(1)   %>% dplyr::pull(r_cl_w_ratio)
-w4_cl_last    <- fig4_w_dat   %>% dplyr::arrange(year) %>% dplyr::slice(n()) %>% dplyr::pull(r_cl_w_ratio)
-
-inc4_first_yr <- fig4_inc_dat %>% dplyr::arrange(year) %>% dplyr::slice(1)   %>% dplyr::pull(year)
-inc4_last_yr  <- fig4_inc_dat %>% dplyr::arrange(year) %>% dplyr::slice(n()) %>% dplyr::pull(year)
-w4_first_yr   <- fig4_w_dat   %>% dplyr::arrange(year) %>% dplyr::slice(1)   %>% dplyr::pull(year)
-w4_last_yr    <- fig4_w_dat   %>% dplyr::arrange(year) %>% dplyr::slice(n()) %>% dplyr::pull(year)
-
-inc4_hh_pct   <- 100 * (inc4_hh_last - inc4_hh_first) / abs(inc4_hh_first)
-inc4_cl_pct   <- 100 * (inc4_cl_last - inc4_cl_first) / abs(inc4_cl_first)
-w4_hh_pct     <- 100 * (w4_hh_last   - w4_hh_first)   / abs(w4_hh_first)
-w4_cl_pct     <- 100 * (w4_cl_last   - w4_cl_first)   / abs(w4_cl_first)
-
-avg_inc4_gap  <- round(mean(fig4_inc_dat$r_hh_w_ratio - fig4_inc_dat$r_cl_w_ratio, na.rm = TRUE), 3)
-avg_w4_gap    <- round(mean(fig4_w_dat$r_hh_w_ratio   - fig4_w_dat$r_cl_w_ratio,   na.rm = TRUE), 3)
-
-# Pooled median income/wealth by race (for note and table)
-.race_medians <- function(df, value_var, weight_var, race_var) {
-  df_s <- df %>% dplyr::filter(is.finite(.data[[value_var]]),
-                                is.finite(.data[[weight_var]]),
-                                .data[[weight_var]] > 0)
-  list(
-    black    = wtd_median(df_s[[value_var]][df_s[[race_var]] == 1],
-                          df_s[[weight_var]][df_s[[race_var]] == 1]),
-    nonblack = wtd_median(df_s[[value_var]][df_s[[race_var]] == 0],
-                          df_s[[weight_var]][df_s[[race_var]] == 0])
-  )
-}
-
-inc_med_hh <- .race_medians(r_hh    %>% dplyr::mutate(inc_all = inc_all / numfu),
-                             "inc_all", "fam_weight",  "black_head")
-inc_med_cl <- .race_medians(r_clans %>% dplyr::mutate(inc_all = inc_all / numclan),
-                             "inc_all", "clan_weight", "black_clan")
-w_med_hh   <- .race_medians(r_hh_wealth    %>% dplyr::mutate(wealth = wealth / numfu),
-                             "wealth", "fam_weight",  "black_head")
-w_med_cl   <- .race_medians(r_clans_wealth %>% dplyr::mutate(wealth = wealth / numclan),
-                             "wealth", "clan_weight", "black_clan")
-
-fig4_note <- paste0(
-  sprintf(
-    paste0(
-      "Note: Lines show the ratio of weighted median income (Panel A) or wealth (Panel B) ",
-      "for Black relative to Non-Black households and clans. ",
-      "The weighted median income for Black HHs is $%s, $%s for Non-Black HHs, $%s for Black clans, and $%s for Non-Black clans. ",
-      "The income ratio changed by %.1f%% for households (%.2f in %d to %.2f in %d) ",
-      "and %.1f%% for clans (%.2f to %.2f). "
-    ),
-    fmt_money0(inc_med_hh$black), fmt_money0(inc_med_hh$nonblack),
-    fmt_money0(inc_med_cl$black), fmt_money0(inc_med_cl$nonblack),
-    inc4_hh_pct, inc4_hh_first, inc4_first_yr, inc4_hh_last, inc4_last_yr,
-    inc4_cl_pct, inc4_cl_first, inc4_cl_last
-  ),
-  sprintf(
-    paste0(
-      "Weighted median wealth for Black HHs is $%s, $%s for Non-Black HHs, $%s for Black clans, and $%s for Non-Black clans (includes home equity). ",
-      "The wealth ratio changed by %.1f%% for households (%.2f in %d to %.2f in %d) ",
-      "and %.1f%% for clans (%.2f to %.2f). ",
-      "On average across all years, the income ratio is %.3f lower for households than clans, ",
-      "and the wealth ratio is %.3f lower for households than clans. ",
-      "Solid lines = households; dotted lines = clans."
-    ),
-    fmt_money0(w_med_hh$black), fmt_money0(w_med_hh$nonblack),
-    fmt_money0(w_med_cl$black), fmt_money0(w_med_cl$nonblack),
-    w4_hh_pct, w4_hh_first, w4_first_yr, w4_hh_last, w4_last_yr,
-    w4_cl_pct, w4_cl_first, w4_cl_last,
-    avg_inc4_gap, avg_w4_gap
-  )
-)
-
-fig4 <- arrangeGrob(
-  textGrob(
-    "Figure 4. Black / Non-Black Median Ratios: Households vs. Clans",
-    x = unit(0, "npc"), just = "left",
-    gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)
-  ),
-  arrangeGrob(
-    arrangeGrob(
-      textGrob("Panel A: Income",
-               x = unit(0, "npc"), just = "left",
-               gp = gpar(fontfamily = base_family, fontsize = sub_size)),
-      fig4_inc_plot, ncol = 1, heights = c(1, 12)
-    ),
-    arrangeGrob(
-      textGrob("Panel B: Wealth",
-               x = unit(0, "npc"), just = "left",
-               gp = gpar(fontfamily = base_family, fontsize = sub_size)),
-      fig4_w_plot, ncol = 1, heights = c(1, 12)
-    ),
-    ncol = 2
-  ),
-  ncol = 1, heights = unit(c(0.5, 10.0), "inches")
-)
-
-if (SAVE_FILES) {
-  ggsave(here("9_figures", "output", "figure4.pdf"), fig4, width = 14, height = 11)
-  message("Saved: figure4.pdf")
-}
-
-
-# ── Table below Figure 4 — Race summary (two tables) ─────────────────────────
-# Table A: Wealth — columns: Mean HH, Mean Clan, Median HH, Median Clan,
-# Table B: Income — columns: Mean HH, Mean Clan, Median HH, Median Clan
-
-#                             HH with 0 Wealth, Clans with 0 Wealth
-# Rows for both: Black, Non-Black, Ratio (Black / Non-Black)
-
-# Weighted % with zero (or negative) wealth, by race group
-.pct_zero_wealth <- function(df, wealth_var, weight_var, race_var, race_val) {
-  df_s <- df %>%
-    dplyr::filter(is.finite(.data[[wealth_var]]),
-                  is.finite(.data[[weight_var]]),
-                  .data[[weight_var]] > 0,
-                  .data[[race_var]] == race_val)
-  w    <- df_s[[weight_var]]
-  zero <- as.numeric(df_s[[wealth_var]] <= 0)
-  100 * sum(w * zero) / sum(w)
-}
-
-# Size-standardised wealth frames
-r_hhw_ss <- r_hh_wealth    %>% dplyr::mutate(wealth = wealth / numfu)
-r_clw_ss <- r_clans_wealth %>% dplyr::mutate(wealth = wealth / numclan)
-
-zero_w_hh_black    <- .pct_zero_wealth(r_hhw_ss, "wealth", "fam_weight",  "black_head", 1)
-zero_w_hh_nonblack <- .pct_zero_wealth(r_hhw_ss, "wealth", "fam_weight",  "black_head", 0)
-zero_w_cl_black    <- .pct_zero_wealth(r_clw_ss, "wealth", "clan_weight", "black_clan",  1)
-zero_w_cl_nonblack <- .pct_zero_wealth(r_clw_ss, "wealth", "clan_weight", "black_clan",  0)
-
-# ── Table B: Income ───────────────────────────────────────────────────────────
-race_income_tbl <- tibble::tibble(
-  Group                = c("Black", "Non-Black", "Ratio"),
-  `Mean Income HH`     = c(
-    fmt_money0(inc_race_hh$black),
-    fmt_money0(inc_race_hh$nonblack),
-    sprintf("%.2f", inc_race_hh$black / inc_race_hh$nonblack)
-  ),
-  `Mean Income Clan`   = c(
-    fmt_money0(inc_race_cl$black),
-    fmt_money0(inc_race_cl$nonblack),
-    sprintf("%.2f", inc_race_cl$black / inc_race_cl$nonblack)
-  ),
-  `Median Income HH`   = c(
-    fmt_money0(inc_med_hh$black),
-    fmt_money0(inc_med_hh$nonblack),
-    sprintf("%.2f", inc_med_hh$black / inc_med_hh$nonblack)
-  ),
-  `Median Income Clan` = c(
-    fmt_money0(inc_med_cl$black),
-    fmt_money0(inc_med_cl$nonblack),
-    sprintf("%.2f", inc_med_cl$black / inc_med_cl$nonblack)
-  )
-)
-
-race_income_ft <- flextable::flextable(race_income_tbl) %>%
-  flextable::set_caption(
-    caption = "Table B. Mean and Median Income by Race: Households vs. Clans",
-    autonum = FALSE
-  ) %>%
-  flextable::bold(part = "header") %>%
-  flextable::bold(j = "Group") %>%
-  flextable::bg(part = "header", bg = GREY_HDR) %>%
-  flextable::bg(i = 3, bg = GREY_HDR) %>%
-  flextable::hline(i = 2, part = "body",
-                   border = officer::fp_border(color = "grey60", width = 0.5)) %>%
-  flextable::align(align = "center", part = "all") %>%
-  flextable::align(j = "Group", align = "left", part = "body") %>%
-  flextable::fontsize(size = 10, part = "all") %>%
-  flextable::font(fontname = base_family, part = "all") %>%
-  flextable::padding(padding = 5, part = "all") %>%
-  flextable::fit_to_width(max_width = 6.5)
-
-# ── Table A: Wealth ───────────────────────────────────────────────────────────
-race_wealth_tbl <- tibble::tibble(
-  Group                  = c("Black", "Non-Black", "Ratio"),
-  `Mean Wealth HH`       = c(
-    fmt_money0(w_race_hh$black),
-    fmt_money0(w_race_hh$nonblack),
-    sprintf("%.2f", w_race_hh$black / w_race_hh$nonblack)
-  ),
-  `Mean Wealth Clan`     = c(
-    fmt_money0(w_race_cl$black),
-    fmt_money0(w_race_cl$nonblack),
-    sprintf("%.2f", w_race_cl$black / w_race_cl$nonblack)
-  ),
-  `Median Wealth HH`     = c(
-    fmt_money0(w_med_hh$black),
-    fmt_money0(w_med_hh$nonblack),
-    sprintf("%.2f", w_med_hh$black / w_med_hh$nonblack)
-  ),
-  `Median Wealth Clan`   = c(
-    fmt_money0(w_med_cl$black),
-    fmt_money0(w_med_cl$nonblack),
-    sprintf("%.2f", w_med_cl$black / w_med_cl$nonblack)
-  ),
-  `HH with 0 Wealth`     = c(
-    sprintf("%.1f%%", zero_w_hh_black),
-    sprintf("%.1f%%", zero_w_hh_nonblack),
-    sprintf("%.2f", zero_w_hh_black / zero_w_hh_nonblack)
-  ),
-  `Clans with 0 Wealth`  = c(
-    sprintf("%.1f%%", zero_w_cl_black),
-    sprintf("%.1f%%", zero_w_cl_nonblack),
-    sprintf("%.2f", zero_w_cl_black / zero_w_cl_nonblack)
-  )
-)
-
-race_wealth_ft <- flextable::flextable(race_wealth_tbl) %>%
-  flextable::set_caption(
-    caption = "Table A. Mean and Median Wealth by Race: Households vs. Clans",
-    autonum = FALSE
-  ) %>%
-  flextable::bold(part = "header") %>%
-  flextable::bold(j = "Group") %>%
-  flextable::bg(part = "header", bg = GREY_HDR) %>%
-  flextable::bg(i = 3, bg = GREY_HDR) %>%
-  flextable::hline(i = 2, part = "body",
-                   border = officer::fp_border(color = "grey60", width = 0.5)) %>%
-  flextable::align(align = "center", part = "all") %>%
-  flextable::align(j = "Group", align = "left", part = "body") %>%
-  flextable::fontsize(size = 10, part = "all") %>%
-  flextable::font(fontname = base_family, part = "all") %>%
-  flextable::padding(padding = 5, part = "all") %>%
-  flextable::fit_to_width(max_width = 6.5)
-
-fig4_table_note <- paste0(
-  "Note: All values are weighted using PSID family and clan weights and pooled across all years. ",
-  "Income and wealth are size-standardised (divided by household or clan size). ",
-  "Wealth includes home equity. '0 Wealth' indicates wealth <= 0. ",
-  "Ratio row shows Black / Non-Black."
-)
-
-# ── Inline scalars for racial wealth gap paragraph ────────────────────────────
-
-# Mean wealth ratios (Black / Non-Black)
-w_mean_ratio_hh   <- w_race_hh$black  / w_race_hh$nonblack
-w_mean_ratio_cl   <- w_race_cl$black  / w_race_cl$nonblack
-
-# Median wealth ratios (Black / Non-Black)
-w_med_ratio_hh    <- w_med_hh$black   / w_med_hh$nonblack
-w_med_ratio_cl    <- w_med_cl$black   / w_med_cl$nonblack
-
-# % reduction in zero-wealth share moving from HH to Clan level
-zero_w_pct_red_black    <- 100 * (zero_w_hh_black    - zero_w_cl_black)    / zero_w_hh_black
-zero_w_pct_red_nonblack <- 100 * (zero_w_hh_nonblack - zero_w_cl_nonblack) / zero_w_hh_nonblack
 
