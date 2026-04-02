@@ -25,6 +25,11 @@ neg_r_clans        <- readRDS(here("4_clans",      "output", "neg_robust_clans.r
 neg_r_hh_wealth    <- readRDS(here("3_households", "output", "neg_robust_households_wealth.rds"))
 neg_r_clans_wealth <- readRDS(here("4_clans",      "output", "neg_robust_clans_wealth.rds"))
 
+# Load raw (un-size-standardised) wealth files for size sensitivity for race ratios
+# Must be read in again
+r_hh_wealth_raw    <- readRDS(here("3_households", "output", "robust_households_wealth.rds"))
+r_clans_wealth_raw <- readRDS(here("4_clans",      "output", "robust_clans_wealth.rds"))
+
 options(survey.lonely.psu = "adjust")
 
 out_dir <- here("7_gini_by_race", "output")
@@ -147,16 +152,9 @@ wh_by_year_race <- list(r_hh_w_wh, r_cl_w_wh) %>%
   reduce(full_join, by = "year") %>%
   arrange(year) %>%
   append_mean_row()
-write.csv(wh_by_year_race, file.path(out_dir, "wealth_withhome_race.csv"), row.names = FALSE)
-
 
 
 # PART 2: RACE RATIOS
-# For each variable, compute weighted mean by year for Black and Non-Black,
-# then ratio = Black mean / Non-Black mean.
-# Specs: hh_u, hh_w, r_hh_u, r_hh_w, cl_u, cl_w, r_cl_u, r_cl_w,
-#        neg_r_hh_w, neg_r_cl_w
-# Saved as wide CSVs: one row per year, one column per spec
 
 wtd_mean_yr <- function(df, value_var, weight_var = NULL) {
   df %>%
@@ -174,19 +172,46 @@ wtd_mean_yr <- function(df, value_var, weight_var = NULL) {
     )
 }
 
+wtd_median_yr <- function(df, value_var, weight_var = NULL) {
+  df %>%
+    group_by(year) %>%
+    summarise(
+      med = if (is.null(weight_var)) {
+        median(.data[[value_var]], na.rm = TRUE)
+      } else {
+        wtd_median(.data[[value_var]], .data[[weight_var]])
+      },
+      .groups = "drop"
+    )
+}
+
 make_ratio_wide <- function(specs) {
   purrr::map(specs, function(s) {
-    b  <- wtd_mean_yr(s$black_df,    s$value_var, s$weight_var) %>% rename(!!paste0(s$name, "_black_mean")    := m)
-    nb <- wtd_mean_yr(s$nonblack_df, s$value_var, s$weight_var) %>% rename(!!paste0(s$name, "_nonblack_mean") := m)
-    full_join(b, nb, by = "year") %>%
-      mutate(!!paste0(s$name, "_ratio") := .data[[paste0(s$name, "_black_mean")]] /
-                                           .data[[paste0(s$name, "_nonblack_mean")]])
+    b_mean  <- wtd_mean_yr(s$black_df,    s$value_var, s$weight_var) %>%
+      rename(!!paste0(s$name, "_black_mean")    := m)
+    nb_mean <- wtd_mean_yr(s$nonblack_df, s$value_var, s$weight_var) %>%
+      rename(!!paste0(s$name, "_nonblack_mean") := m)
+    mean_tbl <- full_join(b_mean, nb_mean, by = "year") %>%
+      mutate(!!paste0(s$name, "_mean_ratio") :=
+               .data[[paste0(s$name, "_black_mean")]] /
+               .data[[paste0(s$name, "_nonblack_mean")]])
+
+    b_med  <- wtd_median_yr(s$black_df,    s$value_var, s$weight_var) %>%
+      rename(!!paste0(s$name, "_black_median")    := med)
+    nb_med <- wtd_median_yr(s$nonblack_df, s$value_var, s$weight_var) %>%
+      rename(!!paste0(s$name, "_nonblack_median") := med)
+    med_tbl <- full_join(b_med, nb_med, by = "year") %>%
+      mutate(!!paste0(s$name, "_median_ratio") :=
+               .data[[paste0(s$name, "_black_median")]] /
+               .data[[paste0(s$name, "_nonblack_median")]])
+
+    full_join(mean_tbl, med_tbl, by = "year")
   }) %>%
     reduce(full_join, by = "year") %>%
     arrange(year)
 }
 
-# Income ratios ─────────────────────────────────────────────────────────────
+# Income ratios
 inc_ratio_specs <- list(
   list(name = "hh_u",       black_df = hh        %>% filter(black_head == 1, !is.na(black_head)),
                          nonblack_df = hh        %>% filter(black_head == 0, !is.na(black_head)),
@@ -222,7 +247,7 @@ inc_ratio_specs <- list(
 inc_ratios <- make_ratio_wide(inc_ratio_specs)
 write.csv(inc_ratios, file.path(out_dir, "income_race_ratios.csv"), row.names = FALSE)
 
-# Wealth (excl. home equity) ratios ─────────────────────────────────────────
+# Wealth (excl. home equity) ratios
 wnh_ratio_specs <- list(
   list(name = "hh_u",       black_df = hh_wealth        %>% filter(black_head == 1, !is.na(black_head)),
                          nonblack_df = hh_wealth        %>% filter(black_head == 0, !is.na(black_head)),
@@ -258,7 +283,7 @@ wnh_ratio_specs <- list(
 wnh_ratios <- make_ratio_wide(wnh_ratio_specs)
 write.csv(wnh_ratios, file.path(out_dir, "wealth_nohouse_race_ratios.csv"), row.names = FALSE)
 
-# Wealth (incl. home equity) ratios ─────────────────────────────────────────
+# Wealth (incl. home equity) ratios
 wh_ratio_specs <- list(
   list(name = "hh_u",       black_df = hh_wealth        %>% filter(black_head == 1, !is.na(black_head)),
                          nonblack_df = hh_wealth        %>% filter(black_head == 0, !is.na(black_head)),
@@ -292,4 +317,21 @@ wh_ratio_specs <- list(
        value_var = "wealth", weight_var = "clan_weight")
 )
 wh_ratios <- make_ratio_wide(wh_ratio_specs)
-write.csv(wh_ratios, file.path(out_dir, "wealth_withhome_race_ratios.csv"), row.names = FALSE)
+
+
+# Race ratios when for size unstandardized  
+unadj_wh_ratio_specs <- list(
+  list(name = "r_hh_w_unadj",
+       black_df    = r_hh_wealth_raw %>% filter(black_head == 1, !is.na(black_head)),
+       nonblack_df = r_hh_wealth_raw %>% filter(black_head == 0, !is.na(black_head)),
+       value_var = "wealth", weight_var = "fam_weight"),
+  list(name = "r_cl_w_unadj",
+       black_df    = r_clans_wealth_raw %>% filter(black_clan == 1, !is.na(black_clan)),
+       nonblack_df = r_clans_wealth_raw %>% filter(black_clan == 0, !is.na(black_clan)),
+       value_var = "wealth", weight_var = "clan_weight")
+)
+unadj_wh_ratios <- make_ratio_wide(unadj_wh_ratio_specs)
+
+wh_ratios_full <- wh_ratios %>%
+  left_join(unadj_wh_ratios, by = "year")
+write.csv(wh_ratios_full, file.path(out_dir, "wealth_withhome_race_ratios.csv"), row.names = FALSE)
