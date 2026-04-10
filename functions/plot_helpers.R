@@ -15,7 +15,7 @@ make_sub_draw <- function(txt) {
                         fontfamily = base_family, size = sub_size)
 }
 
-# Figure 1 style: Gini over time (HH solid / Clan dotted) ──────────────────
+# Figure 1 style: Gini over time (HH solid / Clan dotted) ────────────────────
 
 make_gini_plot <- function(by_year_df, hh_col, cl_col, ylab,
                             y_limits = NULL) {
@@ -54,7 +54,7 @@ make_gini_plot <- function(by_year_df, hh_col, cl_col, ylab,
     ))
 }
 
-# Figure 2 style: Lorenz curves ────────────────────────────────────────────
+# Figure 2 style: Lorenz curves ───────────────────────────────────────────────
 
 .lorenz_data <- function(df, value_var, weight_var, years, unit_label) {
   df %>%
@@ -117,7 +117,7 @@ make_lorenz_plot <- function(df_hh, df_cl, value_var, years, ylab, colors) {
     )
 }
 
-# Figure 3 style: ratio plot (HH solid / Clan dotted) ─────────────────────
+# Figure 3 style: ratio plot (HH solid / Clan dotted) ────────────────────────
 
 make_ratio_plot <- function(dat, ylab, y_limits = NULL, hline = 1) {
   d <- dat %>%
@@ -161,7 +161,6 @@ make_ratio_plot <- function(dat, ylab, y_limits = NULL, hline = 1) {
 
 # ── Sensitivity helpers ───────────────────────────────────────────────────────
 
-# Shared base theme for all sensitivity panels (no legend, no x-axis label)
 .sens_base_t <- function() {
   ggplot2::theme(
     legend.position = "none",
@@ -174,9 +173,6 @@ make_ratio_plot <- function(dat, ylab, y_limits = NULL, hline = 1) {
     plot.subtitle = ggplot2::element_text(size = sub_size * 0.6, hjust = 0.5))
 }
 
-# Legend for make_sensitivity_plot figures (C2-C6, E1-E5):
-# solid/dotted orange = main HH/Clan, solid/dotted blue = alt HH/Clan,
-# dashed orange = main HH-Clan diff, dashed blue = alt HH-Clan diff.
 .sens_legend <- function() {
   DIFF_LABEL_MAIN <- "Main HH-Clan diff"
   DIFF_LABEL_ALT  <- "Alt HH-Clan diff"
@@ -197,10 +193,10 @@ make_ratio_plot <- function(dat, ylab, y_limits = NULL, hline = 1) {
     ggplot2::scale_color_manual(
       name   = NULL,
       values = c(
-        "Main HH"         = ORANGE,
-        "Main Clan"       = PALE_ORANGE,
-        "Alt HH"          = BLUE,
-        "Alt Clan"        = PALE_BLUE,
+        "Main HH"           = ORANGE,
+        "Main Clan"         = PALE_ORANGE,
+        "Alt HH"            = BLUE,
+        "Alt Clan"          = PALE_BLUE,
         "Main HH-Clan diff" = ORANGE,
         "Alt HH-Clan diff"  = BLUE
       )
@@ -225,9 +221,6 @@ make_ratio_plot <- function(dat, ylab, y_limits = NULL, hline = 1) {
   cowplot::get_legend(donor)
 }
 
-# Legend for make_race_sensitivity_plot (C1):
-# solid/dotted orange = Black HH/Clan, solid/dotted blue = Non-Black HH/Clan,
-# dashed orange = Black HH-Clan diff, dashed blue = Non-Black HH-Clan diff.
 .race_sens_legend <- function() {
   leg_df <- data.frame(
     x   = 1:2,
@@ -246,11 +239,11 @@ make_ratio_plot <- function(dat, ylab, y_limits = NULL, hline = 1) {
     ggplot2::scale_color_manual(
       name   = NULL,
       values = c(
-        "Black HH"              = ORANGE,
-        "Black Clan"            = PALE_ORANGE,
-        "Non-Black HH"          = BLUE,
-        "Non-Black Clan"        = PALE_BLUE,
-        "Black HH-Clan diff"    = ORANGE,
+        "Black HH"               = ORANGE,
+        "Black Clan"             = PALE_ORANGE,
+        "Non-Black HH"           = BLUE,
+        "Non-Black Clan"         = PALE_BLUE,
+        "Black HH-Clan diff"     = ORANGE,
         "Non-Black HH-Clan diff" = BLUE
       )
     ) +
@@ -350,7 +343,6 @@ make_sensitivity_plot <- function(df, main_hh, main_cl, alt_hh, alt_cl,
                   color = NULL, linetype = NULL, subtitle = right_label) +
     .sens_base_t() + .sens_sub_t()
 
-  # Plain ASCII column names to avoid backtick + unicode parse error
   long_diff <- dat %>%
     dplyr::select(year, main_diff, alt_diff) %>%
     tidyr::pivot_longer(-year, names_to = "spec", values_to = "Difference") %>%
@@ -412,7 +404,7 @@ make_sensitivity_figure <- function(plot_inc, plot_w, title_str,
   }
 }
 
-# Wealth-only figure: title + single plot + shared legend
+# Wealth-only sensitivity figure: single plot + shared legend
 make_single_sensitivity_figure <- function(plot_w, title_str, show_title = TRUE) {
   leg <- .sens_legend()
   if (show_title) {
@@ -494,7 +486,6 @@ make_race_sensitivity_plot <- function(dat,
                   color = NULL, linetype = NULL) +
     .sens_base_t() + .sens_sub_t()
 
-  # Plain ASCII column names, recode to display labels afterwards
   diff_dat <- dat %>%
     dplyr::transmute(
       year,
@@ -616,7 +607,7 @@ make_c123_panel <- function(dat, y_limits = NULL, show_unit,
     .sens_base_t() + .sens_sub_t()
 }
 
-# ── Appendix E style: ratio sensitivity 3-panel (main | alt | diff) ──────────
+# ── Appendix F style: ratio sensitivity 3-panel (main | alt | diff) ──────────
 
 make_ratio_sensitivity_plot <- function(dat,
                                          main_hh, main_cl,
@@ -673,7 +664,6 @@ make_ratio_sensitivity_plot <- function(dat,
     ggplot2::labs(x = NULL, y = NULL, subtitle = right_label) +
     .sens_base_t() + .sens_sub_t()
 
-  # Plain ASCII column names, recode to display labels afterwards
   long_diff <- wide %>%
     dplyr::select(year, main_diff, alt_diff) %>%
     tidyr::pivot_longer(-year, names_to = "spec", values_to = "Difference") %>%
@@ -704,39 +694,12 @@ make_ratio_sensitivity_plot <- function(dat,
   cowplot::plot_grid(pA, pB, pC, nrow = 1)
 }
 
-# Wrapper: title + Panel A (mean) + Panel B (median) + single shared legend
-make_ratio_sensitivity_figure_fig3 <- function(plot_mean, plot_median,
-                                                title_str, show_title = FALSE) {
-  sub_a_grob <- cowplot::ggdraw() +
-    cowplot::draw_label("Panel A: Mean wealth ratio", x = 0, hjust = 0,
-                        fontfamily = base_family, size = sub_size)
-  sub_b_grob <- cowplot::ggdraw() +
-    cowplot::draw_label("Panel B: Median wealth ratio", x = 0, hjust = 0,
-                        fontfamily = base_family, size = sub_size)
-
-  leg <- .sens_legend()
-
-  if (show_title) {
-    title_grob <- cowplot::ggdraw() +
-      cowplot::draw_label(title_str, x = 0, hjust = 0, fontface = "bold",
-                          fontfamily = base_family, size = title_size)
-    cowplot::plot_grid(
-      title_grob, sub_a_grob, plot_mean, sub_b_grob, plot_median, leg,
-      ncol = 1, rel_heights = c(0.08, 0.05, 1, 0.05, 1, 0.12)
-    )
-  } else {
-    cowplot::plot_grid(
-      sub_a_grob, plot_mean, sub_b_grob, plot_median, leg,
-      ncol = 1, rel_heights = c(0.05, 1, 0.05, 1, 0.12)
-    )
-  }
-}
-
-# Wrapper: title + Panel A (income) + Panel B (wealth) + single shared legend
-make_ratio_sensitivity_figure <- function(plot_inc, plot_w, title_str,
-                                           sub_a = "Panel A: Income",
-                                           sub_b = "Panel B: Wealth",
-                                           show_title = TRUE) {
+# Wrapper: title + Panel A + Panel B + single shared legend
+make_ratio_sensitivity_figure <- function(plot_a, plot_b,
+                                           title_str,
+                                           sub_a = "Panel A: Median wealth ratio",
+                                           sub_b = "Panel B: Mean wealth ratio",
+                                           show_title = FALSE) {
   sub_a_grob <- cowplot::ggdraw() +
     cowplot::draw_label(sub_a, x = 0, hjust = 0,
                         fontfamily = base_family, size = sub_size)
@@ -751,12 +714,12 @@ make_ratio_sensitivity_figure <- function(plot_inc, plot_w, title_str,
       cowplot::draw_label(title_str, x = 0, hjust = 0, fontface = "bold",
                           fontfamily = base_family, size = title_size)
     cowplot::plot_grid(
-      title_grob, sub_a_grob, plot_inc, sub_b_grob, plot_w, leg,
+      title_grob, sub_a_grob, plot_a, sub_b_grob, plot_b, leg,
       ncol = 1, rel_heights = c(0.08, 0.05, 1, 0.05, 1, 0.12)
     )
   } else {
     cowplot::plot_grid(
-      sub_a_grob, plot_inc, sub_b_grob, plot_w, leg,
+      sub_a_grob, plot_a, sub_b_grob, plot_b, leg,
       ncol = 1, rel_heights = c(0.05, 1, 0.05, 1, 0.12)
     )
   }

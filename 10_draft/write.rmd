@@ -86,7 +86,7 @@ source(here::here("9_figures", "src", "all_figures.R"))
 ```
 
 # Abstract
-Most macro-level studies of inequality treat households as the primary unit of analysis, focusing on disparities between households. As a result, far less is known about inequality between extended families. Building on research highlighting the importance of intergenerational family ties, we examine income and wealth inequality in the United States using both households and intergenerational extended families—hereafter referred to as clans. Using data from the Panel Study of Income Dynamics (PSID), we calculate Gini coefficients for income and wealth at the household and clan levels from 1969 to 2023. We find that both income and wealth inequality are higher when measured at the household level than at the clan level. Wealth inequality has increased at similar rates across both units, whereas income inequality has grown more rapidly at the clan level than at the household level. These divergent patterns reflect differences in where inequality emerges within the distributions: the gap between household and clan wealth inequality is driven primarily by those in the middle of the wealth distribution, while the gap in income inequality is driven by units across the entire income distribution. Finally, although the mean racial wealth gap between Black and non-Black households and clans is similar, the median racial wealth gap is more pronounced at the household level. Together, these findings underscore the importance of considering extended families—in addition to households—when examining contemporary patterns of inequality in the United States.
+Most macro-level studies of inequality treat households as the primary unit of analysis, focusing on disparities between households. As a result, far less is known about inequality between extended families. Building on research highlighting the importance of intergenerational family ties, we examine income and wealth inequality in the United States using both households and intergenerational extended families—hereafter referred to as clans. Using data from the Panel Study of Income Dynamics (PSID), we calculate Gini coefficients for income and wealth at the household and clan levels from 1968 to 2023. We find that both income and wealth inequality are higher when measured at the household level than at the clan level. Wealth inequality has increased at similar rates across both units, whereas income inequality has grown more rapidly at the clan level than at the household level. These divergent patterns reflect differences in where inequality emerges within the distributions: the gap between household and clan wealth inequality is driven primarily by those in the middle of the wealth distribution, while the gap in income inequality is driven by units across the entire income distribution. Finally, although the mean racial wealth gap between Black and non-Black households and clans is similar, the median racial wealth gap is more pronounced at the household level. Together, these findings underscore the importance of considering extended families—in addition to households—when examining contemporary patterns of inequality in the United States.
 
 
 # Significance Statement
@@ -101,12 +101,12 @@ Yet this predominant focus on households overlooks the fact that households are 
 
 Drawing on scholarship showing the importance of extended families, we ask: what do income and wealth inequality in the U.S. look like when examined not only at the household level but also at the level of intergenerational extended families—what we refer to as "clans" [@shiffer-sebba_concentration_2022].  In our empirical analyses, we use data from the Panel Study of Income Dynamics (PSID), a nationally representative longitudinal survey that has followed American households and their descendants since 1968. In the PSID, households include economically interdependent individuals living in the same dwelling, while clans include all descendants linked to an original household through a family identifier. In practice, this means that clans are comprised of households linked by birth, marriage, and adoption spanning multiple generations and extended kin ties (grandparents, aunts, uncles, and cousins and in some cases great-grandparents, great-uncles, second cousins, and so on).
 
-We calculate Gini coefficients for both income and wealth at the household and clan levels from 1969 to 2023. Conceptually, the Gini can be understood as the average difference between any two units in a population. Arithmetically, it is the average absolute difference between all pairs of observations, normalized by the mean. The Gini is often illustrated with the Lorenz curve, which plots the cumulative share of income or wealth against the cumulative share of the population—whether defined as households or clans. Perfect equality appears as a 45° line where income or wealth is distributed evenly; greater inequality pulls the curve farther below this line. The Gini summarizes this deviation from perfect equality. Comparing household- and clan-level Ginis therefore shows whether the average difference between households is larger or smaller than the average difference between clans.
+We calculate Gini coefficients for both income and wealth at the household and clan levels from 1968 to 2023. Conceptually, the Gini can be understood as the average difference between any two units in a population. Arithmetically, it is the average absolute difference between all pairs of observations, normalized by the mean. The Gini is often illustrated with the Lorenz curve, which plots the cumulative share of income or wealth against the cumulative share of the population—whether defined as households or clans. Perfect equality appears as a 45° line where income or wealth is distributed evenly; greater inequality pulls the curve farther below this line. The Gini summarizes this deviation from perfect equality. Comparing household- and clan-level Ginis therefore shows whether the average difference between households is larger or smaller than the average difference between clans.
 
 Using clans as the unit of analysis requires aggregating households. One may think that aggregating units smooths variation and will inherently lead to a Gini coefficient representing less inequality. However, this is not the case. Using simulated data, we show that it is possible to obtain clan-level Gini coefficients equal to or higher than a household-level Gini coefficient (see Appendix Table A). Whether the Gini coefficient increases or decreases from the household to the clan level depends on the relationship between clan size, the overall distribution of resources, and the selection of households into clans.  
 
 # Results
-**Comparing Gini coefficients at the household and clan levels.** Figure 1 depicts income and wealth inequality for all households and clans over time. Reflecting available data, Panel A plots income Gini coefficients from 1969 to 2023 and Panel B plots wealth Gini coefficients from 1984 to 2023. Inequality is lower when using clans as the unit of analysis rather than households. The Gini coefficient for income falls by `r fmt2(inc_gini_diff)` points on average (from `r fmt2(avg_inc_hh)` to `r fmt2(avg_inc_cl)`), a `r fmt2(inc_gini_pct_red)`% decline, while the wealth Gini falls by `r fmt2(w_gini_diff)` points on average (from `r fmt2(avg_w_hh)` to `r fmt2(avg_w_cl)`), about a `r fmt1(w_gini_pct_red)`% decrease. Taken together, these results indicate that both wealth and income inequality are higher when measured using households versus extended family units.
+**Comparing Gini coefficients at the household and clan levels.** Figure 1 depicts income and wealth inequality for all households and clans over time. Reflecting available data, Panel A plots income Gini coefficients from 1968 to 2023 and Panel B plots wealth Gini coefficients from 1984 to 2023. Inequality is lower when using clans as the unit of analysis rather than households. The Gini coefficient for income falls by `r fmt2(inc_gini_diff)` points on average (from `r fmt2(avg_inc_hh)` to `r fmt2(avg_inc_cl)`), a `r fmt2(inc_gini_pct_red)`% decline, while the wealth Gini falls by `r fmt2(w_gini_diff)` points on average (from `r fmt2(avg_w_hh)` to `r fmt2(avg_w_cl)`), about a `r fmt1(w_gini_pct_red)`% decrease. Taken together, these results indicate that both wealth and income inequality are higher when measured using households versus extended family units.
 
 
 ```{r figure1, fig.width=14, fig.height=11}
@@ -172,7 +172,7 @@ Additionally, although all households belong to a clan, not all extended family 
 
 The PSID has collected income data since its inception but began collecting wealth data only in 1984. As a result, analytic samples differ: income analyses include `r fmt0(inc_hh_years)` household-years and `r fmt0(inc_cl_years)` clan-years, representing `r fmt0 (inc_uniq_clans)` unique clans; wealth analyses include `r fmt0(w_hh_years)` household-years and `r fmt0(w_cl_years)` clan-years, representing `r fmt0(w_uniq_clans)` unique clans.
 
-**Measures of income and wealth.** We measure both income and wealth to capture distinct dimensions of economic inequality. This choice follows from research identifying divergent patterns depending on choice of financial indicator because mechanisms driving wealth inequality are distinct from those driving income inequality [@killewald_wealth_2017; @pfeffer_determinants_2017; @hallsten_grand_2017]. Aggregate measures for income and wealth are provided by the PSID. Income includes earnings, asset income, transfers, and income from farming and gardening. Wealth includes non-primary real estate, business equity, stocks, bonds, vehicles, retirement accounts, and bank accounts, and includes home equity. As a sensitivity analysis, we compare Gini coefficients for wealth measures that exclude home equity (see Appendix C3). When home equity  is excluded, estimated inequality is lower at both the household and clan level, but the difference between household and clan-level Gini coefficients remains similar.
+**Measures of income and wealth.** We measure both income and wealth to capture distinct dimensions of economic inequality. This choice follows from research identifying divergent patterns depending on choice of financial indicator because mechanisms driving wealth inequality are distinct from those driving income inequality [@killewald_wealth_2017; @pfeffer_determinants_2017; @hallsten_grand_2017]. Aggregate measures for income and wealth are provided by the PSID. Income includes earnings, asset income, transfers, and income from farming and gardening. Income is recorded for the year prior to when the survey is fielded. For example, survey data collected in 2023 asks about income in 2022. Wealth includes non-primary real estate, business equity, stocks, bonds, vehicles, retirement accounts, and bank accounts, and includes home equity. As a sensitivity analysis, we compare Gini coefficients for wealth measures that exclude home equity (see Appendix C3). When home equity  is excluded, estimated inequality is lower at both the household and clan level, but the difference between household and clan-level Gini coefficients remains similar.
 
 Missing data for components of income and wealth are imputed by the PSID. Concerns about measurement error, especially for wealth, are minimal, as imputation methods utilized by the PSID explain little of the variation in wealth over time [@pfeffer_determinants_2017; @si_multiple_2021]. All income and wealth values are adjusted for inflation. Additionally, analyses set negative values of income and wealth to zero so that Gini coefficients are interpretable by remaining in the 0 to 1 range. When negative values are included, Gini coefficents are about the same (see Appendix C4). 
 
@@ -367,44 +367,52 @@ appendix_d
 ```
 
 
-# Appendix E: Sensitivity Analyses — Race Ratios {-}
+# Appendix E: Mean Wealth Ratios {-}
 
-## Appendix E1: Race Ratios — Single-Household Clans {-}
-Appendix E1 shows Black / Non-Black wealth ratios when single-household clans are excluded (main specification, left panels) versus included (right panels). Panel A shows mean wealth ratios and Panel B shows median wealth ratios. Including single-household clans minimizes but does not eliminate the difference between household and clan race ratios.
+Appendix E shows Black / Non-Black wealth ratios using weighted means for households and clans. Panel A shows the median wealth ratio (as in Figure 3) and Panel B shows the mean wealth ratio. 
 
-```{r appendix-e1, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_ratio_e1
+```{r appendix-e, fig.width=14, fig.height=11, out.width="100%"}
+grid::grid.draw(appendix_e)
 ```
 
 
-## Appendix E2: Race Ratios — Wealth With and Without Home Equity {-}
-Appendix E2 compares Black / Non-Black wealth ratios when home equity is included (main specification, left panels) versus excluded (right panels). Panel A shows mean wealth ratios and Panel B shows median wealth ratios.
+# Appendix F: Sensitivity Analyses — Race Ratios {-}
 
-```{r appendix-e2, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_ratio_e2
+## Appendix F1: Race Ratios — Single-Household Clans {-}
+Appendix F1 shows Black / Non-Black wealth ratios when single-household clans are excluded (main specification, left panels) versus included (right panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios. Including single-household clans minimizes but does not eliminate the difference between household and clan race ratios.
+
+```{r appendix-f1, fig.width=14, fig.height=11, out.width="100%"}
+sensitivity_ratio_f1
 ```
 
 
-## Appendix E3: Race Ratios — Negative Values {-}
-Appendix E3 shows Black / Non-Black wealth ratios when negative wealth values are excluded (main specification, left panels) versus included (right panels). Panel A shows mean wealth ratios and Panel B shows median wealth ratios. Including negative values does not substantially change the estimated race ratios.
+## Appendix F2: Race Ratios — Wealth With and Without Home Equity {-}
+Appendix F2 compares Black / Non-Black wealth ratios when home equity is included (main specification, left panels) versus excluded (right panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios.
 
-```{r appendix-e3, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_ratio_e3
+```{r appendix-f2, fig.width=14, fig.height=11, out.width="100%"}
+sensitivity_ratio_f2
 ```
 
 
-## Appendix E4: Race Ratios — Size Standardization {-}
-Appendix E4 compares Black / Non-Black wealth ratios when wealth is size-standardized by household and clan size (main specification, left panels) versus unadjusted (right panels). Panel A shows mean wealth ratios and Panel B shows median wealth ratios.
+## Appendix F3: Race Ratios — Negative Values {-}
+Appendix F3 shows Black / Non-Black wealth ratios when negative wealth values are excluded (main specification, left panels) versus included (right panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios. Including negative values does not substantially change the estimated race ratios.
 
-```{r appendix-e4, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_ratio_e4
+```{r appendix-f3, fig.width=14, fig.height=11, out.width="100%"}
+sensitivity_ratio_f3
 ```
 
 
-## Appendix E5: Race Ratios — Weighting {-}
-Appendix E5 shows Black / Non-Black wealth ratios using weighted estimates (main specification, left panels) versus unweighted estimates (right panels). Panel A shows mean wealth ratios and Panel B shows median wealth ratios. Weighting does not substantially change the estimated race ratios.
+## Appendix F4: Race Ratios — Size Standardization {-}
+Appendix F4 compares Black / Non-Black wealth ratios when wealth is size-standardized by household and clan size (main specification, left panels) versus unadjusted (right panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios.
 
-```{r appendix-e5, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_ratio_e5
+```{r appendix-f4, fig.width=14, fig.height=11, out.width="100%"}
+sensitivity_ratio_f4
 ```
 
+
+## Appendix F5: Race Ratios — Weighting {-}
+Appendix F5 shows Black / Non-Black wealth ratios using weighted estimates (main specification, left panels) versus unweighted estimates (right panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios. Weighting does not substantially change the estimated race ratios.
+
+```{r appendix-f5, fig.width=14, fig.height=11, out.width="100%"}
+sensitivity_ratio_f5
+```

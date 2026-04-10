@@ -1,5 +1,5 @@
 # ============================================================
-# Makefile for clan_project (robust to variable output prefixes)
+# Makefile for clan_project
 # ============================================================
 # NOTE: This Makefile is written for Unix-style environments.
 # It works on macOS, Linux, and Windows Git Bash. It will NOT
@@ -26,7 +26,13 @@ endif
 # ----------------
 # Project inputs
 # ----------------
-FUNCS := functions/all_functions.R
+FUNCS := functions/all_functions.R \
+         functions/data_utils.R \
+         functions/gini_utils.R \
+         functions/plot_helpers.R \
+         functions/table_helpers.R \
+         functions/wtd_stats.R \
+         functions/sims.R
 
 RMD        := 10_draft/write.rmd
 CSL        := 10_draft/council-of-science-editors-brackets.csl
@@ -59,8 +65,24 @@ STEP9_SCRIPT := 9_figures/src/all_figures.R
 STEP1_OUT := 1_build_panel/output/build.rds
 STEP2_OUT := 2_clean_panel/output/clean.rds
 
-STEP3_DONE := 3_households/output/.done
-STEP4_DONE := 4_clans/output/.done
+STEP3_OUTS := \
+  3_households/output/robust_households.rds \
+  3_households/output/robust_households_wealth.rds \
+  3_households/output/households.rds \
+  3_households/output/households_wealth.rds \
+  3_households/output/neg_robust_households.rds \
+  3_households/output/neg_robust_households_wealth.rds \
+  3_households/output/mismatched.rds
+STEP3_PRIMARY := 3_households/output/robust_households.rds
+
+STEP4_OUTS := \
+  4_clans/output/robust_clans.rds \
+  4_clans/output/robust_clans_wealth.rds \
+  4_clans/output/clans.rds \
+  4_clans/output/clans_wealth.rds \
+  4_clans/output/neg_robust_clans.rds \
+  4_clans/output/neg_robust_clans_wealth.rds
+STEP4_PRIMARY := 4_clans/output/robust_clans.rds
 
 STEP5_OUTS := \
   5_summary/output/summary_statistics.csv \
@@ -85,10 +107,28 @@ STEP7_PRIMARY := 7_gini_by_race/output/income_race.csv
 
 STEP8_OUTS := \
   8_nuclear_family/output/income_C123.csv \
-  8_nuclear_family/output/wealth_C123.csv
+  8_nuclear_family/output/wealth_C123.csv \
+  8_nuclear_family/output/wealth_nohouse_C123.csv
 STEP8_PRIMARY := 8_nuclear_family/output/income_C123.csv
 
-STEP9_DONE := 9_figures/output/.done
+STEP9_OUTS := \
+  9_figures/output/figure1.pdf \
+  9_figures/output/figure2.pdf \
+  9_figures/output/figure3.pdf \
+  9_figures/output/appendixC1.pdf \
+  9_figures/output/appendixC2.pdf \
+  9_figures/output/appendixC3.pdf \
+  9_figures/output/appendixC4.pdf \
+  9_figures/output/appendixC5.pdf \
+  9_figures/output/appendixC6.pdf \
+  9_figures/output/appendixD.pdf \
+  9_figures/output/appendixE.pdf \
+  9_figures/output/appendixF1.pdf \
+  9_figures/output/appendixF2.pdf \
+  9_figures/output/appendixF3.pdf \
+  9_figures/output/appendixF4.pdf \
+  9_figures/output/appendixF5.pdf
+STEP9_PRIMARY := 9_figures/output/figure1.pdf
 
 # ----------------
 # Phony targets
@@ -97,9 +137,9 @@ STEP9_DONE := 9_figures/output/.done
 
 all: paper
 
-pipeline: $(STEP8_PRIMARY) $(STEP9_DONE)
+pipeline: $(STEP8_PRIMARY) $(STEP9_PRIMARY)
 
-figures: $(STEP9_DONE)
+figures: $(STEP9_PRIMARY)
 
 paper: $(PAPER_PDF) $(PAPER_DOCX)
 
@@ -140,7 +180,7 @@ check-scripts:
 define run_step
 	@echo "==> Running: $(1)"
 	@echo "    Script: $(2)"
-	@$(R) -e "source('$(FUNCS)'); source('$(2)')"
+	@$(R) -e "source('$(2)')"
 endef
 
 # ----------------
@@ -154,17 +194,15 @@ $(STEP2_OUT): check-data check-scripts $(STEP1_OUT) $(FUNCS) $(STEP2_SCRIPT)
 	$(call run_step,2_clean_panel,$(STEP2_SCRIPT))
 	@test -f $(STEP2_OUT)
 
-$(STEP3_DONE): check-data check-scripts $(STEP2_OUT) $(FUNCS) $(STEP3_SCRIPT)
+$(STEP3_PRIMARY): check-data check-scripts $(STEP2_OUT) $(FUNCS) $(STEP3_SCRIPT)
 	$(call run_step,3_households,$(STEP3_SCRIPT))
-	@mkdir -p 3_households/output
-	@touch $(STEP3_DONE)
+	@for f in $(STEP3_OUTS); do test -f $$f; done
 
-$(STEP4_DONE): check-data check-scripts $(STEP3_DONE) $(FUNCS) $(STEP4_SCRIPT)
+$(STEP4_PRIMARY): check-data check-scripts $(STEP3_PRIMARY) $(FUNCS) $(STEP4_SCRIPT)
 	$(call run_step,4_clans,$(STEP4_SCRIPT))
-	@mkdir -p 4_clans/output
-	@touch $(STEP4_DONE)
+	@for f in $(STEP4_OUTS); do test -f $$f; done
 
-$(STEP6_PRIMARY): check-data check-scripts $(STEP4_DONE) $(FUNCS) $(STEP6_SCRIPT)
+$(STEP6_PRIMARY): check-data check-scripts $(STEP4_PRIMARY) $(FUNCS) $(STEP6_SCRIPT)
 	$(call run_step,6_calculate_gini,$(STEP6_SCRIPT))
 	@for f in $(STEP6_OUTS); do test -f $$f; done
 
@@ -180,16 +218,15 @@ $(STEP8_PRIMARY): check-data check-scripts $(STEP7_PRIMARY) $(FUNCS) $(STEP8_SCR
 	$(call run_step,8_nuclear_family,$(STEP8_SCRIPT))
 	@for f in $(STEP8_OUTS); do test -f $$f; done
 
-$(STEP9_DONE): check-data check-scripts $(STEP8_PRIMARY) $(FUNCS) $(STEP9_SCRIPT)
+$(STEP9_PRIMARY): check-data check-scripts $(STEP8_PRIMARY) $(FUNCS) $(STEP9_SCRIPT)
 	$(call run_step,9_figures,$(STEP9_SCRIPT))
-	@mkdir -p 9_figures/output
-	@touch $(STEP9_DONE)
+	@for f in $(STEP9_OUTS); do test -f $$f; done
 
 # ----------------
 # Render paper — both PDF and DOCX produced in one render call
 # via the knit: function defined in the Rmd header
 # ----------------
-$(PAPER_PDF) $(PAPER_DOCX): check-data $(STEP9_DONE) $(RMD) $(CSL) $(BIB)
+$(PAPER_PDF) $(PAPER_DOCX): check-data $(STEP9_PRIMARY) $(RMD) $(CSL) $(BIB)
 	@mkdir -p 10_draft/output
 	@echo "==> Rendering paper"
 	@$(R) -e "rmarkdown::render('$(RMD)')"
@@ -205,8 +242,8 @@ clean:
 	@rm -f $(PAPER_PDF) $(PAPER_DOCX)
 
 veryclean: clean
-	@echo "==> Removing pipeline outputs + stamps (careful)"
+	@echo "==> Removing pipeline outputs (careful)"
 	@rm -f $(STEP1_OUT) $(STEP2_OUT)
-	@rm -f $(STEP3_DONE) $(STEP4_DONE)
+	@rm -f $(STEP3_OUTS) $(STEP4_OUTS)
 	@rm -f $(STEP5_OUTS) $(STEP6_OUTS) $(STEP7_OUTS) $(STEP8_OUTS)
-	@rm -f $(STEP9_DONE)
+	@rm -f $(STEP9_OUTS)
