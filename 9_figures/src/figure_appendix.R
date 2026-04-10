@@ -43,7 +43,6 @@ inc_race_all <- read_csv(here("7_gini_by_race", "output", "income_race.csv"),
 w_race_all   <- read_csv(here("7_gini_by_race", "output", "wealth_withhome_race.csv"),
                          show_col_types = FALSE) %>% filter(year == "ALL")
 
-# All ratio CSVs
 wealth_ratios <- read_csv(here("7_gini_by_race", "output", "wealth_withhome_race_ratios.csv"),
                           show_col_types = FALSE)
 wnh_ratios    <- read_csv(here("7_gini_by_race", "output", "wealth_nohouse_race_ratios.csv"),
@@ -78,14 +77,8 @@ w_diff_nonblack   <- w_race_all$r_hh_w_wealth_nonblack - w_race_all$r_cl_w_wealt
 
 
 # ── Appendix C: Gini Sensitivity Analyses (C1–C6) ────────────────────────────
-# Each figure mirrors Figure 1: Panel A = income ginis, Panel B = wealth ginis. 
-# Each panel is a 3-panel sensitivity plot (main | alt | diff).
-# Main spec throughout: size-standardised, weighted, positive only, robust sample
-# wealth with home equity (r_hh_w_mean_ratio / r_cl_w_mean_ratio).
-# Each figure changes exactly one of these dimensions.
 
 # C1 — Race (Gini by race subgroup) ──────────────────────────────────────────
-# Change: Racial subgroups
 shared_y_race <- {
   vals <- c(inc_race_yr$r_hh_w_inc_black,     inc_race_yr$r_cl_w_inc_black,
             inc_race_yr$r_hh_w_inc_nonblack,  inc_race_yr$r_cl_w_inc_nonblack,
@@ -128,7 +121,6 @@ if (SAVE_FILES) {
 }
 
 # C2 — Sample: single-household clans ────────────────────────────────────────
-# Change: robust (excl. single-HH clans) vs. not robust (incl. single-HH clans)
 sensitivity_gini_3 <- make_sensitivity_figure(
   make_sensitivity_plot(df = income_all,
     main_hh = "r_hh_w_inc", main_cl = "r_cl_w_inc",
@@ -147,7 +139,6 @@ if (SAVE_FILES) {
 }
 
 # C3 — Wealth without home equity ─────────────────────────────────────────────
-# Change: wealth with home equity vs. wealth without home equity
 wealth_d2_df <- wealth_wh_all %>%
   left_join(
     wealth_nh_all %>% dplyr::select(
@@ -170,7 +161,6 @@ if (SAVE_FILES) {
 }
 
 # C4 — Negative values ────────────────────────────────────────────────────────
-# Change: excluding negative inc/wealth vs. including negative inc/wealth
 sensitivity_gini_1 <- make_sensitivity_figure(
   make_sensitivity_plot(df = income_all,
     main_hh = "r_hh_w_inc",   main_cl = "r_cl_w_inc",
@@ -189,7 +179,6 @@ if (SAVE_FILES) {
 }
 
 # C5 — Size standardization ───────────────────────────────────────────────────
-# Change: size-standardised (divided by numfu / numclan) vs. unadjusted
 r_hh_raw    <- readRDS(here("3_households", "output", "robust_households.rds"))
 r_clans_raw <- readRDS(here("4_clans",      "output", "robust_clans.rds"))
 r_hh_w_raw  <- readRDS(here("3_households", "output", "robust_households_wealth.rds"))
@@ -240,7 +229,6 @@ if (SAVE_FILES) {
 }
 
 # C6 — Weighting ──────────────────────────────────────────────────────────────
-# Change: weighted vs. unweighted
 sensitivity_gini_4 <- make_sensitivity_figure(
   make_sensitivity_plot(df = income_all,
     main_hh = "r_hh_w_inc",   main_cl = "r_cl_w_inc",
@@ -326,14 +314,86 @@ if (SAVE_FILES) {
 }
 
 
-# ── Appendix E: Race Ratio Sensitivity Analyses (E1–E5) ──────────────────────
-# Each figure mirrors Figure 3: Panel A = mean wealth ratio, Panel B = median wealth ratio. 
-# Each panel is a 3-panel sensitivity plot (main | alt | diff).
-# Main spec throughout: size-standardised, weighted, positive only, robust,
-# wealth with home equity (r_hh_w_mean_ratio / r_cl_w_mean_ratio).
-# Each figure changes exactly one of these dimensions.
+# ── Appendix E: Mean and Median Wealth Ratios ─────────────────────────────────
+appendix_e_med_plot <- make_ratio_plot(
+  wealth_ratios %>% select(year,
+                           r_hh_w_ratio = r_hh_w_median_ratio,
+                           r_cl_w_ratio = r_cl_w_median_ratio),
+  ylab = "Black / Non-Black"
+)
 
-# Shared y limits across all mean and median ratio columns in both CSVs
+appendix_e_mean_plot <- make_ratio_plot(
+  wealth_ratios %>% select(year,
+                           r_hh_w_ratio = r_hh_w_mean_ratio,
+                           r_cl_w_ratio = r_cl_w_mean_ratio),
+  ylab = "Black / Non-Black"
+)
+
+appendix_e_note <- sprintf(
+  paste0(
+    "Note: Lines show the ratio of Black to Non-Black wealth for households and clans ",
+    "(includes home equity). Panel A uses weighted medians; Panel B uses weighted means. ",
+    "Weighted median wealth: Black HH $%s, Non-Black HH $%s, ",
+    "Black clans $%s, Non-Black clans $%s. ",
+    "Median ratio changed by %.1f%% for households (%.2f in %d to %.2f in %d) ",
+    "and %.1f%% for clans (%.2f to %.2f). ",
+    "On average across all years, the median ratio is %.3f higher for households than clans. ",
+    "Weighted mean wealth: Black HH $%s, Non-Black HH $%s, ",
+    "Black clans $%s, Non-Black clans $%s. ",
+    "Mean ratio changed by %.1f%% for households (%.2f in %d to %.2f in %d) ",
+    "and %.1f%% for clans (%.2f to %.2f). ",
+    "On average across all years, the mean ratio is %.3f higher for households than clans. ",
+    "Solid lines = households; dotted lines = clans. ",
+    "See Figure 3 for median wealth ratios."
+  ),
+  # Median scalars
+  fmt_money0(w_med_hh$black),    fmt_money0(w_med_hh$nonblack),
+  fmt_money0(w_med_cl$black),    fmt_money0(w_med_cl$nonblack),
+  w_med_ratio_hh_pct, w_med_ratio_hh_first, w_first_yr, w_med_ratio_hh_last, w_last_yr,
+  w_med_ratio_cl_pct, w_med_ratio_cl_first, w_med_ratio_cl_last,
+  avg_w_med_ratio_gap,
+  # Mean scalars
+  fmt_money0(w_race_hh$black),   fmt_money0(w_race_hh$nonblack),
+  fmt_money0(w_race_cl$black),   fmt_money0(w_race_cl$nonblack),
+  w_ratio_hh_pct, w_ratio_hh_first, w_first_yr, w_ratio_hh_last, w_last_yr,
+  w_ratio_cl_pct, w_ratio_cl_first, w_ratio_cl_last,
+  avg_w_ratio_gap
+)
+
+appendix_e <- arrangeGrob(
+  textGrob(
+    "Appendix E. Black / Non-Black Wealth Ratios: Households vs. Clans",
+    x = unit(0, "npc"), just = "left",
+    gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)
+  ),
+  arrangeGrob(
+    arrangeGrob(
+      textGrob("Panel A: Median wealth ratio",
+               x = unit(0, "npc"), just = "left",
+               gp = gpar(fontfamily = base_family, fontsize = sub_size)),
+      appendix_e_med_plot, ncol = 1, heights = c(1, 12)
+    ),
+    arrangeGrob(
+      textGrob("Panel B: Mean wealth ratio",
+               x = unit(0, "npc"), just = "left",
+               gp = gpar(fontfamily = base_family, fontsize = sub_size)),
+      appendix_e_mean_plot, ncol = 1, heights = c(1, 12)
+    ),
+    ncol = 2
+  ),
+  ncol = 1, heights = unit(c(0.5, 10.0), "inches")
+)
+
+if (SAVE_FILES) {
+  ggsave(here("9_figures", "output", "appendixE.pdf"),
+         appendix_e, width = 14, height = 11)
+  message("Saved: appendixE.pdf")
+}
+
+
+# ── Appendix F: Race Ratio Sensitivity Analyses (F1–F5) ──────────────────────
+# Panel A = median wealth ratio, Panel B = mean wealth ratio throughout.
+
 all_ratio_vals <- c(
   unlist(wealth_ratios %>% select(ends_with("_mean_ratio"))),
   unlist(wealth_ratios %>% select(ends_with("_median_ratio"))),
@@ -344,7 +404,6 @@ all_ratio_vals <- all_ratio_vals[is.finite(all_ratio_vals)]
 shared_y_rsens <- c(floor(min(all_ratio_vals) * 20) / 20,
                     ceiling(max(all_ratio_vals) * 20) / 20 + 0.05)
 
-# Helper: diff limits for a single hh/cl column pair in one data frame
 diff_limits_for <- function(dat, hh_col, cl_col) {
   vals <- dat[[hh_col]] - dat[[cl_col]]
   vals <- vals[is.finite(vals)]
@@ -352,33 +411,31 @@ diff_limits_for <- function(dat, hh_col, cl_col) {
 }
 
 
-# E1 — Sample: single-household clans ─────────────────────────────────────────
-# Change: robust (excl. single-HH clans) vs. not robust (incl. single-HH clans)
-sensitivity_ratio_e1 <- make_ratio_sensitivity_figure_fig3(
-  make_ratio_sensitivity_plot(wealth_ratios,
-    main_hh = "r_hh_w_mean_ratio", main_cl = "r_cl_w_mean_ratio",
-    alt_hh  = "hh_w_mean_ratio",   alt_cl  = "cl_w_mean_ratio",
-    left_label = "Excl. single-HH clans", right_label = "Incl. single-HH clans",
-    y_limits    = shared_y_rsens,
-    diff_limits = diff_limits_for(wealth_ratios, "hh_w_mean_ratio", "cl_w_mean_ratio")),
+# F1 — Sample: single-household clans ─────────────────────────────────────────
+sensitivity_ratio_f1 <- make_ratio_sensitivity_figure(
   make_ratio_sensitivity_plot(wealth_ratios,
     main_hh = "r_hh_w_median_ratio", main_cl = "r_cl_w_median_ratio",
     alt_hh  = "hh_w_median_ratio",   alt_cl  = "cl_w_median_ratio",
     left_label = "Excl. single-HH clans", right_label = "Incl. single-HH clans",
     y_limits    = shared_y_rsens,
     diff_limits = diff_limits_for(wealth_ratios, "hh_w_median_ratio", "cl_w_median_ratio")),
-  title_str = "Appendix E1. Race Ratios: Single-Household Clans"
+  make_ratio_sensitivity_plot(wealth_ratios,
+    main_hh = "r_hh_w_mean_ratio", main_cl = "r_cl_w_mean_ratio",
+    alt_hh  = "hh_w_mean_ratio",   alt_cl  = "cl_w_mean_ratio",
+    left_label = "Excl. single-HH clans", right_label = "Incl. single-HH clans",
+    y_limits    = shared_y_rsens,
+    diff_limits = diff_limits_for(wealth_ratios, "hh_w_mean_ratio", "cl_w_mean_ratio")),
+  title_str = "Appendix F1. Race Ratios: Single-Household Clans"
 )
 if (SAVE_FILES) {
-  ggsave(here("9_figures", "output", "appendixE1.pdf"),
-         sensitivity_ratio_e1, width = 14, height = 11)
-  message("Saved: appendixE1.pdf")
+  ggsave(here("9_figures", "output", "appendixF1.pdf"),
+         sensitivity_ratio_f1, width = 14, height = 11)
+  message("Saved: appendixF1.pdf")
 }
 
 
-# E2 — Wealth without home equity ─────────────────────────────────────────────
-# Change: wealth with home equity vs. wealth without home equity
-wealth_e2 <- wealth_ratios %>%
+# F2 — Wealth without home equity ─────────────────────────────────────────────
+wealth_f2 <- wealth_ratios %>%
   left_join(
     wnh_ratios %>% dplyr::select(
       year,
@@ -388,95 +445,92 @@ wealth_e2 <- wealth_ratios %>%
       r_cl_w_median_ratio_nh = r_cl_w_median_ratio),
     by = "year")
 
-sensitivity_ratio_e2 <- make_ratio_sensitivity_figure_fig3(
-  make_ratio_sensitivity_plot(wealth_e2,
-    main_hh = "r_hh_w_mean_ratio",    main_cl = "r_cl_w_mean_ratio",
-    alt_hh  = "r_hh_w_mean_ratio_nh", alt_cl  = "r_cl_w_mean_ratio_nh",
-    left_label = "Incl. home equity", right_label = "Excl. home equity",
-    y_limits    = shared_y_rsens,
-    diff_limits = diff_limits_for(wealth_e2, "r_hh_w_mean_ratio", "r_cl_w_mean_ratio")),
-  make_ratio_sensitivity_plot(wealth_e2,
+sensitivity_ratio_f2 <- make_ratio_sensitivity_figure(
+  make_ratio_sensitivity_plot(wealth_f2,
     main_hh = "r_hh_w_median_ratio",    main_cl = "r_cl_w_median_ratio",
     alt_hh  = "r_hh_w_median_ratio_nh", alt_cl  = "r_cl_w_median_ratio_nh",
     left_label = "Incl. home equity", right_label = "Excl. home equity",
     y_limits    = shared_y_rsens,
-    diff_limits = diff_limits_for(wealth_e2, "r_hh_w_median_ratio", "r_cl_w_median_ratio")),
-  title_str = "Appendix E2. Race Ratios: Wealth With and Without Home Equity"
+    diff_limits = diff_limits_for(wealth_f2, "r_hh_w_median_ratio", "r_cl_w_median_ratio")),
+  make_ratio_sensitivity_plot(wealth_f2,
+    main_hh = "r_hh_w_mean_ratio",    main_cl = "r_cl_w_mean_ratio",
+    alt_hh  = "r_hh_w_mean_ratio_nh", alt_cl  = "r_cl_w_mean_ratio_nh",
+    left_label = "Incl. home equity", right_label = "Excl. home equity",
+    y_limits    = shared_y_rsens,
+    diff_limits = diff_limits_for(wealth_f2, "r_hh_w_mean_ratio", "r_cl_w_mean_ratio")),
+  title_str = "Appendix F2. Race Ratios: Wealth With and Without Home Equity"
 )
 if (SAVE_FILES) {
-  ggsave(here("9_figures", "output", "appendixE2.pdf"),
-         sensitivity_ratio_e2, width = 14, height = 11)
-  message("Saved: appendixE2.pdf")
+  ggsave(here("9_figures", "output", "appendixF2.pdf"),
+         sensitivity_ratio_f2, width = 14, height = 11)
+  message("Saved: appendixF2.pdf")
 }
 
 
-# E3 — Negative values ────────────────────────────────────────────────────────
-# Change: excluding negative wealth vs. including negative wealth
-sensitivity_ratio_e3 <- make_ratio_sensitivity_figure_fig3(
-  make_ratio_sensitivity_plot(wealth_ratios,
-    main_hh = "r_hh_w_mean_ratio",     main_cl = "r_cl_w_mean_ratio",
-    alt_hh  = "neg_r_hh_w_mean_ratio", alt_cl  = "neg_r_cl_w_mean_ratio",
-    left_label = "Excl. negative values", right_label = "Incl. negative values",
-    y_limits    = shared_y_rsens,
-    diff_limits = diff_limits_for(wealth_ratios, "neg_r_hh_w_mean_ratio", "neg_r_cl_w_mean_ratio")),
+# F3 — Negative values ────────────────────────────────────────────────────────
+sensitivity_ratio_f3 <- make_ratio_sensitivity_figure(
   make_ratio_sensitivity_plot(wealth_ratios,
     main_hh = "r_hh_w_median_ratio",     main_cl = "r_cl_w_median_ratio",
     alt_hh  = "neg_r_hh_w_median_ratio", alt_cl  = "neg_r_cl_w_median_ratio",
     left_label = "Excl. negative values", right_label = "Incl. negative values",
     y_limits    = shared_y_rsens,
     diff_limits = diff_limits_for(wealth_ratios, "neg_r_hh_w_median_ratio", "neg_r_cl_w_median_ratio")),
-  title_str = "Appendix E3. Race Ratios: Negative Values"
+  make_ratio_sensitivity_plot(wealth_ratios,
+    main_hh = "r_hh_w_mean_ratio",     main_cl = "r_cl_w_mean_ratio",
+    alt_hh  = "neg_r_hh_w_mean_ratio", alt_cl  = "neg_r_cl_w_mean_ratio",
+    left_label = "Excl. negative values", right_label = "Incl. negative values",
+    y_limits    = shared_y_rsens,
+    diff_limits = diff_limits_for(wealth_ratios, "neg_r_hh_w_mean_ratio", "neg_r_cl_w_mean_ratio")),
+  title_str = "Appendix F3. Race Ratios: Negative Values"
 )
 if (SAVE_FILES) {
-  ggsave(here("9_figures", "output", "appendixE3.pdf"),
-         sensitivity_ratio_e3, width = 14, height = 11)
-  message("Saved: appendixE3.pdf")
+  ggsave(here("9_figures", "output", "appendixF3.pdf"),
+         sensitivity_ratio_f3, width = 14, height = 11)
+  message("Saved: appendixF3.pdf")
 }
 
 
-# E4 — Size standardization ───────────────────────────────────────────────────
-# Change: size-standardised (divided by numfu / numclan) vs. unadjusted
-sensitivity_ratio_e4 <- make_ratio_sensitivity_figure_fig3(
+# F4 — Size standardization ───────────────────────────────────────────────────
+sensitivity_ratio_f4 <- make_ratio_sensitivity_figure(
   make_ratio_sensitivity_plot(wealth_ratios,
-    main_hh = "r_hh_w_mean_ratio",        main_cl = "r_cl_w_mean_ratio",
-    alt_hh  = "r_hh_w_unadj_mean_ratio",  alt_cl  = "r_cl_w_unadj_mean_ratio",
-    left_label = "Size-standardised", right_label = "Unadjusted",
-    y_limits    = shared_y_rsens,
-    diff_limits = diff_limits_for(wealth_ratios, "r_hh_w_unadj_mean_ratio", "r_cl_w_unadj_mean_ratio")),
-  make_ratio_sensitivity_plot(wealth_ratios,
-    main_hh = "r_hh_w_median_ratio",        main_cl = "r_cl_w_median_ratio",
-    alt_hh  = "r_hh_w_unadj_median_ratio",  alt_cl  = "r_cl_w_unadj_median_ratio",
+    main_hh = "r_hh_w_median_ratio",       main_cl = "r_cl_w_median_ratio",
+    alt_hh  = "r_hh_w_unadj_median_ratio", alt_cl  = "r_cl_w_unadj_median_ratio",
     left_label = "Size-standardised", right_label = "Unadjusted",
     y_limits    = shared_y_rsens,
     diff_limits = diff_limits_for(wealth_ratios, "r_hh_w_unadj_median_ratio", "r_cl_w_unadj_median_ratio")),
-  title_str = "Appendix E4. Race Ratios: Size Standardization"
+  make_ratio_sensitivity_plot(wealth_ratios,
+    main_hh = "r_hh_w_mean_ratio",       main_cl = "r_cl_w_mean_ratio",
+    alt_hh  = "r_hh_w_unadj_mean_ratio", alt_cl  = "r_cl_w_unadj_mean_ratio",
+    left_label = "Size-standardised", right_label = "Unadjusted",
+    y_limits    = shared_y_rsens,
+    diff_limits = diff_limits_for(wealth_ratios, "r_hh_w_unadj_mean_ratio", "r_cl_w_unadj_mean_ratio")),
+  title_str = "Appendix F4. Race Ratios: Size Standardization"
 )
 if (SAVE_FILES) {
-  ggsave(here("9_figures", "output", "appendixE4.pdf"),
-         sensitivity_ratio_e4, width = 14, height = 11)
-  message("Saved: appendixE4.pdf")
+  ggsave(here("9_figures", "output", "appendixF4.pdf"),
+         sensitivity_ratio_f4, width = 14, height = 11)
+  message("Saved: appendixF4.pdf")
 }
 
 
-# E5 — Weighting ──────────────────────────────────────────────────────────────
-# Change: weighted vs. unweighted
-sensitivity_ratio_e5 <- make_ratio_sensitivity_figure_fig3(
-  make_ratio_sensitivity_plot(wealth_ratios,
-    main_hh = "r_hh_w_mean_ratio", main_cl = "r_cl_w_mean_ratio",
-    alt_hh  = "r_hh_u_mean_ratio", alt_cl  = "r_cl_u_mean_ratio",
-    left_label = "Weighted", right_label = "Unweighted",
-    y_limits    = shared_y_rsens,
-    diff_limits = diff_limits_for(wealth_ratios, "r_hh_u_mean_ratio", "r_cl_u_mean_ratio")),
+# F5 — Weighting ──────────────────────────────────────────────────────────────
+sensitivity_ratio_f5 <- make_ratio_sensitivity_figure(
   make_ratio_sensitivity_plot(wealth_ratios,
     main_hh = "r_hh_w_median_ratio", main_cl = "r_cl_w_median_ratio",
     alt_hh  = "r_hh_u_median_ratio", alt_cl  = "r_cl_u_median_ratio",
     left_label = "Weighted", right_label = "Unweighted",
     y_limits    = shared_y_rsens,
     diff_limits = diff_limits_for(wealth_ratios, "r_hh_u_median_ratio", "r_cl_u_median_ratio")),
-  title_str = "Appendix E5. Race Ratios: Weighting"
+  make_ratio_sensitivity_plot(wealth_ratios,
+    main_hh = "r_hh_w_mean_ratio", main_cl = "r_cl_w_mean_ratio",
+    alt_hh  = "r_hh_u_mean_ratio", alt_cl  = "r_cl_u_mean_ratio",
+    left_label = "Weighted", right_label = "Unweighted",
+    y_limits    = shared_y_rsens,
+    diff_limits = diff_limits_for(wealth_ratios, "r_hh_u_mean_ratio", "r_cl_u_mean_ratio")),
+  title_str = "Appendix F5. Race Ratios: Weighting"
 )
 if (SAVE_FILES) {
-  ggsave(here("9_figures", "output", "appendixE5.pdf"),
-         sensitivity_ratio_e5, width = 14, height = 11)
-  message("Saved: appendixE5.pdf")
+  ggsave(here("9_figures", "output", "appendixF5.pdf"),
+         sensitivity_ratio_f5, width = 14, height = 11)
+  message("Saved: appendixF5.pdf")
 }
