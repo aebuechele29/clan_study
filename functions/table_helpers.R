@@ -75,9 +75,9 @@ style_dist_ft <- function(ft) {
   ft %>%
     flextable::set_header_labels(
       Statistic = "Statistic",
-      HH1 = "HH", Clan1 = "Clan",
-      HH2 = "HH", Clan2 = "Clan",
-      HH3 = "HH", Clan3 = "Clan"
+      HH1 = "HH", Clan1 = "Kin Group",
+      HH2 = "HH", Clan2 = "Kin Group",
+      HH3 = "HH", Clan3 = "Kin Group"
     ) %>%
     flextable::add_header_row(
       values    = c("", "All", "Black", "Non-Black"),
@@ -163,7 +163,7 @@ make_ratio_tbl <- function(hh_all, cl_all, r_hh_all, r_cl_all,
       dplyr::mutate(
         ratio    = mean_val_black / mean_val_nonblack,
         spec     = s$label,
-        unit     = ifelse(grepl("cl",  s$label), "Clan",        "Household"),
+        unit     = ifelse(grepl("cl",  s$label), "Kin Group",   "Household"),
         weighted = ifelse(grepl("_w",  s$label), "Weighted",    "Unweighted"),
         robust   = ifelse(grepl("^r_", s$label), "Robust",      "All")
       )

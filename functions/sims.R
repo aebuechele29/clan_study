@@ -50,7 +50,7 @@ plot_lorenz_for_sim_sums <- function(sim) {
 
   ld <- dplyr::bind_rows(
     lorenz_df_safe(x_house, "Households"),
-    lorenz_df_safe(x_clan,  "Clan sums")
+    lorenz_df_safe(x_clan,  "Kin Groups")
   )
 
   ggplot2::ggplot(ld, ggplot2::aes(x = p, y = L, linetype = group)) +
@@ -116,7 +116,7 @@ make_two_mekko_sums <- function(sims, idx_min_sums, idx_max_sums) {
     dplyr::summarise(
       x = 0.01,
       y = max(y_max) * 1.02,
-      lab = sprintf("Household Gini - Clan Gini = %.3f", dplyr::first(diff)),
+      lab = sprintf("Household Gini - Kin Group Gini = %.3f", dplyr::first(diff)),
       .groups = "drop"
     )
 
@@ -127,7 +127,7 @@ make_two_mekko_sums <- function(sims, idx_min_sums, idx_max_sums) {
     ggplot2::geom_text(data = label_df, ggplot2::aes(x = x, y = y, label = lab),
                        hjust = 0, vjust = 0, size = 3.6) +
     ggplot2::labs(
-      x = "Cumulative share of households (by clan width)",
+      x = "Cumulative share of households (by kin group width)",
       y = NULL
     ) +
     ggplot2::theme_minimal(base_size = 11) +

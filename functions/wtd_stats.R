@@ -53,6 +53,14 @@ wtd_mean_by_year <- function(df, value_var, weight_var = NULL) {
     )
 }
 
+# Weighted standard deviation
+wtd_sd <- function(x, w) {
+  keep <- is.finite(x) & is.finite(w) & w > 0
+  x <- x[keep]; w <- w[keep]
+  mu <- sum(x * w) / sum(w)
+  sqrt(sum(w * (x - mu)^2) / sum(w))
+}
+
 # Vectorised helpers used inside data pipeline scripts (2_clean_panel,
 # 3_households) — kept here so they are always available after source().
 efficient_max <- function(x, na.rm = FALSE) {
