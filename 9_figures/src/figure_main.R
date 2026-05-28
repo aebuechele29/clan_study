@@ -22,10 +22,12 @@ title_size  <- 26
 sub_size    <- 24
 note_size   <- 14
 
-ORANGE      <- "#E66101"
-PALE_ORANGE <- "#FDB863"
-BLUE        <- "#4a71c7"
-PALE_BLUE   <- "#92aee0"
+NAVY        <- "#185FA5"
+PALE_NAVY   <- "#85B7EB"
+CORAL       <- "#D85A30"
+PALE_CORAL  <- "#F0997B"
+PURPLE      <- "#534AB7"
+TEAL        <- "#0F6E56"
 GREY_HDR    <- "#F2F2F2"
 
 theme_set(theme_minimal(base_size = base_size, base_family = base_family))
@@ -52,10 +54,10 @@ wealth_ratios  <- read_csv(here("7_gini_by_race",    "output", "wealth_withhome_
 n_mismatched   <- nrow(mismatched)
 inc_uniq_clans <- n_distinct(r_clans$id1968)
 w_uniq_clans   <- n_distinct(r_clans_wealth$id1968)
-inc_hh_years <- nrow(r_hh)
-inc_cl_years <- nrow(r_clans)
-w_hh_years   <- nrow(r_hh_wealth)
-w_cl_years   <- nrow(r_clans_wealth)
+inc_hh_years   <- nrow(r_hh)
+inc_cl_years   <- nrow(r_clans)
+w_hh_years     <- nrow(r_hh_wealth)
+w_cl_years     <- nrow(r_clans_wealth)
 
 
 # Gini scalars for inline Rmd text
@@ -158,44 +160,71 @@ w_med_hh  <- .race_medians(r_hh_wealth    %>% dplyr::mutate(wealth = wealth / nu
 w_med_cl  <- .race_medians(r_clans_wealth %>% dplyr::mutate(wealth = wealth / numclan),
                              "wealth", "clan_weight", "black_clan")
 
+w_med_ratio_hh_min <- min(wealth_ratios$r_hh_w_median_ratio, na.rm = TRUE)
+w_med_ratio_hh_max <- max(wealth_ratios$r_hh_w_median_ratio, na.rm = TRUE)
+w_med_ratio_cl_min <- min(wealth_ratios$r_cl_w_median_ratio, na.rm = TRUE)
+w_med_ratio_cl_max <- max(wealth_ratios$r_cl_w_median_ratio, na.rm = TRUE)
+
+w_med_ratio_hh_mean <- mean(wealth_ratios$r_hh_w_median_ratio, na.rm = TRUE)
+w_med_ratio_cl_mean <- mean(wealth_ratios$r_cl_w_median_ratio, na.rm = TRUE)
+
+w_med_ratio_hh_min_yr <- wealth_ratios$year[which.min(wealth_ratios$r_hh_w_median_ratio)]
+w_med_ratio_hh_max_yr <- wealth_ratios$year[which.max(wealth_ratios$r_hh_w_median_ratio)]
+w_med_ratio_cl_min_yr <- wealth_ratios$year[which.min(wealth_ratios$r_cl_w_median_ratio)]
+w_med_ratio_cl_max_yr <- wealth_ratios$year[which.max(wealth_ratios$r_cl_w_median_ratio)]
+
+# ── Inline scalars: kin group and household size ──────────────────────────────
+# Income sample: kin group size (unique clan-year observations weighted by clan_weight)
+inc_cl_hh_mean   <- wtd_mean(r_clans$numclan,         r_clans$clan_weight)
+inc_cl_hh_sd     <- wtd_sd(r_clans$numclan,           r_clans$clan_weight)
+inc_cl_ppl_mean  <- wtd_mean(r_clans$num_clan_people,  r_clans$clan_weight)
+inc_cl_ppl_sd    <- wtd_sd(r_clans$num_clan_people,   r_clans$clan_weight)
+
+# Wealth sample: kin group size
+w_cl_hh_mean     <- wtd_mean(r_clans_wealth$numclan,        r_clans_wealth$clan_weight)
+w_cl_hh_sd       <- wtd_sd(r_clans_wealth$numclan,          r_clans_wealth$clan_weight)
+w_cl_ppl_mean    <- wtd_mean(r_clans_wealth$num_clan_people, r_clans_wealth$clan_weight)
+w_cl_ppl_sd      <- wtd_sd(r_clans_wealth$num_clan_people,  r_clans_wealth$clan_weight)
+
+# Household size (same for income and wealth samples)
+hh_size_mean       <- wtd_mean(r_hh$numfu,        r_hh$fam_weight)
+hh_size_sd         <- wtd_sd(r_hh$numfu,          r_hh$fam_weight)
+hh_size_w_mean     <- wtd_mean(r_hh_wealth$numfu,  r_hh_wealth$fam_weight)
+hh_size_w_sd       <- wtd_sd(r_hh_wealth$numfu,   r_hh_wealth$fam_weight)
 
 # ── Figure 1 — Gini over time ─────────────────────────────────────────────────
-
-# Income years are lagged: survey year 1969 measures income earned in 1968, etc.
-inc_by_year_lagged <- inc_by_year %>%
-  mutate(year = if_else(year == "ALL", year, as.character(as.integer(year) - 1)))
+# Income years shown as survey years (1969-2023); lag removed.
 
 shared_y_fig1 <- {
   vals <- c(
     inc_by_year    %>% filter(year != "ALL") %>% pull(r_hh_w_inc),
     inc_by_year    %>% filter(year != "ALL") %>% pull(r_cl_w_inc),
     wealth_by_year %>% filter(year != "ALL") %>% pull(r_hh_w_wealth),
-    wealth_by_year %>% filter(year != "ALL") %>% pull(r_cl_w_wealth)
-  )
+    wealth_by_year %>% filter(year != "ALL") %>% pull(r_cl_w_wealth))
   vals <- vals[is.finite(vals)]
   c(floor(min(vals) * 20) / 20, ceiling(max(vals) * 20) / 20 + 0.05)
 }
 
-fig1_inc <- make_gini_plot(inc_by_year_lagged, r_hh_w_inc,    r_cl_w_inc,
+fig1_inc <- make_gini_plot(inc_by_year, r_hh_w_inc, r_cl_w_inc,
                            "Gini Coefficient", y_limits = shared_y_fig1)
-fig1_w   <- make_gini_plot(wealth_by_year,     r_hh_w_wealth, r_cl_w_wealth,
+fig1_w   <- make_gini_plot(wealth_by_year, r_hh_w_wealth, r_cl_w_wealth,
                            "Gini Coefficient", y_limits = shared_y_fig1)
 
 fig1_note <- sprintf(
   paste0(
     "Note: Gini coefficients estimated from weighted PSID data. ",
-    "Weighted mean income: $%s (households), $%s (clans). ",
-    "Weighted mean wealth: $%s (households), $%s (clans; includes home equity). ",
-    "Income Gini changed by %.1f%% for households (%.2f in %d to %.2f in %d) ",
-    "and by %.1f%% for clans (%.2f to %.2f). ",
-    "Wealth Gini changed by %.1f%% for households (%.2f in %d to %.2f in %d) ",
-    "and by %.1f%% for clans (%.2f to %.2f). ",
-    "On average across all years, the income Gini is %.3f higher for households than clans; ",
+    "Weighted mean income: $%s (households), $%s (kin groups). ",
+    "Weighted mean wealth: $%s (households), $%s (kin groups; includes home equity). ",
+    "Income Ginis changed by %.1f%% for households (%.2f in %d to %.2f in %d) ",
+    "and by %.1f%% for kin groups (%.2f to %.2f). ",
+    "Wealth Ginis changed by %.1f%% for households (%.2f in %d to %.2f in %d) ",
+    "and by %.1f%% for kin groups (%.2f to %.2f). ",
+    "On average across all years, the income Gini is %.3f higher for households than kin groups; ",
     "the wealth Gini is %.3f higher. "
   ),
   fmt_money0(inc_mean_hh_w), fmt_money0(inc_mean_cl_w),
   fmt_money0(w_mean_hh_w),   fmt_money0(w_mean_cl_w),
-  inc_hh_pct, inc_hh_1969, 1968L, inc_hh_2023, 2022L,
+  inc_hh_pct, inc_hh_1969, 1969L, inc_hh_2023, 2023L,
   inc_cl_pct, inc_cl_1969, inc_cl_2023,
   w_hh_pct,   w_hh_1984,  1984L, w_hh_2023,  2023L,
   w_cl_pct,   w_cl_1984,  w_cl_2023,
@@ -206,25 +235,20 @@ fig1 <- arrangeGrob(
   textGrob(
     "Figure 1. Income and Wealth Inequality Over Time",
     x = unit(0, "npc"), just = "left",
-    gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)
-  ),
+    gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)),
   arrangeGrob(
     arrangeGrob(
-      textGrob("Panel A: Income inequality from 1968 to 2022",
+      textGrob("Panel A: Income inequality from 1969 to 2023",
                x = unit(0, "npc"), just = "left",
                gp = gpar(fontfamily = base_family, fontsize = sub_size)),
-      fig1_inc, ncol = 1, heights = c(1, 12)
-    ),
+      fig1_inc, ncol = 1, heights = c(1, 12)),
     arrangeGrob(
       textGrob("Panel B: Wealth inequality from 1984 to 2023",
                x = unit(0, "npc"), just = "left",
                gp = gpar(fontfamily = base_family, fontsize = sub_size)),
-      fig1_w, ncol = 1, heights = c(1, 12)
-    ),
-    ncol = 2
-  ),
-  ncol = 1, heights = unit(c(0.5, 9.5), "inches")
-)
+      fig1_w, ncol = 1, heights = c(1, 12)),
+    ncol = 2),
+  ncol = 1, heights = unit(c(0.5, 9.5), "inches"))
 
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "figure1.pdf"), fig1, width = 14, height = 11)
@@ -236,13 +260,11 @@ if (SAVE_FILES) {
 fig2_inc <- make_lorenz_plot(
   r_hh, r_clans, "inc_all", years = c(1984, 2023),
   ylab   = "Cumulative Proportion of Income",
-  colors = c("1984" = BLUE, "2023" = ORANGE)
-)
+  colors = c("1984" = NAVY, "2023" = CORAL))
 fig2_w <- make_lorenz_plot(
   r_hh_wealth, r_clans_wealth, "wealth", years = c(1984, 2023),
   ylab   = "Cumulative Proportion of Wealth",
-  colors = c("1984" = BLUE, "2023" = ORANGE)
-)
+  colors = c("1984" = NAVY, "2023" = CORAL))
 
 inc_stats_hh <- r_hh %>%
   filter(year %in% c(1984, 2023), is.finite(inc_all),
@@ -261,9 +283,9 @@ inc_stats_cl <- r_clans %>%
 fig2_note <- sprintf(
   paste0(
     "Note: Lorenz curves are estimated from weighted data using PSID family and ",
-    "clan weights. Wealth includes home equity.",
-    "Income in 1984: weighted mean (median) $%s ($%s) for households, $%s ($%s) for clans. ",
-    "Income in 2023: $%s ($%s) for households, $%s ($%s) for clans."
+    "kin group weights. Wealth includes home equity. ",
+    "Income in 1984: weighted mean (median) $%s ($%s) for households, $%s ($%s) for kin groups. ",
+    "Income in 2023: $%s ($%s) for households, $%s ($%s) for kin groups."
   ),
   fmt_money0(inc_stats_hh$mean[inc_stats_hh$year == 1984]),
   fmt_money0(inc_stats_hh$med [inc_stats_hh$year == 1984]),
@@ -272,32 +294,26 @@ fig2_note <- sprintf(
   fmt_money0(inc_stats_hh$mean[inc_stats_hh$year == 2023]),
   fmt_money0(inc_stats_hh$med [inc_stats_hh$year == 2023]),
   fmt_money0(inc_stats_cl$mean[inc_stats_cl$year == 2023]),
-  fmt_money0(inc_stats_cl$med [inc_stats_cl$year == 2023])
-)
+  fmt_money0(inc_stats_cl$med [inc_stats_cl$year == 2023]))
 
 fig2 <- arrangeGrob(
   textGrob(
-    "Figure 2. Lorenz Curves at the Household and Clan Levels",
+    "Figure 2. Lorenz Curves at the Household and Kin Group Levels",
     x = unit(0, "npc"), just = "left",
-    gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)
-  ),
+    gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)),
   arrangeGrob(
     arrangeGrob(
       textGrob("Panel A: Distribution of income in 1984 and 2023",
                x = unit(0, "npc"), just = "left",
                gp = gpar(fontfamily = base_family, fontsize = sub_size)),
-      fig2_inc, ncol = 1, heights = c(1, 12)
-    ),
+      fig2_inc, ncol = 1, heights = c(1, 12)),
     arrangeGrob(
       textGrob("Panel B: Distribution of wealth in 1984 and 2023",
                x = unit(0, "npc"), just = "left",
                gp = gpar(fontfamily = base_family, fontsize = sub_size)),
-      fig2_w, ncol = 1, heights = c(1, 12)
-    ),
-    ncol = 2
-  ),
-  ncol = 1, heights = unit(c(0.5, 8.4), "inches")
-)
+      fig2_w, ncol = 1, heights = c(1, 12)),
+    ncol = 2),
+  ncol = 1, heights = unit(c(0.5, 8.4), "inches"))
 
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "figure2.pdf"), fig2, width = 14, height = 9)
@@ -310,36 +326,32 @@ fig3_med_plot <- make_ratio_plot(
   wealth_ratios %>% select(year,
                            r_hh_w_ratio = r_hh_w_median_ratio,
                            r_cl_w_ratio = r_cl_w_median_ratio),
-  ylab = "Black / Non-Black"
-)
+  ylab = "Black / Non-Black")
 
 fig3_note <- sprintf(
   paste0(
-    "Note: Lines show the ratio of Black to Non-Black wealth for households and clans ",
+    "Note: Lines show the ratio of Black to Non-Black wealth for households and kin groups ",
     "(includes home equity), using weighted medians. ",
-    "Weighted median wealth: Black HH $%s, Non-Black HH $%s, ",
-    "Black clans $%s, Non-Black clans $%s. ",
-    "Median ratio changed by %.1f%% for households (%.2f in %d to %.2f in %d) ",
-    "and %.1f%% for clans (%.2f to %.2f). ",
-    "On average across all years, the median ratio is %.3f higher for households than clans. ",
+    "Across all years, weighted median wealth is $%s for Black households and $%s for Non-Black households. ",
+    "For kin groups, the weighted median wealth is $%s for Black kin groups and $%s for Non-Black kin groups. ",
+    "Median ratio changed by %.1f%% for households (%.3f in %d to %.3f in %d) ",
+    "and %.1f%% for kin groups (%.3f to %.3f). ",
+    "On average across all years, the median wealth ratio for kin groups is %.3f higher than for households. ",
     "See Appendix E for mean wealth ratios."
   ),
   fmt_money0(w_med_hh$black),    fmt_money0(w_med_hh$nonblack),
   fmt_money0(w_med_cl$black),    fmt_money0(w_med_cl$nonblack),
   w_med_ratio_hh_pct, w_med_ratio_hh_first, w_first_yr, w_med_ratio_hh_last, w_last_yr,
   w_med_ratio_cl_pct, w_med_ratio_cl_first, w_med_ratio_cl_last,
-  avg_w_med_ratio_gap
-)
+  -avg_w_med_ratio_gap)
 
 fig3 <- arrangeGrob(
   textGrob(
-    "Figure 3. Black / Non-Black Median Wealth Ratio: Households vs. Clans",
+    "Figure 3. Black / Non-Black Median Wealth Ratio: Households vs. Kin Groups",
     x = unit(0, "npc"), just = "left",
-    gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)
-  ),
+    gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)),
   fig3_med_plot,
-  ncol = 1, heights = unit(c(0.5, 10.0), "inches")
-)
+  ncol = 1, heights = unit(c(0.5, 10.0), "inches"))
 
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "figure3.pdf"), fig3, width = 14, height = 11)
