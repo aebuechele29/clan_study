@@ -13,7 +13,7 @@
 
 make_x_breaks <- function(min_yr, max_yr) {
   br <- seq(ceiling(min_yr / 10) * 10, floor(max_yr / 10) * 10, by = 10)
-  br <- br[br > (min_yr + 1) & br < (max_yr - 1)]
+  br <- br[br >= (min_yr + 5) & br <= (max_yr - 2)]
   sort(unique(c(min_yr, br, max_yr)))
 }
 
