@@ -122,12 +122,12 @@ STEP9_OUTS := \
   9_figures/output/appendixC5.pdf \
   9_figures/output/appendixC6.pdf \
   9_figures/output/appendixD.pdf \
-  9_figures/output/appendixE.pdf \
-  9_figures/output/appendixF1.pdf \
+  9_figures/output/appendixE1.pdf \
   9_figures/output/appendixF2.pdf \
   9_figures/output/appendixF3.pdf \
   9_figures/output/appendixF4.pdf \
-  9_figures/output/appendixF5.pdf
+  9_figures/output/appendixF5.pdf \
+  9_figures/output/appendixF6.pdf
 STEP9_PRIMARY := 9_figures/output/figure1.pdf
 
 # ----------------
