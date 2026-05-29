@@ -171,7 +171,7 @@ make_ratio_plot <- function(dat, ylab, y_limits = NULL, hline = 1) {
       "Alt HH"                 = "solid",
       "Alt Kin Group"          = "dotted",
       "Main HH-Kin Group diff" = "dashed",
-      "Alt HH-Kin Group diff"  = "dashed")) +
+      "Alt HH-Kin Group diff"  = "dotdash")) +
     ggplot2::theme(legend.position = "bottom") +
     ggplot2::guides(
       color    = ggplot2::guide_legend(nrow = 2, override.aes = list(linewidth = 1.2)),
@@ -259,15 +259,16 @@ make_sensitivity_plot <- function(df, main_hh, main_cl, alt_hh, alt_cl,
     dplyr::mutate(spec = dplyr::recode(spec,
       "main_diff" = "Main HH-Kin Group diff", "alt_diff" = "Alt HH-Kin Group diff"))
 
-  pC <- ggplot2::ggplot(long_diff, ggplot2::aes(x = year, y = Difference, color = spec)) +
+  pC <- ggplot2::ggplot(long_diff,
+                         ggplot2::aes(x = year, y = Difference, color = spec)) +
     ggplot2::geom_line(data = long_diff %>% dplyr::filter(spec == "Main HH-Kin Group diff"),
                        linewidth = 1.7, linetype = "dashed") +
     ggplot2::geom_line(data = long_diff %>% dplyr::filter(spec == "Alt HH-Kin Group diff"),
-                       linewidth = 1.7, linetype = "dashed") +
+                       linewidth = 1.7, linetype = "dotdash") +
     ggplot2::geom_hline(yintercept = 0, linetype = "dotted", color = "grey60") +
     ggplot2::scale_color_manual(name = NULL,
       values = c("Main HH-Kin Group diff" = NAVY, "Alt HH-Kin Group diff" = CORAL)) +
-    ggplot2::scale_y_continuous(limits = diff_limits) +
+    ggplot2::coord_cartesian(ylim = diff_limits) +
     ggplot2::scale_x_continuous(breaks = br, expand = ggplot2::expansion(mult = c(0.02, 0.02))) +
     ggplot2::labs(x = NULL, y = "HH \u2212 Kin Group Gini",
                   subtitle = "HH \u2212 Kin Group Difference") +
@@ -369,7 +370,7 @@ make_race_sensitivity_plot <- function(dat, hh_black, cl_black, hh_nonblack, cl_
       values = c("Black" = NAVY, "Non-Black" = CORAL)) +
     ggplot2::scale_linetype_manual(name = NULL,
       values = c("Black" = "dashed", "Non-Black" = "dashed")) +
-    ggplot2::scale_y_continuous(limits = diff_limits) +
+    ggplot2::coord_cartesian(ylim = diff_limits) +
     ggplot2::scale_x_continuous(breaks = br, expand = ggplot2::expansion(mult = c(0.02, 0.02))) +
     ggplot2::labs(x = NULL, y = "HH \u2212 Kin Group Gini",
                   subtitle = "HH \u2212 Kin Group Difference") +
@@ -404,7 +405,7 @@ make_c123_panel <- function(dat, y_limits = NULL, show_unit,
         ggplot2::geom_line(linewidth = 1.7, linetype = "dashed") +
         ggplot2::geom_hline(yintercept = 0, linetype = "dotted", color = "grey60") +
         ggplot2::scale_color_manual(values = coef_colors, name = NULL) +
-        ggplot2::scale_y_continuous(limits = y_limits) +
+        ggplot2::coord_cartesian(ylim = y_limits) +
         ggplot2::scale_x_continuous(breaks = br,
                                      expand = ggplot2::expansion(mult = c(0.02, 0.02))) +
         ggplot2::labs(x = NULL, y = "HH \u2212 Kin Group",
@@ -495,16 +496,15 @@ make_ratio_sensitivity_plot <- function(dat, main_hh, main_cl, alt_hh, alt_cl,
     dplyr::mutate(spec = dplyr::recode(spec,
       "main_diff" = "Main HH-Kin Group diff", "alt_diff" = "Alt HH-Kin Group diff"))
 
-  pC <- ggplot2::ggplot(long_diff, ggplot2::aes(x = year, y = Difference, color = spec)) +
+  pC <- ggplot2::ggplot(long_diff,
+                         ggplot2::aes(x = year, y = Difference, color = spec)) +
     ggplot2::geom_line(data = long_diff %>% dplyr::filter(spec == "Main HH-Kin Group diff"),
                        linewidth = 1.7, linetype = "dashed") +
     ggplot2::geom_line(data = long_diff %>% dplyr::filter(spec == "Alt HH-Kin Group diff"),
-                       linewidth = 1.7, linetype = "dashed") +
+                       linewidth = 1.7, linetype = "dotdash") +
     ggplot2::geom_hline(yintercept = 0, linetype = "dotted", color = "grey60") +
     ggplot2::scale_color_manual(name = NULL,
       values = c("Main HH-Kin Group diff" = NAVY, "Alt HH-Kin Group diff" = CORAL)) +
-    ggplot2::scale_y_continuous(limits = c(min(long_diff$Difference, na.rm = TRUE) - 0.05,
-                                            max(long_diff$Difference, na.rm = TRUE) + 0.05)) +
     ggplot2::coord_cartesian(ylim = diff_limits) +
     ggplot2::scale_x_continuous(breaks = br, expand = ggplot2::expansion(mult = c(0.02, 0.02))) +
     ggplot2::labs(x = NULL, y = "HH \u2212 Kin Group Diff",
