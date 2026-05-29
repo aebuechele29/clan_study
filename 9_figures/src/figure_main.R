@@ -334,7 +334,7 @@ fig3_note <- sprintf(
     "(includes home equity), using weighted medians. ",
     "Across all years, weighted median wealth is $%s for Black households and $%s for Non-Black households. ",
     "For kin groups, the weighted median wealth is $%s for Black kin groups and $%s for Non-Black kin groups. ",
-    "Median ratio changed by %.1f%% for households (%.3f in %d to %.3f in %d) ",
+    "The median ratio changed by %.1f%% for households (%.3f in %d to %.3f in %d) ",
     "and %.1f%% for kin groups (%.3f to %.3f). ",
     "On average across all years, the median wealth ratio for kin groups is %.3f higher than for households. ",
     "See Appendix E for mean wealth ratios."
