@@ -109,7 +109,7 @@ The relationship between households and kin groups can be understood as an exten
   
 
 # Results
-**Comparing Gini coefficients at the household and clan levels.** Figure 1 depicts income and wealth inequality for all households and kin groups over time. Reflecting data availability in the PSID, Panel A plots income Gini coefficients from 1969 to 2023 and Panel B plots wealth Gini coefficients from 1984 to 2023. Figure 1 shows that inequality is substantial under both measurement approaches. Yet the level of inequality depends on the unit of analysis. Wealth and income Ginis measured at the kin group level are roughly 70%-80% the levels of their respective Ginis measured at the household level, a pattern that holds over the study period. The average income Gini coefficient is `r fmt2(avg_inc_hh)` at the household level versus `r fmt2(avg_inc_cl)` at the kin group level. For wealth, the average Gini coefficient is `r fmt2(avg_w_hh)` at the household level versus `r fmt2(avg_w_cl)` at the kin group level. 
+**Comparing Gini coefficients at the household and kin group levels.** Figure 1 depicts income and wealth inequality for all households and kin groups over time. Reflecting data availability in the PSID, Panel A plots income Gini coefficients from 1969 to 2023 and Panel B plots wealth Gini coefficients from 1984 to 2023. Figure 1 shows that inequality is substantial under both measurement approaches. Yet the level of inequality depends on the unit of analysis. Wealth and income Ginis measured at the kin group level are roughly 70%-80% the levels of their respective Ginis measured at the household level, a pattern that holds over the study period. The average income Gini coefficient is `r fmt2(avg_inc_hh)` at the household level versus `r fmt2(avg_inc_cl)` at the kin group level. For wealth, the average Gini coefficient is `r fmt2(avg_w_hh)` at the household level versus `r fmt2(avg_w_cl)` at the kin group level. 
 
 Plotting Gini coefficients over time helps contextualize contemporary inequality by placing kin group estimates alongside historical household benchmarks. For example, the most recent income Gini measured at the kin group level is only slightly lower than the household-level income Gini in the early 1970s. Inequality is higher today than in the 1970s at both levels, but because household inequality in the 1970s—at roughly 80% of current levels—has long been considered substantively important, today’s kin group inequality should be viewed as similarly consequential. Wealth Ginis tell a related but distinct story. While kin group wealth inequality represents a large share of household-level inequality, it has not approached the historically observed levels of household wealth inequality over the period we examine.
 
@@ -250,12 +250,12 @@ ext    <- extreme_indices_sums(df_res)
 
 \newpage
 
-**Appendix A1: Case with lowest simulated clan-household Gini difference**
+**Appendix A1: Case with lowest simulated kin group-household Gini difference**
 ```{r appendix-a1, fig.width=6, fig.height=4.5, fig.align="center"}
 plot_lorenz_for_sim_sums(sims[[ext$idx_min_sums]])
 ```
 
-**Appendix A2: Case with highest simulated clan-household Gini difference**
+**Appendix A2: Case with highest simulated kin group-household Gini difference**
 ```{r appendix-a2, fig.width=6, fig.height=4.5, fig.align="center"}
 plot_lorenz_for_sim_sums(sims[[ext$idx_max_sums]])
 ```
@@ -343,7 +343,7 @@ sensitivity_gini_c1
 ```
 
 
-## Appendix C2: Sensitivity — Single-Household Clans {-}
+## Appendix C2: Sensitivity — Single-Household Kin Groups {-}
 In reality, all households belong to kin groups that consist of multiple households. However, some households in the PSID do not have kin groups due to the survey design and attrition. The survey is genealogical, meaning that initial households only have measurable kin groups once their descendants respond to the survey. Attrition also might limit responses from some households, thereby erasing kin groups for the households they are connected to. 
 
 Because these limitations are imposed by the survey design, not social reality, we exclude household-years where households are alone in their kin group from both household and kin group measurements. The graphs on the left side show this. When including these single-household kin groups, or “kin groupless” households, the difference in Gini coefficients at the household and kin groups levels is minimized but not eliminated. The graphs in the middle show Gini coefficients when single-household kin groups are included. The graphs on the right side show the difference between household and kin group (HH - kin group) Gini coefficients for each group. Differences in estimated inequality at the kin group and household levels are smaller when including kin groupless households, however, they still exist and are increasing over time. 
@@ -409,7 +409,7 @@ Race ratios using mean wealth, when pooled across all years, show that Black hou
 grid::grid.draw(appendix_e1)
 ```
 
-## Appendix E2: Race Ratios — Single-Household Clans {-}
+## Appendix E2: Race Ratios — Single-Household Kin Groups {-}
 Appendix E2 shows Black / Non-Black wealth ratios when single-household kin groups are excluded (main specification, left panels) versus included (middle panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios. Including single-household kin groups does little to change racial wealth gaps using median or mean wealth (right panels). In particular, the median racial wealth gap between kin groups, versus households, shows less inequality irrespective of whether single-household kin groups are included. 
 
 ```{r appendix-e2, fig.width=14, fig.height=11, out.width="100%"}
