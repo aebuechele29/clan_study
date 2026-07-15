@@ -1,0 +1,352 @@
+---
+title: "Supplemental Information: Kin Group Gini: An Extended Family Approach to Income and Wealth Inequality in the U.S."
+author: "Doron Shiffer-Sebba, Amanda Buechele, Julia A. Behrman, Limor Gabay Egozi"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+bibliography: bibliography_clan.bib
+csl: council-of-science-editors-brackets.csl
+always_allow_html: true
+output:
+  pdf_document:
+    number_sections: false
+    extra_dependencies:
+      - float
+      - graphicx
+      - codehigh
+      - ulem
+      - siunitx
+  word_document:
+    number_sections: false
+header-includes:
+  - \usepackage{tabularray}
+  - \UseTblrLibrary{booktabs}
+  - \UseTblrLibrary{siunitx}
+  - \newcommand{\tinytableTabularrayUnderline}[1]{\underline{#1}}
+  - \newcommand{\tinytableTabularrayStrikeout}[1]{\sout{#1}}
+  - \NewTableCommand{\tinytableDefineColor}[3]{\definecolor{#1}{#2}{#3}}
+  - \usepackage{float}
+  - \floatplacement{figure}{H}
+  - \usepackage{caption}
+  - \captionsetup[table]{labelformat=empty}
+knit: (function(input, ...) {
+  rmarkdown::render(input, ..., output_format = "pdf_document",
+    output_file = here::here("10_draft", "output", "supplemental.pdf"));
+  rmarkdown::render(input, ..., output_format = "word_document",
+    output_file = here::here("10_draft", "output", "supplemental.docx"))
+  })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo    = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  tidy    = FALSE
+)
+options(width = 10000)  # prevent R from wrapping long strings in output
+library(here)
+library(dplyr)
+library(flextable)
+library(grid)
+library(tidyr)
+library(purrr)
+library(readr)
+library(ggplot2)
+library(cowplot)
+library(officer)
+library(grid)
+library(gridExtra)
+library(tidyverse)
+library(ineq)
+
+# Formatting helpers for inline numbers
+fmt2 <- function(x) format(round(x, 2), nsmall = 2)
+fmt1 <- function(x) format(round(x, 1), nsmall = 1)
+fmt0 <- function(x) format(round(x, 0), big.mark = ",")
+fmtp <- function(x) paste0(format(round(x, 2), nsmall = 2), "%")
+
+# Helper for adding notes to figures in .docx and .pdf
+print_note <- function(txt) {
+  if (knitr::is_latex_output()) {
+    cat("\n\n\\begingroup\\itshape\\small\\par\n", txt, "\n\\endgroup\n\n")
+  } else {
+    # Word: blank lines ensure a new paragraph; txt wrapped in markdown italic
+    cat(paste0("\n\n*", txt, "*\n\n"))
+  }
+}
+```
+
+```{r appendix-load}
+source(here::here("functions", "all_functions.R"))
+
+# Source main figures and appendix figures 
+SAVE_FILES <- FALSE
+source(here("9_figures", "src", "figure_main.R"))
+source(here("9_figures", "src", "figure_appendix.R"))
+
+income          <- read_gini(here("6_calculate_gini", "output", "income.csv"))
+wealth_nohouse  <- read_gini(here("6_calculate_gini", "output", "wealth_nohouse.csv"))
+wealth_withhome <- read_gini(here("6_calculate_gini", "output", "wealth_withhome.csv"))
+
+income_all <- read_csv(here("6_calculate_gini", "output", "income.csv"), show_col_types = FALSE) %>%
+  mutate(year = suppressWarnings(as.integer(as.character(year))))
+wealth_all <- read_csv(here("6_calculate_gini", "output", "wealth_withhome.csv"), show_col_types = FALSE) %>%
+  mutate(year = suppressWarnings(as.integer(as.character(year))))
+
+inc_c123 <- read_csv(here("8_nuclear_family", "output", "income_C123.csv"),  show_col_types = FALSE)
+wnh_c123 <- read_csv(here("8_nuclear_family", "output", "wealth_C123.csv"),  show_col_types = FALSE)
+```
+
+# Supplemental Information
+
+## Table A: Comparison with External Estimates
+
+```{r table-a1}
+b1_years <- c(1969L, 1979L, 1989L, 1999L, 2009L, 2019L)
+
+b1 <- tibble(
+  Year          = c("1969", "1979", "1989", "1999", "2009", "2019"),
+  Year_pick     = b1_years,
+  FRED          = c(0.391, 0.404, 0.431, 0.458, 0.468, 0.484),
+  `U.S. Census` = c(0.349, 0.365, 0.401, 0.429, 0.443, 0.454)
+) %>%
+  left_join(
+    income_all %>% filter(year %in% b1_years) %>%
+      select(Year_pick = year, `Our Results (All HH)` = hh_w_inc),
+    by = "Year_pick"
+  ) %>%
+  select(Year, FRED, `U.S. Census`, `Our Results (All HH)`) %>%
+  mutate(across(-Year, ~ round(as.numeric(.x), 3)))
+
+flextable(b1) %>%
+  set_caption(caption = "Table A1. Comparison of income Gini coefficients",
+              autonum = FALSE) %>%
+  set_header_labels(`Our Results (All HH)` = "Our Results\n(All HH)") %>%
+  theme_vanilla() %>%
+  bold(part = "header") %>%
+  align(align = "center", part = "all") %>%
+  fontsize(size = 9, part = "all") %>%
+  fontsize(size = 8, part = "body") %>%
+  fit_to_width(max_width = 6.5)
+```
+
+```{r table-a2}
+b2 <- tibble(
+  Year      = c("1983", "1984", "1989", "1992", "1994", "2003", "2004", "2007", "2009", "2010", "2011"),
+  Year_pick = c(NA, 1984L, 1989L, NA, 1994L, 2003L, NA, 2007L, 2009L, NA, 2011L),
+  SCF       = c(0.760, NA,    0.781, 0.770, NA,    NA,    0.809, NA,    NA,    0.846, NA),
+  PSID      = c(NA,    0.739, 0.742, NA,    0.732, 0.810, NA,    0.830, 0.890, NA,    0.880)
+) %>%
+  left_join(
+    wealth_all %>%
+      filter(year %in% c(1984L, 1989L, 1994L, 2003L, 2007L, 2009L, 2011L)) %>%
+      select(Year_pick = year, `Our Results` = hh_w_wealth) %>%
+      mutate(`Our Results` = round(as.numeric(`Our Results`), 3)),
+    by = "Year_pick"
+  ) %>%
+  select(Year, SCF, PSID, `Our Results`)
+
+flextable(b2) %>%
+  set_caption(caption = "Table A2. Comparison of wealth Gini coefficients with external estimates",
+              autonum = FALSE) %>%
+  theme_vanilla() %>%
+  bold(part = "header") %>%
+  align(align = "center", part = "all") %>%
+  fontsize(size = 9, part = "all") %>%
+  fontsize(size = 8, part = "body") %>%
+  fit_to_width(max_width = 6.5)
+```
+
+Table A compares Gini coefficients at the household level calculated for income and wealth with Gini coefficients from other researchers. Gini coefficients in Table A are calculated using the full sample of households in the PSID, rather than just the households who belong to a kin group with at least one other household (which are the results presented in the main paper).
+
+Gini coefficients are not available for all years in other sources, so only years available are presented. Gini benchmarks for income rely on estimates from the Federal Reserve Bank of St. Louis (FRED) and the U.S. Census [@fred_gini_2025; @census_table_2025]. FRED uses data from the World Bank on U.S. households and the Census uses data from the Current Population Survey (CPS). Gini benchmarks for wealth rely on estimates from research papers based on data from the PSID or Survey of Consumer Finances (SCF) [@wolff_size_209; @pfeffer_wealth_2013].
+
+\newpage
+
+## Fig A: Simulating Gini Coefficients
+
+```{r fig-a-sim}
+set.seed(123)
+sims   <- run_many_sims_sums(
+  n_sims = 100, n_clans = 5, hh_per_clan = 10,
+  dist = "lognormal", dist_params = list(meanlog = 0, sdlog = 1),
+  clan_size_scenario = "rich_big"
+)
+df_res <- results_from_sims_sums(sims)
+ext    <- extreme_indices_sums(df_res)
+```
+
+**Fig A1: Case with lowest simulated kin group-household Gini difference**
+
+```{r fig-a1, fig.width=6, fig.height=4.5, fig.align="center"}
+plot_lorenz_for_sim_sums(sims[[ext$idx_min_sums]])
+```
+
+Fig A1 illustrates the minimum possible difference between kin group and household Gini coefficients in the simulated data. This case demonstrates that Gini coefficients at the kin group level can exceed those of households.
+
+\newpage
+
+**Fig A2: Case with highest simulated kin group-household Gini difference**
+
+```{r fig-a2, fig.width=6, fig.height=4.5, fig.align="center"}
+plot_lorenz_for_sim_sums(sims[[ext$idx_max_sums]])
+```
+
+Fig A2 shows the maximum possible difference between kin group and household Gini coefficients in the simulated data. This case also demonstrates that Gini coefficients at the kin group level can exceed those of households.
+
+\newpage
+
+**Fig A3: Summary of extreme cases**
+
+```{r fig-a3, fig.width=6.5, fig.height=5, fig.align="center"}
+make_two_mekko_sums(sims, ext$idx_min_sums, ext$idx_max_sums)
+```
+
+Fig A illustrates extreme cases from simulated household and kin group data. The simulation demonstrates that kin group-level Gini coefficients are not necessarily lower than household-level Gini coefficients. The direction of the difference depends on the relationship between kin group size, the overall distribution of resources, and the selection of households into kin groups.
+
+Fig A1 shows the minimum possible difference between kin group and household Gini coefficients in the simulated data, while Fig A2 shows the maximum possible difference. Curves show that Gini coefficients at the kin group level can exceed those of households. Fig A3 illustrates that, while it is more likely for Gini coefficients at the household level to exceed Gini coefficients at the kin group level, whether this effect is observed depends on the combination between kin group size and income or wealth distribution.
+
+\newpage
+
+## Section B: Sensitivity Analyses — Gini Coefficients {-}
+
+Across a range of specifications, estimated inequality using the Gini is lower when kin groups are used as the unit of analysis instead of households. This pattern is not driven by race, nor does it disappear when expanding the sample, excluding home equity in measures of wealth, including negative wealth values, standardizing by household size, or applying weights. For each specification, results are recalculated and displayed alongside the main results.
+
+### Fig B1: Gini Coefficients by Race Subgroup {-}
+
+```{r fig-b1, fig.width=14, fig.height=11, out.width="100%"}
+sensitivity_gini_c1
+```
+
+Fig B1 shows that the differences between Gini coefficients at the household and kin group level are not driven by racial subgroups. Graphs on the left side show Gini coefficients for Black households and kin groups. Graphs in the middle show Gini coefficients for non-Black households and kin groups. The graphs on the right side show the difference between household and kin group (HH - kin group) Gini coefficients for each group. Gini coefficients for income (Panel A) and wealth (Panel B) are higher at the kin group level for both Black and non-Black kin groups, indicating that inequality is lower when estimated at the kin group level across racial groups.
+
+\newpage
+
+### Fig B2: Sensitivity — Single-Household Kin Groups {-}
+
+```{r fig-b2, fig.width=14, fig.height=11, out.width="100%"}
+sensitivity_gini_c2
+```
+
+In reality, all households belong to kin groups that consist of multiple households. However, some households in the PSID do not have kin groups due to the survey design and attrition. The survey is genealogical, meaning that initial households only have measurable kin groups once their descendants respond to the survey. Attrition also might limit responses from some households, thereby erasing kin groups for the households they are connected to.
+
+Because these limitations are imposed by the survey design, not social reality, we exclude household-years where households are alone in their kin group from both household and kin group measurements. The graphs on the left side show this. When including these single-household kin groups, or "kin groupless" households, the difference in Gini coefficients at the household and kin groups levels is minimized but not eliminated. The graphs in the middle show Gini coefficients when single-household kin groups are included. The graphs on the right side show the difference between household and kin group (HH - kin group) Gini coefficients for each group. Differences in estimated inequality at the kin group and household levels are smaller when including kin groupless households, however, they still exist and are increasing over time.
+
+\newpage
+
+### Fig B3: Sensitivity — Wealth With and Without Home Equity {-}
+
+```{r fig-b3, fig.width=14, fig.height=7, out.width="100%"}
+sensitivity_gini_c3
+```
+
+Results presented in the main text include home equity for measures of wealth. Fig B3 shows Gini coefficients when home equity is excluded (middle graphs), and reports the difference between Gini coefficients at the household and kin group levels (graphs on the right). Excluding home equity makes estimated inequality lower and minimizes the observed difference between household and kin group Gini coefficients.
+
+\newpage
+
+### Fig B4: Sensitivity — Negative Values {-}
+
+```{r fig-b4, fig.width=14, fig.height=11, out.width="100%"}
+sensitivity_gini_c4
+```
+
+Results presented in the main text exclude negative values for income and wealth. Fig B4 shows Gini coefficients when negative values are included (middle graphs), and reports the difference between Gini coefficients at the household and kin group levels (graphs on the right). Including negative values does not change estimated Gini coefficients at the household or kin group levels.
+
+\newpage
+
+### Fig B5: Sensitivity — Size Standardization {-}
+
+```{r fig-b5, fig.width=14, fig.height=11, out.width="100%"}
+sensitivity_gini_c5
+```
+
+Results in the main text standardize income, wealth, and resulting Gini coefficients by household and kin group size. Estimated inequality is higher when results are not standardized by size and the gap between household and kin group Gini coefficients is smaller. However, Gini coefficients are higher at the kin group versus household level irrespective of whether measurements are adjusted by size.
+
+\newpage
+
+### Fig B6: Sensitivity — Weighting {-}
+
+```{r fig-b6, fig.width=14, fig.height=11, out.width="100%"}
+sensitivity_gini_c6
+```
+
+All results presented in the main paper are weighted. Household-level Gini coefficients are weighted using PSID-provided family weights, while kin group-level Gini coefficients are weighted using a constructed kin group weight based on the PSID family weight. Weighting does not substantially change the results.
+
+\newpage
+
+## Fig C: Alternative Inequality Measures {-}
+
+```{r fig-c, fig.width=14, fig.height=13, out.width="100%"}
+appendix_d
+```
+
+Fig C shows three alternative measures of inequality proposed by Aaberge [@aaberge_ginis_2007]. C1 is the Bonferroni coefficient (greater weight on lower tail); C2 is the standard Gini coefficient; C3 places greater weight on the upper tail of the distribution. All estimates are weighted averages across all available years. Inequality is lower at the kin group level using any measure of inequality.
+
+\newpage
+
+## Section D: Sensitivity Analyses — Race Ratios {-}
+
+Across a range of specifications, estimated median racial wealth gaps are lower when kin groups are used as the unit of analysis instead of households. This pattern does not disappear when expanding the sample, excluding home equity in measures of wealth, including negative wealth values, standardizing by household size, or applying weights. For each specification, results are recalculated and displayed alongside the main results.
+
+Mean racial wealth gaps are about the same at the household and kin group levels. This finding is also robust across each specification. Fig D1 explains the difference between the mean and median wealth ratios and why median racial wealth gaps are presented.
+
+### Fig D1: Mean and Median Wealth Ratios {-}
+
+```{r fig-d1, fig.width=14, fig.height=11, out.width="100%"}
+grid::grid.draw(appendix_e1)
+```
+
+Fig D1 reports Black / non-Black wealth ratios using weighted means for both households and kin groups. Panel A reproduces the median wealth ratios (as in Figure 3 of the main paper), while Panel B presents mean wealth ratios. Using medians, the racial wealth gap differs between households and kin groups (Panel A), whereas using means, the two are about the same (Panel B).
+
+Race ratios using mean wealth, when pooled across all years, show that Black households hold 19 cents for every dollar of wealth held by non-Black households, while Black kin groups hold 18 cents for every dollar held by non-Black kin groups. The convergence in mean-based estimates is driven by a small number of high-wealth Black households in the PSID, particularly in 2004–2005, which skew household-level averages. These results highlight the sensitivity of mean-based measures to outliers, which is why we present race ratios based on median wealth in the main text.
+
+\newpage
+
+### Fig D2: Race Ratios — Single-Household Kin Groups {-}
+
+```{r fig-d2, fig.width=14, fig.height=11, out.width="100%"}
+sensitivity_ratio_e2
+```
+
+Fig D2 shows Black / Non-Black wealth ratios when single-household kin groups are excluded (main specification, left panels) versus included (middle panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios. Including single-household kin groups does little to change racial wealth gaps using median or mean wealth (right panels). In particular, the median racial wealth gap between kin groups, versus households, shows less inequality irrespective of whether single-household kin groups are included.
+
+\newpage
+
+### Fig D3: Race Ratios — Wealth With and Without Home Equity {-}
+
+```{r fig-d3, fig.width=14, fig.height=11, out.width="100%"}
+sensitivity_ratio_e3
+```
+
+Fig D3 compares racial wealth ratios when home equity is included (main specification, left panels) versus excluded (middle panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios. The median racial wealth gap between kin groups, versus households, shows less inequality irrespective of whether wealth measures include home equity.
+
+\newpage
+
+### Fig D4: Race Ratios — Negative Values {-}
+
+```{r fig-d4, fig.width=14, fig.height=11, out.width="100%"}
+sensitivity_ratio_e4
+```
+
+Fig D4 shows Black / Non-Black wealth ratios when negative wealth values are excluded (main specification, left panels) versus included (middle panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios. Including negative values does not change the estimated race ratios.
+
+\newpage
+
+### Fig D5: Race Ratios — Size Standardization {-}
+
+```{r fig-d5, fig.width=14, fig.height=11, out.width="100%"}
+sensitivity_ratio_e5
+```
+
+Fig D5 compares Black / Non-Black wealth ratios when wealth is size-standardized by household and kin group size (main specification, left panels) versus unadjusted (middle panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios. Standardizing by size does not substantially change the estimated median wealth race ratios from 1984–2015. From 2015–2023, the difference between median wealth gaps at the kin group versus household level widen.
+
+\newpage
+
+### Fig D6: Race Ratios — Weighting {-}
+
+```{r fig-d6, fig.width=14, fig.height=11, out.width="100%"}
+sensitivity_ratio_e6
+```
+
+Fig D6 shows Black / Non-Black wealth ratios using weighted estimates (main specification, left panels) versus unweighted estimates (middle panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios. Weighting does not substantially change the estimated race ratios.
+
+# References
