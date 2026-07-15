@@ -95,15 +95,15 @@ Economic inequality in the United States is typically measured between household
 # Introduction
 Income and wealth inequality have increased sharply in the United States from the 1960s to the present. This trend is evident in the Gini index, a widely used measure of inequality ranging from 0 (perfect equality) to 1 (perfect inequality). For instance, the U.S. household-level income Gini rose from 0.369 in 1967 to 0.418 in 2023 [@fred_gini_2025]. Similarly, the U.S. household-level wealth Gini increased from 0.79 to 0.85 from 1989 to 2019 [@barro_decline_2020; @kuhn_income_2025].
 
-The Gini and other important measures of inequality, like the racial wealth gap, are typically calculated at the household level[@auten_income_2024; @killewald_wealth_2017]. As a result, research on inequality tends to focus on differences between households[@saez_wealth_2016]. This emphasis aligns with broader social-science practice, where households serve as the main unit of analysis. In doing so, scholars are largely centering nuclear families, reflecting longstanding assumptions about the primacy of the nuclear family and the diminished role of extended kin in the U.S. and other high-income industrialized nations [@goode_world_1963; @parsons_essays_1954].^[The exception is multi-generational co-residing households, which comprise about 20% of U.S. households [@pilkauskas_beyond_2018]. In this case, a focus on households elevates the importance of live-in extended family members and downplays the importance of extended family members who do not co-reside.] Data availability reinforces this orientation: most large surveys, including the Survey of Income and Program Participation and the Survey of Consumer Finances, are designed around households, limiting researchers’ ability to study inequality beyond the nuclear family.
+The Gini and other important measures of inequality, like the racial wealth gap, are typically calculated at the household level[@auten_income_2024; @killewald_wealth_2017]. As a result, research on inequality tends to focus on differences between households[@saez_wealth_2016]. This emphasis aligns with broader social-science practice, where households serve as the main unit of analysis. In doing so, scholars are largely centering nuclear families, reflecting longstanding assumptions about the primacy of the nuclear family and the diminished role of extended kin in the U.S. and other high-income industrialized nations [@goode_world_1963; @parsons_essays_1954].^[The exception is multi-generational co-residing households, which comprise about 20% of U.S. households [@pilkauskas_beyond_2018]. In this case, a focus on households elevates the importance of live-in extended family members and downplays the importance of extended family members who do not co-reside.] Data availability reinforces this orientation: most large surveys, including the Survey of Income and Program Participation and the Survey of Consumer Finances, are designed around households, limiting researchers' ability to study inequality beyond the nuclear family.
 
-Yet this predominant focus on households overlooks the fact that households are embedded in larger kin networks that structure obligations, cooperation, and access to resources. Such ties advantage and constrain households, shaping resource accumulation beyond parent-child transmission. Indeed, a growing body of research suggests that social scientists have underestimated the importance of extended family in studies of inequality [@killewald_wealth_2017; @mare_multigenerational_2011; @obrien_family_2024; @shiffer-sebba_keeping_2025].  Mare [@mare_multigenerational_2011], for example, argues that intergenerational mobility has likely been overstated because analyses typically ignore the influence of ancestors and extended kin. Research on elites similarly highlights the importance of extended family networks in maintaining wealth across generations. For example, O’Brien’s [@obrien_family_2024] study of elite families in Dallas shows that focusing solely on parent–child dyads obscures how these dyads are embedded within interconnected kin networks, where intermarriage among elite families is common and wealth circulates within a small number of extended lineages. Narrow attention to households therefore makes society appear more mobile than it truly is. Such insights have prompted renewed attention to the role extended family members play in the transmission of (dis)advantage [@alburez-gutierrez_projections_2023]. Scholars show that individual extended family members such as grandparents, aunts, uncles, and cousins transfer resources to individuals that impact their socioeconomic status [@adermon_dynastic_2021; @hallsten_shadow_2023; @song_shared_2019], and that these resource flows often continue even when family members live geographically far apart [@song_shared_2019]. Yet despite these insights, most macro-level studies of inequality—such as those that calculate the Gini coefficient or estimate the racial wealth gap—continue to treat households, or occasionally individuals, as the primary unit of analysis. Consequently, scholars have documented patterns of inequality between households, but know little about inequality between extended families.
+Yet this predominant focus on households overlooks the fact that households are embedded in larger kin networks that structure obligations, cooperation, and access to resources. Such ties advantage and constrain households, shaping resource accumulation beyond parent-child transmission. Indeed, a growing body of research suggests that social scientists have underestimated the importance of the extended family in studies of inequality [@killewald_wealth_2017; @mare_multigenerational_2011; @obrien_family_2024; @shiffer-sebba_keeping_2025].  Mare [@mare_multigenerational_2011], for example, argues that intergenerational mobility has likely been overstated because analyses typically ignore the influence of ancestors and extended kin. Research on elites similarly highlights the importance of extended family networks in maintaining wealth across generations. For example, O'Brien's [@obrien_family_2024] study of elite families in Dallas shows that focusing solely on parent–child dyads obscures how these dyads are embedded within interconnected kin networks, where intermarriage among elite families is common and wealth circulates within a small number of extended lineages. Narrow attention to households therefore makes society appear more mobile than it truly is. Such insights have prompted renewed attention to the role extended family members play in the transmission of (dis)advantage [@alburez-gutierrez_projections_2023]. Scholars show that individual extended family members such as grandparents, aunts, uncles, and cousins transfer resources to individuals that impact their socioeconomic status [@adermon_dynastic_2021; @hallsten_shadow_2023; @song_shared_2019], and that these resource flows often continue even when family members live geographically far apart [@song_shared_2019]. Yet despite these insights, most macro-level studies of inequality—such as those that calculate the Gini coefficient or estimate the racial wealth gap—continue to treat households, or occasionally individuals, as the primary unit of analysis. Consequently, scholars have documented patterns of inequality between households, but know little about inequality between extended families.
 
-Drawing on scholarship showing the importance of extended families, we ask: what does income and wealth inequality in the U.S. look like when examining intergenerational extended families—what we refer to as “ kin groups”. To ease interpretation, we compare kin group estimates to the dominant unit of analysis, households. In our empirical analyses, we use data from the Panel Study of Income Dynamics (PSID), a nationally representative longitudinal survey that has followed American households and their descendants since 1968. In the PSID, households include economically interdependent individuals living in the same dwelling, while kin groups include all descendants linked to an original household through a family identifier. In practice, this means that kin groups are comprised of households linked by birth, marriage, and adoption spanning multiple generations and extended kin ties (grandparents, aunts, uncles, and cousins and in some cases great-grandparents, great-uncles, second cousins, and so on).^[On average, kin groups in the income sample include `r fmt1(inc_cl_hh_mean)` households (SD = `r fmt1(inc_cl_hh_sd)`). In the wealth sample, kin groups include an average of `r fmt1(w_cl_hh_mean)` households (SD = `r fmt1(w_cl_hh_sd)`). A more detailed discussion of kin group and household size is provided in the Materials and Methods section.]
+Drawing on scholarship showing the importance of extended families, we ask: what does income and wealth inequality in the U.S. look like when examining intergenerational extended families—what we refer to as "kin groups". To ease interpretation, we compare kin group estimates to the dominant unit of analysis, households. In our empirical analyses, we use data from the Panel Study of Income Dynamics (PSID), a nationally representative longitudinal survey that has followed American households and their descendants since 1968. In the PSID, households include economically interdependent individuals living in the same dwelling, while kin groups can be measured by grouping all descendants linked to an original household through a family identifier. In practice, this means that kin groups are comprised of households linked by birth, marriage, and adoption spanning multiple generations and extended kin ties (grandparents, aunts, uncles, and cousins and in some cases great-grandparents, great-uncles, second cousins, and so on).^[On average, kin groups in the income sample include `r fmt1(inc_cl_hh_mean)` households (SD = `r fmt1(inc_cl_hh_sd)`). In the wealth sample, kin groups include an average of `r fmt1(w_cl_hh_mean)` households (SD = `r fmt1(w_cl_hh_sd)`). A more detailed discussion of kin group and household size is provided in the Materials and Methods section.]
 
-We calculate household and kin-group Gini coefficients for both income and wealth, as well as the racial wealth gap, using all available PSID years up to 2023. Conceptually, the Gini can be understood as the average difference between any two units in a population. Arithmetically, it is the average absolute difference between all pairs of observations, normalized by the mean. Scholars have also documented a persistent racial wealth gap between Black and non-Black households [@killewald_wealth_2017; @oliver_black_2013] that is not captured by the Gini coefficient. Other work highlights the unique role of kinship networks in shaping economic outcomes by race [@beckert_durable_2022; @obrien_structural_2020]. Because aggregate inequality measures can obscure these group-based differences, we supplement household and kin group Gini coefficients with ratios of average wealth by race [@oliver_black_2013; @pfeffer_wealth_2013; @mckernan_less_2013], the most common measurement for the racial wealth gap in the United States. Similarly to the Gini, we compare median wealth ratios that rely on household-level values with those that rely on kin group-level values. 
+We calculate household and kin-group Gini coefficients for both income and wealth, as well as the racial wealth gap, using all available PSID years up to 2023. Conceptually, the Gini can be understood as the average difference between any two units in a population. Arithmetically, it is the average absolute difference between all pairs of observations, normalized by the mean. Scholars have also documented a persistent racial wealth gap between Black and non-Black households [@killewald_wealth_2017; @oliver_black_2013] that is not captured by the Gini coefficient, and noted that race plays a unique role in kinship networks, shaping economic outcomes [@beckert_durable_2022; @obrien_structural_2020]. Because aggregate inequality measures can obscure these group-based differences, we supplement household and kin group Gini coefficients with ratios of average wealth by race [@oliver_black_2013; @pfeffer_wealth_2013; @mckernan_less_2013], the most common measurement for the racial wealth gap in the United States. Similarly to the Gini, we juxtapose median wealth ratios that rely on kin group-level values with those that rely on household-level values. 
 
-Using kin groups as the unit of analysis requires aggregating households into kin groups. If households were hypothetically distributed into kin groups at random with respect to their economic attributes, inequality between kin groups could be low even in the context of high between-household inequality. If between-household correlation of economic attributes were high within kin groups, inequality between kin groups would be higher. One may think that aggregating households smooths variation and will inherently lead to a lower Gini coefficient, representing less inequality, between kin groups. However, this is not the case. Using simulated data, Appendix Table A shows that it is possible to obtain kin group-level Gini coefficients equal to or even higher than household-level Gini coefficients. The direction and degree of change in the Gini coefficient from the household to the kin group level depends on the relationship between the distribution of resources between households, kin group size, and the selection of households into kin groups. 
+Using kin groups as the unit of analysis requires aggregating households into kin groups. If, hypothetically, households were distributed into kin groups at random with respect to their economic attributes, inequality between kin groups could be low even in the context of high between-household inequality. If between-household correlation of economic attributes were high within kin groups, inequality between kin groups would be higher. One may think that aggregating households smooths variation and will inherently lead to a lower Gini coefficient, representing less inequality between kin groups. However, this is not the case. Simulated data shows that it is possible to obtain kin group-level Gini coefficients equal to or even higher than household-level Gini coefficients (Supplemental Information). Aggregating households into kin groups can more easily decrease, rather than increase, observed inequality, but the direction and degree of change ultimately depends on the relationship between the distribution of resources between households, kin group size, and the selection of households into kin groups. 
 
 The relationship between households and kin groups can be understood as an extension of a similar dynamic in inequality research :the relationship between individuals and households. Individuals tend to form households with others who have similar socioeconomic characteristics through marital homogamy [@schwartz_trends_2005]. Resources are thus concentrated within households, increasing disparities between them. If analogous mechanisms sort households into kin groups, kin groups may represent an important—and underexamined—unit for understanding the concentration of economic resources.
   
@@ -111,7 +111,7 @@ The relationship between households and kin groups can be understood as an exten
 # Results
 **Gini coefficients at the household and kin group levels.** Figure 1 depicts income and wealth inequality for all households and kin groups over time. Reflecting data availability in the PSID, Panel A plots income Gini coefficients from 1969 to 2023 and Panel B plots wealth Gini coefficients from 1984 to 2023. Figure 1 shows that inequality is substantial under both measurement approaches. Yet the level of inequality depends on the unit of analysis. Wealth and income Ginis measured at the kin group level are roughly 70%-80% the levels of their respective Ginis measured at the household level, a pattern that holds over the study period. The average income Gini coefficient is `r fmt2(avg_inc_hh)` at the household level versus `r fmt2(avg_inc_cl)` at the kin group level. For wealth, the average Gini coefficient is `r fmt2(avg_w_hh)` at the household level versus `r fmt2(avg_w_cl)` at the kin group level. 
 
-Plotting Gini coefficients over time helps contextualize contemporary inequality by placing kin group estimates alongside historical household benchmarks. For example, the most recent income Gini measured at the kin group level is only slightly lower than the household-level income Gini in the early 1970s. Inequality is higher today than in the 1970s at both levels, but because household inequality in the 1970s—at roughly 80% of current levels—has long been considered substantively important, today’s kin group inequality should be viewed as similarly consequential. Wealth Ginis tell a related but distinct story. While kin group wealth inequality represents a large share of household-level inequality, it has not approached the historically observed levels of household wealth inequality over the period we examine.
+Plotting Gini coefficients over time helps contextualize contemporary inequality by placing kin group estimates alongside historical household benchmarks. For example, the most recent income Gini measured at the kin group level is only slightly lower than the household-level income Gini in the early 1970s. Inequality is higher today than in the 1970s at both levels, but because household inequality in the 1970s—at roughly 80% of current levels—has long been considered substantively important, helps clarify the meaning of today's kin group inequality. Wealth Ginis tell a related but distinct story. While kin group wealth inequality represents a large share of household-level inequality, it has not approached the historically observed levels of household wealth inequality over the period we examine.
 
 
 ```{r figure1, fig.width=14, fig.height=11}
@@ -129,9 +129,9 @@ Change over time in household and kin group-level income inequality differ. At t
 
 Unlike income inequality, the difference between household and kin group wealth inequality has remained remarkably consistent. The household wealth Gini has increased only slightly from `r fmt2(w_hh_1984)` in 1984 to `r fmt2(w_hh_2023)` in 2023, a `r fmt1(w_hh_pct)`% increase. At the kin group level, it rose from `r fmt2(w_cl_1984)` to `r fmt2(w_cl_2023)` over the same period, which also constitutes a `r fmt1(w_cl_pct)`% increase. Importantly, these trends reflect inequality within a population that excludes the very top of the wealth distribution. The PSID does not adequately sample the wealthiest individuals, who drive much of the inequality in wealth [@insolera_overview_2021; @pfeffer_measuring_2016]. Therefore, these patterns indicate stable wealth inequality, for both households and kin groups, among the bottom 95%.
 
-**Lorenz curves for 1984 and 2023.** Figure 2 illustrates differences in income and wealth inequality estimates using Lorenz curves–which are often used to depict Gini coefficients at a single point in time – in 1984 (blue) and 2023 (orange). Lorenz curves plot the cumulative share of income or wealth against the cumulative share of the population—whether defined as households or kin groups. Perfect equality appears as a 45° line where income or wealth is distributed evenly; greater inequality pulls the curve farther below this line. The Gini summarizes this deviation from perfect equality. Comparing household- and kin group-level Ginis at two points contextualizes differences by unit by juxtaposing them with how the two measures of inequality have shifted over the years.
+**Lorenz curves for 1984 and 2023.** Figure 2 illustrates differences in income and wealth inequality estimates using Lorenz curves–which are often used to depict Gini coefficients at a single point in time, in 1984 (blue) and 2023 (orange). Lorenz curves plot the cumulative share of income or wealth against the cumulative share of the population—whether defined as households or kin groups. Perfect equality appears as a 45° line where income or wealth is distributed evenly; greater inequality pulls the curve farther below this line. The Gini summarizes this deviation from perfect equality. Comparing household- and kin group-level Ginis at two points contextualizes differences by unit by juxtaposing them with how the two measures of inequality have shifted over the years.
 
-These curves juxtapose two inequality trends: differences in how income and wealth inequality change over time, and differences in inequality across units of analysis. Panel A mirrors Figure 1 Panel A in showing that household inequality (solid) is consistently higher than kin group inequality (dotted), and that income inequality in 2023 (orange) was higher than income inequality in 1984. All curves lie below the 45-degree dashed line representing perfect equality, but the 2023 curves fall further from this line than the 1984 curves, and each household curve falls further from this line than its respective kin group curve.  Panel B similarly mirrors Figure 1 Panel B. Wealth inequality has increased from 1984 to 2023 and is greater at the household level than the kin group level at each year. Figure 2 also mirrors Figure 1 by showing that wealth is more unequally distributed than income in both years, with Panel B curves falling further from the line of equality than Panel A curves. 
+Panel A mirrors Figure 1 Panel A in showing that household inequality (solid) is consistently higher than kin group inequality (dotted), and that income inequality in 2023 (orange) was higher than income inequality in 1984. All curves lie below the 45-degree dashed line representing perfect equality, but the 2023 curves fall further from this line than the 1984 curves, and each household curve falls further from this line than its respective kin group curve.  Panel B similarly mirrors Figure 1 Panel B. Wealth inequality has increased from 1984 to 2023 and is greater at the household level than the kin group level at each year. Figure 2 also mirrors Figure 1 by showing that wealth is more unequally distributed than income in both years, with Panel B curves falling further from the line of equality than Panel A curves. 
 
 Comparing the two panels, however, reveals two additional key differences between income and wealth inequality. First, the gap between household (solid) and kin group (dotted) wealth curves (Panel B) is large and often exceeds the shift between 1984 (blue) and 2023 (orange) curves. This suggests that differences across units of analysis are more pronounced than changes over time for wealth. This, however, is not the case for income (Panel A). For income, gaps between household (solid) and kin group (dotted) curves appear smaller, and for the most part smaller than differences between 1984 (blue) and 2023 (orange) curves. Taken together, these findings indicate that wealth inequality varies more across units than over time, while income inequality varies more over time than across units.
 
@@ -147,11 +147,11 @@ print_note(fig2_note)
 ```
 
 
-**The racial wealth gap at the household and kin group levels.** Figure 3 depicts the racial wealth gap using both households and kin groups. We report racial wealth gaps using medians to account for wealth’s right-skew [@killewald_wealth_2017; @mckernan_racial_2014; @kochhar_wealth_2011]. Specifically, we report the ratio of Black median wealth to non-Black median wealth, where a value of 1 indicates equal median wealth across racial categories. Values below 1 indicate that Black households or kin groups hold less wealth than their non-Black counterparts. Such values can also be interpreted as cents held by Black households or kin groups for every dollar held by non-Black households or kin groups.
+**The racial wealth gap at the household and kin group levels.** Figure 3 depicts the racial wealth gap using both households and kin groups. We report racial wealth gaps using medians to account for wealth's right-skew [@killewald_wealth_2017; @mckernan_racial_2014; @kochhar_wealth_2011]. Specifically, we report the ratio of Black median wealth to non-Black median wealth, where a value of 1 indicates equal median wealth across racial categories. Values below 1 indicate that Black households or kin groups hold less wealth than their non-Black counterparts. Such values can also be interpreted as cents held by Black households or kin groups for every dollar held by non-Black households or kin groups.
 
 The gap is persistent and sizable regardless of the unit of analysis. The typical Black household holds `r fmt0(100 * w_med_ratio_hh_mean)` cents for every dollar of wealth held by the typical non-Black household across the survey period (ranging from `r fmt0(100 * w_med_ratio_hh_max)` cents in `r w_med_ratio_hh_max_yr` to `r fmt0(100 * w_med_ratio_hh_min)` cents in `r w_med_ratio_hh_min_yr`). The typical Black kin group holds `r fmt0(100 * w_med_ratio_cl_mean)` cents for every dollar held by the typical non-Black kin group (ranging from `r fmt0(100 * w_med_ratio_cl_max)` cents in `r w_med_ratio_cl_max_yr` to `r fmt0(100 * w_med_ratio_cl_min)` cents in `r w_med_ratio_cl_min_yr`). The ratio between Black and non-Black median wealth when measured at the kin group level is thus around ten percentage points lower than the equivalent ratio measured at the household level.
 
-These gaps largely persist throughout the 1969-2023 period, but fluctuate differently by unit of analysis. The kin group-level ratio declines before reversing around 2013. The household-level ratio, meanwhile, fluctuates more modestly and approaches its minimum in 2023.
+These gaps largely persist throughout the 1984-2023 period, but fluctuate differently at different periods. The kin group-level ratio bounces around before declining, then increasing around 2013. The household-level ratio, meanwhile, fluctuates more modestly and approaches its minimum in 2023.
 
 ```{r figure3, fig.width=14, fig.height=11}
 grid.newpage()
@@ -162,21 +162,21 @@ grid.draw(fig3)
 print_note(fig3_note)
 ```
 
-**Sensitivity of difference between household- and kin group-level inequality.** We assess the robustness of our results through a series of sensitivity analyses. Across all specifications, estimated inequality is lower when using kin groups rather than households as the unit of analysis. For Gini coefficients, this finding is robust across race, different inclusion criteria for income and wealth measures, different samples, alternative measures of inequality, and when adjusting for household and kin group size. Some sensitivity analyses reduce the difference between household and kin group Gini, suggesting kin group inequality may be higher than what we find in our main analyses, but differences are never altogether eliminated. Results from these sensitivity analyses are available in Appendices C and D. For wealth ratios, findings are robust to different measures, inclusion criteria for wealth, samples, and when adjusting for household and kin group size. Using means rather than medians makes the kin group-level racial wealth gap appear similar to the household-level gap, as a small number of wealthy Black households skew average household-level inequality upwards. Results from these sensitivity analyses are available in Appendix E.
+**Sensitivity of difference between household- and kin group-level inequality.** We assess the robustness of our results through a series of sensitivity analyses. Across all specifications, estimated inequality is lower when using kin groups rather than households as the unit of analysis. For Gini coefficients, this finding is robust across race, different inclusion criteria for income and wealth measures, different samples, alternative measures of inequality, and when adjusting for household and kin group size. Some sensitivity analyses reduce the difference between household and kin group Gini, suggesting kin group inequality may be higher than what we find in our main analyses, but differences are never altogether eliminated. For wealth ratios, findings are robust to different measures, inclusion criteria for wealth, samples, and when adjusting for household and kin group size. Using means rather than medians makes the kin group-level racial wealth gap appear similar to the household-level gap, as a small number of wealthy Black households skew average household-level inequality. Results from all of these sensitivity analyses are available in the Supplemental Information.
 
 
 # Discussion
-Our analyses explored what income and wealth inequality in the U.S. look like when examined not only at the household level but also at the level of intergenerational extended families. We found that income and wealth inequality appear high both when examining society as a collection of households (the standard in the literature) and when examining society as a collection of kin groups. For the most part, income and wealth inequality are 20-30 percent lower when measured at the kin group- rather than the household-level, as per Gini coefficients. Likewise, we find that the median racial wealth gap between Black and non-Black families is high and persistent, whether measured at the household or kin group levels. Kin group racial wealth gaps are roughly ten percentage points lower than household gaps between Black and non-Black households. In other words, extended families are somewhat more economically similar to one another, on average, than households, but economic inequality is still severe on the kin group level. 
+Our analyses explored what income and wealth inequality in the U.S. look like when examined not only at the household level but also at the level of intergenerational extended families. We found that income and wealth inequality appear high both when examining society as a collection of households (the standard in the literature) and when examining society as a collection of kin groups. For the most part, income and wealth inequality are 20-30 percent lower when measured at the kin group- rather than the household-level, as per Gini coefficients. Likewise, we find that the median racial wealth gap between Black and non-Black families is high and persistent, whether measured at the household or kin group levels. Kin group racial wealth gaps are roughly ten percentage points lower than wealth gaps between Black and non-Black households. In other words, extended families are somewhat more economically similar to one another, on average, than households, but economic inequality is still severe on the kin group level. 
 
 Our analyses complement existing scholarship on income and wealth inequality, which typically measures inequality at the household level (or in some cases the individual level). Our goal is not to diminish the importance of households as units of analysis, but to demonstrate that examining multiple units—including both households and kin groups—yields a more complete understanding of inequality as a complex social phenomenon. In principle, inequality between households could be very high even if inequality between kin groups were low. In the United States over the past 55 years, however, we observe substantial inequality at the kin group level as well.
 
-The choice to examine both households and kin groups as analytical units matters because different historical periods may generate inequality at different levels of social organization, a pattern reflected in our findings. For example, our analyses showed that kin group-level income inequality increased more rapidly than household-level income inequality over the study period. By contrast, trends over time in household and kin group wealth inequality were similar. This divergence over time between income and wealth patterns across levels of analysis may reflect the cumulative nature of wealth, which is more durably concentrated within kinship networks [@obrien_family_2024; @adermon_dynastic_2021; @pfeffer_determinants_2017], or limitations of the PSID’s coverage of the top of the wealth distribution, where much wealth inequality is generated. Together, these patterns reinforce the importance of examining inequality at multiple levels of social organization.
+The choice to examine both households and kin groups as analytical units matters because different historical periods may generate inequality at different levels of social organization, a pattern reflected in our findings. For example, our analyses showed that kin group-level income inequality increased more rapidly than household-level income inequality over the study period. By contrast, trends over time in household and kin group wealth inequality were similar. This divergence over time between income and wealth patterns across levels of analysis may reflect the cumulative nature of wealth, which is more durably concentrated within kinship networks [@obrien_family_2024; @adermon_dynastic_2021; @pfeffer_determinants_2017], or limitations of the PSID's coverage of the top of the wealth distribution, where much wealth inequality is generated. Together, these patterns reinforce the importance of examining inequality at multiple levels of social organization.
 
-The patterns documented in our paper should not be interpreted as evidence that inequality in the U.S. is somehow less severe than previously understood. Our results suggest that if the United States were a pure “kin group society”—that is, if kin groups were the only meaningful social units and households held no independent significance—overall inequality would remain high, but somewhat less severe than current estimates imply. In reality, however, households are socially and economically meaningful units in the United States, and the substantial inequality between them remains consequential. At the same time, because the United States is not a pure “household society” either, high levels of kin group‑level inequality must also be taken seriously. 
+The patterns documented in our paper should not be interpreted as evidence that inequality in the U.S. is somehow less severe than previously understood. Our results suggest that if the United States were a pure "kin group society"—that is, if kin groups were the only meaningful social units and households held no independent significance—overall inequality would remain high, but somewhat less severe than current estimates imply. In reality, however, households are socially and economically meaningful units in the United States, and the substantial inequality between them remains consequential. At the same time, because the United States is not a pure "household society" either, high levels of kin group‑level inequality must also be taken seriously. 
 
 Ultimately, inequality between households is nested in, and compounds with, inequality between kin groups. It is thus important to understand how the two, and for that matter individual-level inequality as well, interact to shape overall inequality. It is possible that families behave differently along the economic distribution, as our Lorenz curves suggest. If, for example, kin groups in the middle of the distribution have different motivations for accumulating wealth than those at the top, they may also spread resources differently within kin groups, across households [@rapp_economies_2025]. To fully understand patterns of inequality, we must examine interactions across levels.
 
-One possible mechanism shaping differences between household and kin group inequality, for both income and wealth, is intergenerational mobility. Mechanically, lower mobility between households produces greater homogeneity within kin groups. Low mobility means descendants’ households mimic the status of their ancestors, producing kin groups made up of similar households. Higher mobility would have the opposite effect.  Persistently high inequality at both the household and kin group levels indicates that mobility has not been high. 
+One possible mechanism shaping differences between household and kin group inequality, for both income and wealth, is intergenerational mobility. Mechanically, lower mobility between households produces greater homogeneity within kin groups. Low mobility means descendant households mimic the status of their ancestors, producing kin groups made up of similar households. Higher mobility would have the opposite effect.  Persistently high inequality at both the household and kin group levels indicates that mobility has not been high. 
 
 Additionally, high kin group inequality may further reduce mobility. If extended family members are valuable for upward mobility, high inequality across kin groups means that lower resourced households have less access to higher resourced households within their kin group. In other words, the prevalent concern that high inequality undermines intergenerational mobility [@corak_income_2013; @jerrim_income_2015; @ermisch_parents_2012] may operate on both the household and kin group levels, fueling future patterns of inequality.
 
@@ -188,262 +188,23 @@ Although our analyses focused on the macro level, they highlighted a clear need 
 
 The PSID facilitates two linked units of analysis: households and kin groups. Households consist of economically interdependent individuals living in the same dwelling, with one member reporting data on income and wealth for all members. Household composition changes over time with transitions such as divorce or childbirth; individuals who leave receive a new household identifier. Kin groups, in contrast, include all descendants of households sampled in 1968, linked through a PSID-generated identifier, which we refer to as a kin group identifier. Households added after 1968 receive their own kin group identifier upon entry. Kin group membership can change due to birth, death, adoption, marriage, and divorce. A small number of households (`r fmt0(n_mismatched)` household-years) contain couples belonging to different kin groups; these cases were assigned to both kin groups.
 
-Additionally, although all households belong to a kin group, not all extended family members are observed in the PSID in every year. In some cases (especially in earlier years)^[The prevalence of single-household kin groups dropped by 75% between 1969 and 1980. However, overall trends remain similar regardless of whether this earlier period is excluded.], PSID kin groups consist of only a single observed household, rendering household and kin group-level measures identical. These observations are excluded from the main analyses because they do not capture extended family dynamics and are a result of survey limitations, rather than social reality. Including these single household kin groups reduces the household–kin group inequality gap for income and wealth but does not eliminate it (see Appendix C2).
+Additionally, although all households belong to a kin group, not all extended family members are observed in the PSID in every year. In some cases (especially in earlier years)^[The prevalence of single-household kin groups dropped by 75% between 1969 and 1980. However, overall trends remain similar regardless of whether this earlier period is excluded.], PSID kin groups consist of only a single observed household, rendering household and kin group-level measures identical. These observations are excluded from the main analyses because they do not capture extended family dynamics and are a result of survey limitations, rather than social reality. Including these single household kin groups reduces the household–kin group inequality gap for income and wealth but does not eliminate it (see Supplemental Information).
 
 The PSID has collected income data since its inception but began collecting wealth data only in 1984. As a result, analytic samples differ: income analyses include `r fmt0(inc_hh_years)` household-years and `r fmt0(inc_cl_years)` kin group-years, representing `r fmt0 (inc_uniq_clans)` unique kin groups. Wealth analyses include `r fmt0(w_hh_years)` household-years and `r fmt0(w_cl_years)` kin group-years, representing `r fmt0(w_uniq_clans)` unique kin groups. Kin groups in the income sample have about `r fmt1(inc_cl_hh_mean)` households on average (SD = `r fmt1(inc_cl_hh_sd)`) and `r fmt1(inc_cl_ppl_mean)` individuals (SD = `r fmt1(inc_cl_ppl_sd)`). Kin groups in the wealth sample have about `r fmt1(w_cl_hh_mean)` households on average (SD = `r fmt1(w_cl_hh_sd)`) and `r fmt1(w_cl_ppl_mean)` individuals (SD = `r fmt1(w_cl_ppl_sd)`). The average household consists of `r fmt1(hh_size_mean)` individuals in the income sample (SD = `r fmt1(hh_size_sd)`) and `r fmt1(hh_size_w_mean)` individuals in the wealth sample (SD = `r fmt1(hh_size_w_sd)`).^[Kin group and household sizes are calculated using the weighted mean.]
 
-**Measures of income and wealth.** We measure both income and wealth to capture distinct dimensions of economic inequality. This choice follows from research identifying divergent patterns depending on choice of financial indicator because mechanisms driving wealth inequality are distinct from those driving income inequality [@killewald_wealth_2017; @pfeffer_determinants_2017; @hallsten_grand_2017]. Aggregate measures for income and wealth are provided by the PSID. Income includes earnings, asset income, transfers, and income from farming and gardening. Wealth includes non-primary real estate, business equity, stocks, bonds, vehicles, retirement accounts, and bank accounts, and includes home equity. As a sensitivity analysis, we compare Gini coefficients for wealth measures that exclude home equity (see Appendix C3). When home equity is excluded, estimated inequality is lower at both the household and kin group level, but the difference between household and kin group-level Gini coefficients remains similar.
+**Measures of income and wealth.** We measure both income and wealth to capture distinct dimensions of economic inequality. This choice follows from research identifying divergent patterns depending on choice of financial indicator because mechanisms driving wealth inequality are distinct from those driving income inequality [@killewald_wealth_2017; @pfeffer_determinants_2017; @hallsten_grand_2017]. Aggregate measures for income and wealth are provided by the PSID. Income includes earnings, asset income, transfers, and income from farming and gardening. Wealth includes non-primary real estate, business equity, stocks, bonds, vehicles, retirement accounts, and bank accounts, and includes home equity. As a sensitivity analysis, we compare Gini coefficients for wealth measures that exclude home equity (see Supplemental Information). When home equity is excluded, estimated inequality is lower at both the household and kin group level, but the difference between household and kin group-level Gini coefficients remains similar.
 
-Missing data for components of income and wealth are imputed by the PSID. Concerns about measurement error, especially for wealth, are minimal, as imputation methods utilized by the PSID explain little of the variation in wealth over time[@pfeffer_determinants_2017; @si_multiple_2021]. All income and wealth values are adjusted for inflation. Additionally, analyses set negative values of income and wealth to zero so that Gini coefficients are interpretable by remaining in the 0 to 1 range. When negative values are included, Gini coefficients are about the same (see Appendix C4). 
+Missing data for components of income and wealth are imputed by the PSID. Concerns about measurement error, especially for wealth, are minimal, as imputation methods utilized by the PSID explain little of the variation in wealth over time[@pfeffer_determinants_2017; @si_multiple_2021]. All income and wealth values are adjusted for inflation. Additionally, analyses set negative values of income and wealth to zero so that Gini coefficients are interpretable by remaining in the 0 to 1 range. When negative values are included, Gini coefficients are about the same (see Supplemental Information). 
 
-To construct kin group-level measures, we aggregate household income and wealth for all households in a kin group within each kin group-year. Measures are divided by the number of people in a household or number of households within a kin group to standardize by household and kin group size, respectively. Adjusting for size decreases inequality and magnifies the difference between household and kin group Gini coefficients. Nonetheless, less inequality is estimated when kin groups are the unit of analysis whether income and wealth are adjusted for size or not (see Appendix C5).
+To construct kin group-level measures, we aggregate household income and wealth for all households in a kin group within each kin group-year. Measures are divided by the number of people in a household or number of households within a kin group to standardize by household and kin group size, respectively. Adjusting for size decreases inequality and magnifies the difference between household and kin group Gini coefficients. Nonetheless, less inequality is estimated when kin groups are the unit of analysis whether income and wealth are adjusted for size or not (see Supplemental Information).
 
-All results presented are weighted. Using weights does not meaningfully change results (see Appendix C6). Household-level weights are provided by the PSID. The PSID constructs family weights from individual weights using the fair shares method, which assumes that the probability of observing any individual within a family equals the probability of observing the family itself. We extend this approach to construct kin group-level weights using the same fair shares principle. Kin group weights assume that the probability of observing a family within a kin group equals the probability of observing the kin group itself. As a result, each kin group’s influence reflects the representation of the average household within that kin group, rather than scaling mechanically with the kin group’s total number of households.
+All results presented are weighted. Using weights does not meaningfully change results (see Supplemental Information). Household-level weights are provided by the PSID. The PSID constructs family weights from individual weights using the fair shares method, which assumes that the probability of observing any individual within a family equals the probability of observing the family itself. We extend this approach to construct kin group-level weights using the same fair shares principle. Kin group weights assume that the probability of observing a family within a kin group equals the probability of observing the kin group itself. As a result, each kin group's influence reflects the representation of the average household within that kin group, rather than scaling mechanically with the kin group's total number of households.
 
 
 **Measures of race.** The PSID collects race data from household heads and, in some years, from spouses. If a respondent ever identifies as Black, then that value is imputed for all years that respondent appears in the data [@sayer_women_2004]. Black households are all households with a Black head of household. Black kin groups are kin groups in which more than half of the households within it identify as Black. Analyses by race and ethnicity are limited to Black and non-Black categories because there are relatively few kin groups in the PSID data (`r fmt0 (inc_uniq_clans)` for income and `r fmt0(w_uniq_clans)` for wealth). Additionally, the genealogical design of the PSID reflects the demographics of the United States at the time the survey began in 1968, which constrains analyses of kin groups for demographic groups that were not prominent at that time. Although the PSID incorporated additional samples over time to reflect the changing demographics of the United States in the PSID sample, ethnicity analyses remain limited because Hispanic/Latino households do not form consistent multigenerational lineages over the full panel and therefore have limited kin groups.
 
-**Indexing inequality with the Gini coefficient.** Inequality is measured using the standard Gini coefficient, which ranges from 0 (perfect equality) to 1 (perfect inequality). While the Gini index is a widely-used measure of inequality, it has well-known limitations. First, the Gini places greater weight on differences around the middle of the income or wealth distribution, making it well suited to the PSID, which underrepresents wealthy households compared with surveys such as the Survey of Consumer Finance [@atkinson_measurement_1970; @de_maio_income_2007; @kawachi_relationship_1997]. To assess whether our results depend on where inequality is concentrated along the distribution, we also examine two related measures, referred to as the Gini’s “nuclear family” [@aaberge_ginis_2007]. Across all measures, we find that estimated inequality is consistently lower when measured at the kin group level than at the household level for both income and wealth (see Appendix D).
+**Indexing inequality with the Gini coefficient.** Inequality is measured using the standard Gini coefficient, which ranges from 0 (perfect equality) to 1 (perfect inequality). While the Gini index is a widely-used measure of inequality, it has well-known limitations. First, the Gini places greater weight on differences around the middle of the income or wealth distribution, making it well suited to the PSID, which underrepresents wealthy households compared with surveys such as the Survey of Consumer Finance [@atkinson_measurement_1970; @de_maio_income_2007; @kawachi_relationship_1997]. To assess whether our results depend on where inequality is concentrated along the distribution, we also examine two related measures, referred to as the Gini's "nuclear family" [@aaberge_ginis_2007]. Across all measures, we find that estimated inequality is consistently lower when measured at the kin group level than at the household level for both income and wealth (see Supplemental Information).
 
-Gini coefficients are calculated separately for income and wealth to reflect their distinct dimensions of inequality. Estimates of Gini coefficients in our data are comparable to estimates from other studies, though there is more variation in wealth coefficients, likely because the PSID excludes wealthy households (see Appendix B).
+Gini coefficients are calculated separately for income and wealth to reflect their distinct dimensions of inequality. Estimates of Gini coefficients in our data are comparable to estimates from other studies, though there is more variation in wealth coefficients, likely because the PSID excludes wealthy households (see Supplemental Information).
 
-
-# Appendix
-
-```{r appendix-load}
-source(here::here("functions", "all_functions.R"))
-
-# Source main figures and appendix figures 
-SAVE_FILES <- FALSE
-source(here("9_figures", "src", "figure_main.R"))
-source(here("9_figures", "src", "figure_appendix.R"))
-
-income          <- read_gini(here("6_calculate_gini", "output", "income.csv"))
-wealth_nohouse  <- read_gini(here("6_calculate_gini", "output", "wealth_nohouse.csv"))
-wealth_withhome <- read_gini(here("6_calculate_gini", "output", "wealth_withhome.csv"))
-
-income_all <- read_csv(here("6_calculate_gini", "output", "income.csv"), show_col_types = FALSE) %>%
-  mutate(year = suppressWarnings(as.integer(as.character(year))))
-wealth_all <- read_csv(here("6_calculate_gini", "output", "wealth_withhome.csv"), show_col_types = FALSE) %>%
-  mutate(year = suppressWarnings(as.integer(as.character(year))))
-
-inc_c123 <- read_csv(here("8_nuclear_family", "output", "income_C123.csv"),  show_col_types = FALSE)
-wnh_c123 <- read_csv(here("8_nuclear_family", "output", "wealth_C123.csv"),  show_col_types = FALSE)
-```
-
-## Appendix A: Simulating Gini Coefficients
-
-Appendix A illustrates extreme cases from simulated household and kin group data. The simulation demonstrates that kin group-level Gini coefficients are not necessarily lower than household-level Gini coefficients. The direction of the difference depends on the relationship between kin group size, the overall distribution of resources, and the selection of households into kin groups. 
-
-Appendix A1 shows the minimum possible difference between kin group and household Gini coefficients in the simulated data, while Appendix A2 shows the maximum possible difference. Curves show that Gini coefficients at the kin group level can exceed those of households. Appendix A3 illustrates that, while it is more likely for Gini coefficients at the household level to exceed Gini coefficients at the kin group level, whether this effect is observed depends on the combination between kin group size and income or wealth distribution.
-
-```{r appendix-a-sim}
-set.seed(123)
-sims   <- run_many_sims_sums(
-  n_sims = 100, n_clans = 5, hh_per_clan = 10,
-  dist = "lognormal", dist_params = list(meanlog = 0, sdlog = 1),
-  clan_size_scenario = "rich_big"
-)
-df_res <- results_from_sims_sums(sims)
-ext    <- extreme_indices_sums(df_res)
-```
-
-\newpage
-
-**Appendix A1: Case with lowest simulated kin group-household Gini difference**
-```{r appendix-a1, fig.width=6, fig.height=4.5, fig.align="center"}
-plot_lorenz_for_sim_sums(sims[[ext$idx_min_sums]])
-```
-
-**Appendix A2: Case with highest simulated kin group-household Gini difference**
-```{r appendix-a2, fig.width=6, fig.height=4.5, fig.align="center"}
-plot_lorenz_for_sim_sums(sims[[ext$idx_max_sums]])
-```
-
-\newpage
-
-**Appendix A3: Summary of extreme cases**
-```{r appendix-a3, fig.width=6.5, fig.height=5, fig.align="center"}
-make_two_mekko_sums(sims, ext$idx_min_sums, ext$idx_max_sums)
-```
-
-\newpage
-
-## Appendix B: Comparison with External Estimates
-
-Appendix B compares Gini coefficients at the household level calculated for income and wealth with Gini coefficients from other researchers. Gini coefficients in Appendix B are calculated using the full sample of households in the PSID, rather than just the households who belong to a kin group with at least one other household (which are the results presented in the main paper).
-
-Gini coefficients are not available for all years in other sources, so only years available are presented. Gini benchmarks for income rely on estimates from the Federal Reserve Bank of St. Louis (FRED) and the U.S. Census [@fred_gini_2025; @census_table_2025]. FRED uses data from the World Bank on U.S. households and the Census uses data from the Current Population Survey (CPS). Gini benchmarks for wealth rely on estimates from research papers based on data from the PSID or Survey of Consumer Finances (SCF) [@wolff_size_209; @pfeffer_wealth_2013].
-
-```{r appendix-b1}
-b1_years <- c(1969L, 1979L, 1989L, 1999L, 2009L, 2019L)
-
-b1 <- tibble(
-  Year          = c("1969", "1979", "1989", "1999", "2009", "2019"),
-  Year_pick     = b1_years,
-  FRED          = c(0.391, 0.404, 0.431, 0.458, 0.468, 0.484),
-  `U.S. Census` = c(0.349, 0.365, 0.401, 0.429, 0.443, 0.454)
-) %>%
-  left_join(
-    income_all %>% filter(year %in% b1_years) %>%
-      select(Year_pick = year, `Our Results (All HH)` = hh_w_inc),
-    by = "Year_pick"
-  ) %>%
-  select(Year, FRED, `U.S. Census`, `Our Results (All HH)`) %>%
-  mutate(across(-Year, ~ round(as.numeric(.x), 3)))
-
-flextable(b1) %>%
-  set_caption(caption = "Appendix B1. Comparison of income Gini coefficients",
-              autonum = FALSE) %>%
-  set_header_labels(`Our Results (All HH)` = "Our Results\n(All HH)") %>%
-  theme_vanilla() %>%
-  bold(part = "header") %>%
-  align(align = "center", part = "all") %>%
-  fontsize(size = 9, part = "all") %>%
-  fontsize(size = 8, part = "body") %>%
-  fit_to_width(max_width = 6.5)
-```
-
-```{r appendix-b2}
-b2 <- tibble(
-  Year      = c("1983", "1984", "1989", "1992", "1994", "2003", "2004", "2007", "2009", "2010", "2011"),
-  Year_pick = c(NA, 1984L, 1989L, NA, 1994L, 2003L, NA, 2007L, 2009L, NA, 2011L),
-  SCF       = c(0.760, NA,    0.781, 0.770, NA,    NA,    0.809, NA,    NA,    0.846, NA),
-  PSID      = c(NA,    0.739, 0.742, NA,    0.732, 0.810, NA,    0.830, 0.890, NA,    0.880)
-) %>%
-  left_join(
-    wealth_all %>%
-      filter(year %in% c(1984L, 1989L, 1994L, 2003L, 2007L, 2009L, 2011L)) %>%
-      select(Year_pick = year, `Our Results` = hh_w_wealth) %>%
-      mutate(`Our Results` = round(as.numeric(`Our Results`), 3)),
-    by = "Year_pick"
-  ) %>%
-  select(Year, SCF, PSID, `Our Results`)
-
-flextable(b2) %>%
-  set_caption(caption = "Appendix Table B2. Comparison of wealth Gini coefficients with external estimates",
-              autonum = FALSE) %>%
-  theme_vanilla() %>%
-  bold(part = "header") %>%
-  align(align = "center", part = "all") %>%
-  fontsize(size = 9, part = "all") %>%
-  fontsize(size = 8, part = "body") %>%
-  fit_to_width(max_width = 6.5)
-```
-
-
-# Appendix C: Sensitivity Analyses — Gini Coefficients {-}
-Across a range of specifications, estimated inequality using the Gini is lower when kin groups are used as the unit of analysis instead of households. This pattern is not driven by race, nor does it disappear when expanding the sample, excluding home equity in measures of wealth, including negative wealth values, standardizing by household size, or applying weights. For each specification, results are recalculated and displayed alongside the main results.
-
-## Appendix C1: Gini Coefficients by Race Subgroup {-}
-The differences between Gini coefficients at the household and kin group level are not driven by racial subgroups. Graphs on the left side show Gini coefficients for Black households and kin groups. Graphs in the middle show Gini coefficients for non-Black households and kin groups. The graphs on the right side show the difference between household and kin group (HH - kin group) Gini coefficients for each group. Gini coefficients for income (Panel A) and wealth (Panel B) are higher at the kin group level for both Black and non-Black kin groups, indicating that inequality is lower when estimated at the kin group level across racial groups. 
-
-```{r appendix-c1, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_gini_c1
-```
-
-
-## Appendix C2: Sensitivity — Single-Household Kin Groups {-}
-In reality, all households belong to kin groups that consist of multiple households. However, some households in the PSID do not have kin groups due to the survey design and attrition. The survey is genealogical, meaning that initial households only have measurable kin groups once their descendants respond to the survey. Attrition also might limit responses from some households, thereby erasing kin groups for the households they are connected to. 
-
-Because these limitations are imposed by the survey design, not social reality, we exclude household-years where households are alone in their kin group from both household and kin group measurements. The graphs on the left side show this. When including these single-household kin groups, or “kin groupless” households, the difference in Gini coefficients at the household and kin groups levels is minimized but not eliminated. The graphs in the middle show Gini coefficients when single-household kin groups are included. The graphs on the right side show the difference between household and kin group (HH - kin group) Gini coefficients for each group. Differences in estimated inequality at the kin group and household levels are smaller when including kin groupless households, however, they still exist and are increasing over time. 
-
-```{r appendix-c2, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_gini_c2
-```
-
-
-## Appendix C3: Sensitivity — Wealth With and Without Home Equity {-}
-Results presented in the main text include home equity for measures of wealth. Appendix C3 shows Gini coefficients when home equity is excluded (middle graphs), and reports the difference between Gini coefficients at the household and kin group levels (graphs on the right). Excluding home equity makes estimated inequality lower and minimizes the observed difference between household and kin group Gini coefficients.
-
-```{r appendix-c3, fig.width=14, fig.height=7, out.width="100%"}
-sensitivity_gini_c3
-```
-
-
-## Appendix C4: Sensitivity — Negative Values {-}
-Results presented in the main text exclude negative values for income and wealth. Appendix C4 shows Gini coefficients when negative values are included (middle graphs), and reports the difference between Gini coefficients at the household and kin group levels (graphs on the right). Including negative values does not change estimated Gini coefficients at the household or kin group levels.
-
-```{r appendix-c4, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_gini_c4
-```
-
-
-## Appendix C5: Sensitivity — Size Standardization {-}
-Results in the main text standardize income, wealth, and resulting Gini coefficients by household and kin group size. Estimated inequality is higher when results are not standardized by size and the gap between household and kin group Gini coefficients is smaller. However, Gini coefficients are higher at the kin group versus household level irrespective of whether measurements are adjusted by size.
-
-```{r appendix-c5, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_gini_c5
-```
-
-
-## Appendix C6: Sensitivity — Weighting {-}
-All results presented in the main paper are weighted. Household-level Gini coefficients are weighted using PSID-provided family weights, while kin group-level Gini coefficients are weighted using a constructed kin group weight based on the PSID family weight. Weighting does not substantially change the results.
-
-```{r appendix-c6, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_gini_c6
-```
-
-
-# Appendix D: Alternative Inequality Measures {-}
-Appendix D shows three alternative measures of inequality proposed by Aaberge [@aaberge_ginis_2007]. C1 is the Bonferroni coefficient (greater weight on lower tail); C2 is the standard Gini coefficient; C3 places greater weight on the upper tail of the distribution. All estimates are weighted averages across all available years. Inequality is lower at the kin group level using any measure of inequality.
-
-```{r appendix-d, fig.width=14, fig.height=13, out.width="100%"}
-appendix_d
-```
-
-
-# Appendix E: Sensitivity Analyses — Race Ratios {-}
-Across a range of specifications, estimated median racial wealth gaps are lower when kin groups are used as the unit of analysis instead of households. This pattern does not disappear when expanding the sample, excluding home equity in measures of wealth, including negative wealth values, standardizing by household size, or applying weights. For each specification, results are recalculated and displayed alongside the main results. 
-
-Mean racial wealth gaps are about the same at the household and kin group levels. This finding is also robust across each specification. Appendix E1 explains the difference between the mean and median wealth ratios and why median racial wealth gaps are presented.
-
-
-## Appendix E1: Mean and Median Wealth Ratios {-}
-Appendix E1 reports Black / non-Black wealth ratios using weighted means for both households and kin groups. Panel A reproduces the median wealth ratios (as in Figure 3), while Panel B presents mean wealth ratios. Using medians, the racial wealth gap differs between households and kin groups (Panel A), whereas using means, the two are about the same (Panel B).
-
-Race ratios using mean wealth, when pooled across all years, show that Black households hold 19 cents for every dollar of wealth held by non-Black households, while Black kin groups hold 18 cents for every dollar held by non-Black kin groups. The convergence in mean-based estimates is driven by a small number of high-wealth Black households in the PSID, particularly in 2004–2005, which skew household-level averages. These results highlight the sensitivity of mean-based measures to outliers, which is why we present race ratios based on median wealth in the main text.
-
-
-```{r appendix-e1, fig.width=14, fig.height=11, out.width="100%"}
-grid::grid.draw(appendix_e1)
-```
-
-## Appendix E2: Race Ratios — Single-Household Kin Groups {-}
-Appendix E2 shows Black / Non-Black wealth ratios when single-household kin groups are excluded (main specification, left panels) versus included (middle panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios. Including single-household kin groups does little to change racial wealth gaps using median or mean wealth (right panels). In particular, the median racial wealth gap between kin groups, versus households, shows less inequality irrespective of whether single-household kin groups are included. 
-
-```{r appendix-e2, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_ratio_e2
-```
-
-
-## Appendix E3: Race Ratios — Wealth With and Without Home Equity {-}
-Appendix E3 compares racial wealth ratios when home equity is included (main specification, left panels) versus excluded (middle panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios. The median racial wealth gap between kin groups, versus households, shows less inequality irrespective of whether wealth measures include home equity. 
-
-```{r appendix-e3, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_ratio_e3
-```
-
-
-## Appendix E4: Race Ratios — Negative Values {-}
-Appendix E4 shows Black / Non-Black wealth ratios when negative wealth values are excluded (main specification, left panels) versus included (middle panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios. Including negative values does not change the estimated race ratios.
-
-```{r appendix-e4, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_ratio_e4
-```
-
-
-## Appendix E5: Race Ratios — Size Standardization {-}
-Appendix E5 compares Black / Non-Black wealth ratios when wealth is size-standardized by household and kin group size (main specification, left panels) versus unadjusted (middle panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios. Standardizing by size does not substantially change the estimated median wealth race ratios from 1984–2015. From 2015–2023, the difference between median wealth gaps at the kin group versus household level widen. 
-
-```{r appendix-e5, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_ratio_e5
-```
-
-
-## Appendix E6: Race Ratios — Weighting {-}
-Appendix E6 shows Black / Non-Black wealth ratios using weighted estimates (main specification, left panels) versus unweighted estimates (middle panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios. Weighting does not substantially change the estimated race ratios.
-
-```{r appendix-e6, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_ratio_e6
-```
+# References

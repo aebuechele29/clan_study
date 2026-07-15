@@ -91,7 +91,7 @@ vars <- list(
   list(name = "ind_sequence", varname = "sequence", var = "ER30021"), # Family interview respondent's relation to head [all years]
 
     # INDIVIDUAL DEMOGRAPHICS -------------------------------------------------
-  # list(name = "ind_age", varname = "age", var = "ER30004"), # Age of individual [all years]
+  list(name = "ind_age", varname = "age", var = "ER30004"), # Age of individual [all years]
   # list(name = "ind_death", varname = "yod", var = "ER32050"), # Year of death [all years]
   # list(name = "ind_male", varname = "male", var = "ER32000"), # Time invariant - gender [all years]
   # list(name = "ind_edu", varname = "edu", var = "ER30010"), # Years of education [1968-2021]

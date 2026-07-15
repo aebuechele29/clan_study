@@ -59,6 +59,32 @@ build <- build %>%
       ) 
     )
 
+# CLEAN AGE ---------------------------------------------------------------------
+build <- build %>%
+  mutate(
+    age = as.numeric(age),
+    age = if_else(age >= 120 | age <= 0, NA_real_, age),
+    sequence = case_when(
+      relation != 0 & year == 1968 ~ 22L,
+      TRUE ~ as.integer(sequence)
+    ),
+    birth_year_observed = if_else(
+      !is.na(age),
+      year - age,
+      NA_real_
+    )
+  ) %>%
+  group_by(pid) %>%
+  mutate(
+    birth = if_else(
+      any(!is.na(birth_year_observed)),
+      median(birth_year_observed, na.rm = TRUE),
+      NA_real_
+    ),
+    birth = round(birth)
+  ) %>%
+  ungroup()
+
 # CLEAN FAMILY DATA -------------------------------------------------------------------------------------------------
 
 # CLEAN INCOME AND WEALTH ------------------------------------------------------------------
@@ -74,7 +100,6 @@ build <- build %>%
   ))
   
 # Add indicator for top-coded values, then adjust for inflation
-
 topcode_rules <- tribble(
   ~var,                 ~year_start, ~year_end, ~topcode,
   "inc_all",         1969,        1979,      99999,
