@@ -1,3 +1,5 @@
+setwd("/Users/amanda/Desktop/clan_project")
+
 # Activate virtual environment -------------------------------------------
 if (file.exists("renv/activate.R")) source("renv/activate.R")
 options(renv.config.auto.snapshot = TRUE)

@@ -14,31 +14,98 @@ clans <- readRDS(here("4_clans", "output", "clans.rds"))
 r_hh <- readRDS(here("3_households", "output", "robust_households.rds"))
 r_clans <- readRDS(here("4_clans", "output", "robust_clans.rds"))
 
-hh_wealth <- readRDS(here("3_households", "output", "households_wealth.rds"))
-clans_wealth <- readRDS(here("4_clans", "output", "clans_wealth.rds"))
-r_hh_wealth <- readRDS(here("3_households", "output", "robust_households_wealth.rds"))
-r_clans_wealth <- readRDS(here("4_clans", "output", "robust_clans_wealth.rds"))
+hh_wealth <- readRDS(
+  here("3_households", "output", "households_wealth.rds")
+)
+
+clans_wealth <- readRDS(
+  here("4_clans", "output", "clans_wealth.rds")
+)
+
+r_hh_wealth <- readRDS(
+  here("3_households", "output", "robust_households_wealth.rds")
+)
+
+r_clans_wealth <- readRDS(
+  here("4_clans", "output", "robust_clans_wealth.rds")
+)
 
 
-# APPLY WEIGHTS -----------------------------------------------------------------
-
+# APPLY WEIGHTS ---------------------------------------------------------------
+# NOTE: the family demographic summaries below (build_family_demo) are now
+# unweighted and do not use these survey designs. Left in place in case they
+# are used elsewhere in this script / downstream.
 # Adjust weighted designs for lonely PSUs
 options(survey.lonely.psu = "adjust")
 
-hh_design <- svydesign(ids = ~cluster, strata = ~stratum,
-                       weights = ~fam_weight, data = r_hh, nest = TRUE)
+hh_design <- svydesign(
+  ids = ~cluster,
+  strata = ~stratum,
+  weights = ~fam_weight,
+  data = r_hh,
+  nest = TRUE
+)
 
-clan_design <- svydesign(ids = ~cluster, strata = ~stratum,
-                         weights = ~clan_weight, data = r_clans, nest = TRUE)
+clan_design <- svydesign(
+  ids = ~cluster,
+  strata = ~stratum,
+  weights = ~clan_weight,
+  data = r_clans,
+  nest = TRUE
+)
 
-hhw_design <- svydesign(ids = ~cluster, strata = ~stratum,
-                        weights = ~fam_weight, data = r_hh_wealth, nest = TRUE)
+hhw_design <- svydesign(
+  ids = ~cluster,
+  strata = ~stratum,
+  weights = ~fam_weight,
+  data = r_hh_wealth,
+  nest = TRUE
+)
 
-clanw_design <- svydesign(ids = ~cluster, strata = ~stratum,
-                          weights = ~clan_weight, data = r_clans_wealth, nest = TRUE)
+clanw_design <- svydesign(
+  ids = ~cluster,
+  strata = ~stratum,
+  weights = ~clan_weight,
+  data = r_clans_wealth,
+  nest = TRUE
+)
+
+# Non-robust (full) designs — needed to show what family composition looks
+# like before the robustness/kin-linkage restrictions are applied.
+hh_design_full <- svydesign(
+  ids = ~cluster,
+  strata = ~stratum,
+  weights = ~fam_weight,
+  data = hh,
+  nest = TRUE
+)
+
+clan_design_full <- svydesign(
+  ids = ~cluster,
+  strata = ~stratum,
+  weights = ~clan_weight,
+  data = clans,
+  nest = TRUE
+)
+
+hhw_design_full <- svydesign(
+  ids = ~cluster,
+  strata = ~stratum,
+  weights = ~fam_weight,
+  data = hh_wealth,
+  nest = TRUE
+)
+
+clanw_design_full <- svydesign(
+  ids = ~cluster,
+  strata = ~stratum,
+  weights = ~clan_weight,
+  data = clans_wealth,
+  nest = TRUE
+)
 
 
-# FUNCTIONS FOR SUMMARY TABLES --------------------------------------------------
+# FUNCTIONS FOR SUMMARY TABLES ------------------------------------------------
 # Function for a weighted median
 get_wtd_median <- function(design, var) {
   q <- svyquantile(
@@ -48,8 +115,122 @@ get_wtd_median <- function(design, var) {
     na.rm = TRUE,
     ci = FALSE
   )
-  as.numeric(q[1]) 
+
+  as.numeric(q[1])
 }
+
+
+# Create annual UNWEIGHTED household and clan demographic summaries
+# NOTE: takes the raw (data-frame) household and clan data directly, not
+# svydesign objects — plain group_by/summarise means, no survey weighting.
+#
+# hh_age_mean vs. ppl_age_mean:
+#   - hh_age_mean is the average, across households, of each household's own
+#     mean member age (hh_age_sum / hh_age_n). Every household counts once,
+#     regardless of how many people are in it — this is "the average
+#     household's age."
+#   - ppl_age_mean pools hh_age_sum and hh_age_n across all households before
+#     dividing, so every *person* counts once — this is "the average
+#     individual's age," and will differ from hh_age_mean whenever household
+#     size correlates with age (e.g. larger households pull ppl_age_mean
+#     toward their composition more than hh_age_mean does).
+build_family_demo <- function(hh_data, clan_data) {
+
+  # Household-level variables:
+  # Unweighted averages describe the average household in each year
+  hh_summary <- hh_data %>%
+    group_by(year) %>%
+    summarise(
+      hh_children = mean(hh_children, na.rm = TRUE), # Average number of children per household
+      hh_other = mean(hh_other, na.rm = TRUE),        # Average number of other family members per household
+
+      # Average age of the average household (households weighted equally)
+      hh_age_mean = mean(
+        if_else(hh_age_n > 0, hh_age_sum / hh_age_n, NA_real_),
+        na.rm = TRUE
+      ),
+
+      # Average age of the average individual (people weighted equally)
+      ppl_age_mean = if_else(
+        sum(hh_age_n, na.rm = TRUE) > 0,
+        sum(hh_age_sum, na.rm = TRUE) / sum(hh_age_n, na.rm = TRUE),
+        NA_real_
+      ),
+      .groups = "drop"
+    )
+
+  # Clan-level variables:
+  # Unweighted averages describe the average clan in each year
+  clan_summary <- clan_data %>%
+    group_by(year) %>%
+    summarise(
+      clan_age_mean = mean(clan_age_mean, na.rm = TRUE),                 # Average age of all clan members
+      numclan = mean(numclan, na.rm = TRUE),                             # Number of households in the clan
+      num_clan_people = mean(num_clan_people, na.rm = TRUE),             # Number of people in the clan
+      clan_children_hh_mean = mean(clan_children_hh_mean, na.rm = TRUE), # Average number of children per household within the clan
+      clan_other_hh_mean = mean(clan_other_hh_mean, na.rm = TRUE),       # Average number of other family members per household within the clan
+      .groups = "drop"
+    )
+
+  left_join(
+    hh_summary,
+    clan_summary,
+    by = "year"
+  ) %>%
+    arrange(year)
+}
+
+
+# CREATE FAMILY DEMOGRAPHIC SUMMARY FILES -------------------------------------
+# Income sample: robust household and clan samples
+inc_family_demo <- build_family_demo(
+  r_hh,
+  r_clans
+)
+
+# Wealth sample: robust household and clan samples, wealth years only
+w_family_demo <- build_family_demo(
+  r_hh_wealth,
+  r_clans_wealth
+)
+
+# Income sample: full (non-robust) household and clan samples.
+# Used to show the selection effect of the robust kin-linkage criteria —
+# i.e., how family composition in the robust sample compares to the full,
+# unrestricted PSID sample in each year.
+inc_family_demo_full <- build_family_demo(
+  hh,
+  clans
+)
+
+# Wealth sample: full (non-robust) household and clan samples, wealth years only
+w_family_demo_full <- build_family_demo(
+  hh_wealth,
+  clans_wealth
+)
+
+
+# EXPORT ----------------------------------------------------------------------
+write_csv(
+  inc_family_demo,
+  here("5_summary", "output", "inc_family_demo.csv")
+)
+
+write_csv(
+  w_family_demo,
+  here("5_summary", "output", "w_family_demo.csv")
+)
+
+write_csv(
+  inc_family_demo_full,
+  here("5_summary", "output", "inc_family_demo_full.csv")
+)
+
+write_csv(
+  w_family_demo_full,
+  here("5_summary", "output", "w_family_demo_full.csv")
+)
+
 
 # Function to build quartile summary rows
 build_quartile_rows <- function(hh_df, cl_df, var, year,

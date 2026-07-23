@@ -318,6 +318,8 @@ households <- households %>%
     hh_children,  # Number of children in the household
     hh_other,     # Number of other family members in the household
     hh_single,    # Indicator for a single-headed household
+    hh_age_sum,   # Sum of member ages in the household (NEW)
+    hh_age_n,     # Count of members with observed age in the household (NEW)
 
     # Clan demographic and structure variables
     clan_age_mean,             # Average age of clan members
