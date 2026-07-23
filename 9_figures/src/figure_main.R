@@ -55,6 +55,13 @@ summary_stats  <- read_csv(here("5_summary",         "output", "summary_statisti
 wealth_ratios  <- read_csv(here("7_gini_by_race",    "output", "wealth_withhome_race_ratios.csv"),
                            show_col_types = FALSE)
 
+# Family demographic summaries (robust income sample + full/non-robust
+# income sample), used by Figure 4 below.
+inc_family_demo      <- read_csv(here("5_summary", "output", "inc_family_demo.csv"),
+                                 show_col_types = FALSE)
+inc_family_demo_full <- read_csv(here("5_summary", "output", "inc_family_demo_full.csv"),
+                                 show_col_types = FALSE)
+
 
 # Sample size scalars
 n_mismatched   <- nrow(mismatched)
@@ -437,621 +444,175 @@ if (SAVE_FILES) {
 }
 
 
-
-# -- FIGURE 4 + TABLE 4 — Family Composition Over Time (Household vs. Kin Group)
-inc_family_demo <- read_csv(here("5_summary", "output", "inc_family_demo.csv"),
-                            show_col_types = FALSE)
-
-shared_y_fig4a <- {
-  vals <- c(inc_family_demo$hh_children, inc_family_demo$clan_children_hh_mean)
-  vals <- vals[is.finite(vals)]
-  c(floor(min(vals) * 10) / 10, ceiling(max(vals) * 10) / 10)
-}
-
-fig4_children <- make_gini_plot(
-  inc_family_demo, hh_children, clan_children_hh_mean,
-  "Average Number of Children per Household", y_limits = shared_y_fig4a)
-
-shared_y_fig4b <- {
-  vals <- c(inc_family_demo$hh_other, inc_family_demo$clan_other_hh_mean)
-  vals <- vals[is.finite(vals)]
-  c(floor(min(vals) * 10) / 10, ceiling(max(vals) * 10) / 10)
-}
-
-fig4_other <- make_gini_plot(
-  inc_family_demo, hh_other, clan_other_hh_mean,
-  "Average Number of Other Family Members per Household", y_limits = shared_y_fig4b)
-
-# ── Scalars for the Figure 4 note ─────────────────────────────────────────────
-fig4_first_yr <- min(inc_family_demo$year)
-fig4_last_yr  <- max(inc_family_demo$year)
-
-hh_child_first <- inc_family_demo$hh_children[inc_family_demo$year == fig4_first_yr]
-hh_child_last  <- inc_family_demo$hh_children[inc_family_demo$year == fig4_last_yr]
-cl_child_first <- inc_family_demo$clan_children_hh_mean[inc_family_demo$year == fig4_first_yr]
-cl_child_last  <- inc_family_demo$clan_children_hh_mean[inc_family_demo$year == fig4_last_yr]
-
-hh_other_first <- inc_family_demo$hh_other[inc_family_demo$year == fig4_first_yr]
-hh_other_last  <- inc_family_demo$hh_other[inc_family_demo$year == fig4_last_yr]
-cl_other_first <- inc_family_demo$clan_other_hh_mean[inc_family_demo$year == fig4_first_yr]
-cl_other_last  <- inc_family_demo$clan_other_hh_mean[inc_family_demo$year == fig4_last_yr]
-
-hh_child_pct <- 100 * (hh_child_last - hh_child_first) / hh_child_first
-cl_child_pct <- 100 * (cl_child_last - cl_child_first) / cl_child_first
-hh_other_pct <- 100 * (hh_other_last - hh_other_first) / hh_other_first
-cl_other_pct <- 100 * (cl_other_last - cl_other_first) / cl_other_first
-
-fig4_note <- sprintf(
-  paste0(
-    "Note: Figure 4 plots average family composition over time (%d\u2013%d) ",
-    "at the household and kin group level, using weighted PSID data from the income sample. ",
-    "\u201cKin group\u201d values are the average across households within each kin group. ",
-    "Panel A shows the average number of children per household. ",
-    "The number of children per household changed by %.1f%% (%.2f in %d to %.2f in %d), ",
-    "while the kin group average changed by %.1f%% (%.2f to %.2f). ",
-    "Panel B shows the average number of other family members (non-spouse, non-children) per household. ",
-    "This changed by %.1f%% for households (%.2f in %d to %.2f in %d) ",
-    "and by %.1f%% for kin groups (%.2f to %.2f)."
-  ),
-  fig4_first_yr, fig4_last_yr,
-  hh_child_pct, hh_child_first, fig4_first_yr, hh_child_last, fig4_last_yr,
-  cl_child_pct, cl_child_first, cl_child_last,
-  hh_other_pct, hh_other_first, fig4_first_yr, hh_other_last, fig4_last_yr,
-  cl_other_pct, cl_other_first, cl_other_last
-)
-
-# ── Assemble (same layout as Figure 1) ────────────────────────────────────────
-fig4 <- arrangeGrob(
-  textGrob(
-    "Figure 4. Family Composition Over Time: Households vs. Kin Groups",
-    x = unit(0, "npc"), just = "left",
-    gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)),
-  arrangeGrob(
-    arrangeGrob(
-      textGrob("Panel A: Average number of children per household",
-               x = unit(0, "npc"), just = "left",
-               gp = gpar(fontfamily = base_family, fontsize = sub_size)),
-      fig4_children, ncol = 1, heights = c(1, 12)),
-    arrangeGrob(
-      textGrob("Panel B: Average number of other family members per household",
-               x = unit(0, "npc"), just = "left",
-               gp = gpar(fontfamily = base_family, fontsize = sub_size)),
-      fig4_other, ncol = 1, heights = c(1, 12)),
-    ncol = 2),
-  ncol = 1, heights = unit(c(0.5, 9.5), "inches"))
-
-if (SAVE_FILES) {
-  ggsave(here("9_figures", "output", "figure4.pdf"), fig4, width = 14, height = 11)
-  message("Saved: figure4.pdf")
-}
-
-
-
 # ══════════════════════════════════════════════════════════════════════════
-# FIGURE 4 + TABLE 4 — Kin Group Selection Over Time in the PSID
+# FIGURE 4 — Average Age Over Time: Households, Kin Groups, and Individuals
 # ══════════════════════════════════════════════════════════════════════════
-# Drop-in additions for the figures script:
-#   1) Add the two read_csv() calls below near the other read_csv() calls at
-#      the top of the script (with inc_by_year, wealth_by_year, etc.).
-#   2) Add the Figure 4 / Table 4 code block after the Figure 3 section.
+# One panel, six lines: three units of analysis (Household, Kin Group,
+# Individual) x two samples (Robust = kin-linked sample used everywhere else
+# in this script, Full Sample = the unrestricted PSID sample, before the
+# robust kin-linkage criteria are applied). Color encodes the unit of
+# analysis; linetype encodes robust vs. full sample, so all six lines are
+# visually distinguishable without needing six separate colors.
 #
-# Each panel now has 3 lines: Household (robust), Kin Group (robust), and
-# Kin Group (Full Sample) — the last computed on the non-robust "clans" data
-# (see build_family_demo.R) to show the selection effect of the robust
-# kin-linkage criteria. None of the existing plot_helpers.R functions support
-# a 3-series panel (make_gini_plot only takes two), so the panels are built
-# directly with ggplot2 below, reusing make_x_breaks() and the existing color
-# constants — no new functions are defined.
+# hh_age_mean:  average age of the average household (households weighted
+#               equally, regardless of size) — see build_family_demo() in
+#               summary.R.
+# ppl_age_mean: average age of the average individual (people weighted
+#               equally) — will differ from hh_age_mean if household size
+#               correlates with age.
+# clan_age_mean: average age of all kin group members (as in the original
+#               Figure 5 Panel A).
 
-# ── Data load (place with the other read_csv() calls) ────────────────────────
-inc_family_demo <- read_csv(here("5_summary", "output", "inc_family_demo.csv"),
-                            show_col_types = FALSE)
-inc_family_demo_full <- read_csv(here("5_summary", "output", "inc_family_demo_full.csv"),
-                                 show_col_types = FALSE)
-
-# ── Combine robust + full kin group series ────────────────────────────────────
 fig4_dat <- inc_family_demo %>%
-  dplyr::select(year, hh_children, hh_other,
-                clan_children_hh_mean, clan_other_hh_mean) %>%
+  dplyr::select(year, hh_age_mean, ppl_age_mean, clan_age_mean) %>%
   dplyr::left_join(
     inc_family_demo_full %>%
       dplyr::select(year,
-                    clan_children_hh_mean_full = clan_children_hh_mean,
-                    clan_other_hh_mean_full    = clan_other_hh_mean),
+                    hh_age_mean_full   = hh_age_mean,
+                    ppl_age_mean_full  = ppl_age_mean,
+                    clan_age_mean_full = clan_age_mean),
     by = "year"
   )
+# NOTE: earlier drafts of this script excluded 2023 from the analogous kin
+# group figure (Figure 5), presumably because of an incomplete/small 2023
+# sample for family-demographic variables. If that's still true here, add:
+#   %>% dplyr::filter(year != 2023)
 
-fig4_series_colors <- c(
-  "Household"               = NAVY,
-  "Kin Group (Robust)"      = PALE_NAVY,
-  "Kin Group (Full Sample)" = CORAL)
-fig4_series_linetypes <- c(
-  "Household"               = "solid",
-  "Kin Group (Robust)"      = "dotted",
-  "Kin Group (Full Sample)" = "dashed")
-fig4_series_levels <- names(fig4_series_colors)
+fig4_plot_dat <- fig4_dat %>%
+  tidyr::pivot_longer(-year, names_to = "series", values_to = "value") %>%
+  dplyr::mutate(
+    sample = dplyr::if_else(grepl("_full$", series), "Full Sample", "Robust"),
+    unit = dplyr::case_when(
+      grepl("^hh_age",   series) ~ "Household",
+      grepl("^clan_age", series) ~ "Kin Group",
+      grepl("^ppl_age",  series) ~ "Individual"
+    ),
+    unit   = factor(unit,   levels = c("Household", "Kin Group", "Individual")),
+    sample = factor(sample, levels = c("Robust", "Full Sample"))
+  )
 
-fig4_br <- make_x_breaks(min(fig4_dat$year, na.rm = TRUE), max(fig4_dat$year, na.rm = TRUE))
+# Two separate aesthetics (color = unit, linetype = sample) rendered as two
+# separate legends that were hard to read together, and default breaks were
+# too dense for this date range and printed on top of each other. Both are
+# fixed below: one combined "series" factor with 6 explicitly distinct
+# colors (one legend, one glyph per line), and explicit, evenly spaced
+# x-axis breaks with a smaller, rotated text label.
 
-# ── Panel A: children per household ───────────────────────────────────────────
-plot_a_dat <- fig4_dat %>%
-  dplyr::transmute(
-    year,
-    `Household`               = hh_children,
-    `Kin Group (Robust)`      = clan_children_hh_mean,
-    `Kin Group (Full Sample)` = clan_children_hh_mean_full
-  ) %>%
-  tidyr::pivot_longer(-year, names_to = "Series", values_to = "value") %>%
-  dplyr::mutate(Series = factor(Series, levels = fig4_series_levels))
+fig4_plot_dat <- fig4_plot_dat %>%
+  dplyr::mutate(
+    series = factor(
+      paste0(unit, " (", sample, ")"),
+      levels = c("Household (Robust)",   "Household (Full Sample)",
+                "Kin Group (Robust)",   "Kin Group (Full Sample)",
+                "Individual (Robust)",  "Individual (Full Sample)")
+    )
+  )
 
-y4a <- {
-  vals <- plot_a_dat$value[is.finite(plot_a_dat$value)]
-  c(floor(min(vals) * 10) / 10, ceiling(max(vals) * 10) / 10)
-}
+# One panel per unit of analysis (Household, Kin Group, Individual), each
+# showing Robust vs. Full Sample as solid vs. dotted lines in a shared
+# two-color scheme. Faceting removes the need to color-code the unit itself
+# (the panel label already does that), so the legend collapses to just the
+# two things that vary within a panel: Robust vs. Full Sample.
 
-fig4_children <- ggplot2::ggplot(plot_a_dat,
-                                  ggplot2::aes(x = year, y = value,
-                                               color = Series, linetype = Series)) +
-  ggplot2::geom_line(linewidth = 1.7) +
-  ggplot2::scale_color_manual(values = fig4_series_colors, name = NULL) +
-  ggplot2::scale_linetype_manual(values = fig4_series_linetypes, name = NULL) +
-  ggplot2::scale_y_continuous(limits = y4a) +
+fig4_plot_dat <- fig4_plot_dat %>%
+  dplyr::mutate(
+    unit = factor(unit, levels = c("Household", "Kin Group", "Individual"))
+  )
+
+fig4_sample_colors <- c("Robust" = "#185FA5", "Full Sample" = "#D85A30")
+
+fig4_br <- pretty(fig4_plot_dat$year, n = 6)
+
+fig4_plot <- ggplot2::ggplot(
+  fig4_plot_dat,
+  ggplot2::aes(x = year, y = value, color = sample, linetype = sample, group = series)
+) +
+  ggplot2::geom_line(linewidth = 1.5) +
+  ggplot2::facet_wrap(~ unit, nrow = 1) +
+  ggplot2::scale_color_manual(values = fig4_sample_colors, name = NULL) +
+  ggplot2::scale_linetype_manual(values = c("Robust" = "solid", "Full Sample" = "dotted"),
+                                  name = NULL) +
   ggplot2::scale_x_continuous(breaks = fig4_br,
-                               expand = ggplot2::expansion(mult = c(0.02, 0.02))) +
-  ggplot2::labs(x = NULL, y = "Avg. Children per Household") +
+                               expand = ggplot2::expansion(mult = c(0.03, 0.03))) +
+  ggplot2::labs(x = NULL, y = "Average Age") +
   ggplot2::theme(
-    legend.position = "bottom",
-    plot.title      = ggplot2::element_blank(),
-    axis.text.x     = ggplot2::element_text(angle = 45, hjust = 1)) +
-  ggplot2::guides(color = ggplot2::guide_legend(nrow = 1, override.aes = list(linewidth = 1.2)))
-
-# ── Panel B: other family members per household ──────────────────────────────
-plot_b_dat <- fig4_dat %>%
-  dplyr::transmute(
-    year,
-    `Household`               = hh_other,
-    `Kin Group (Robust)`      = clan_other_hh_mean,
-    `Kin Group (Full Sample)` = clan_other_hh_mean_full
-  ) %>%
-  tidyr::pivot_longer(-year, names_to = "Series", values_to = "value") %>%
-  dplyr::mutate(Series = factor(Series, levels = fig4_series_levels))
-
-y4b <- {
-  vals <- plot_b_dat$value[is.finite(plot_b_dat$value)]
-  c(floor(min(vals) * 10) / 10, ceiling(max(vals) * 10) / 10)
-}
-
-fig4_other <- ggplot2::ggplot(plot_b_dat,
-                               ggplot2::aes(x = year, y = value,
-                                            color = Series, linetype = Series)) +
-  ggplot2::geom_line(linewidth = 1.7) +
-  ggplot2::scale_color_manual(values = fig4_series_colors, name = NULL) +
-  ggplot2::scale_linetype_manual(values = fig4_series_linetypes, name = NULL) +
-  ggplot2::scale_y_continuous(limits = y4b) +
-  ggplot2::scale_x_continuous(breaks = fig4_br,
-                               expand = ggplot2::expansion(mult = c(0.02, 0.02))) +
-  ggplot2::labs(x = NULL, y = "Avg. Other Family Members per Household") +
-  ggplot2::theme(
-    legend.position = "bottom",
-    plot.title      = ggplot2::element_blank(),
-    axis.text.x     = ggplot2::element_text(angle = 45, hjust = 1)) +
-  ggplot2::guides(color = ggplot2::guide_legend(nrow = 1, override.aes = list(linewidth = 1.2)))
+    legend.position  = "bottom",
+    legend.text      = ggplot2::element_text(size = base_size * 0.6),
+    strip.text       = ggplot2::element_text(family = base_family, face = "bold",
+                                              size = sub_size * 0.6),
+    axis.text.x      = ggplot2::element_text(angle = 45, hjust = 1,
+                                              size = base_size * 0.55)) +
+  ggplot2::guides(
+    color    = ggplot2::guide_legend(override.aes = list(linewidth = 2.2)),
+    linetype = ggplot2::guide_legend())
 
 # ── Scalars for the Figure 4 note ─────────────────────────────────────────────
-fig4_first_yr <- min(fig4_dat$year)
-fig4_last_yr  <- max(fig4_dat$year)
+fig4_first_yr <- min(fig4_dat$year, na.rm = TRUE)
+fig4_last_yr  <- max(fig4_dat$year, na.rm = TRUE)
 
 get_fig4 <- function(var, yr) fig4_dat[[var]][fig4_dat$year == yr]
+pct_chg  <- function(first, last) 100 * (last - first) / first
 
-hh_child_first <- get_fig4("hh_children", fig4_first_yr)
-hh_child_last  <- get_fig4("hh_children", fig4_last_yr)
-cl_child_first <- get_fig4("clan_children_hh_mean", fig4_first_yr)
-cl_child_last  <- get_fig4("clan_children_hh_mean", fig4_last_yr)
-cl_child_full_first <- get_fig4("clan_children_hh_mean_full", fig4_first_yr)
-cl_child_full_last  <- get_fig4("clan_children_hh_mean_full", fig4_last_yr)
+hh_age_first   <- get_fig4("hh_age_mean", fig4_first_yr)
+hh_age_last    <- get_fig4("hh_age_mean", fig4_last_yr)
+hh_age_full_first <- get_fig4("hh_age_mean_full", fig4_first_yr)
+hh_age_full_last  <- get_fig4("hh_age_mean_full", fig4_last_yr)
 
-hh_other_first <- get_fig4("hh_other", fig4_first_yr)
-hh_other_last  <- get_fig4("hh_other", fig4_last_yr)
-cl_other_first <- get_fig4("clan_other_hh_mean", fig4_first_yr)
-cl_other_last  <- get_fig4("clan_other_hh_mean", fig4_last_yr)
-cl_other_full_first <- get_fig4("clan_other_hh_mean_full", fig4_first_yr)
-cl_other_full_last  <- get_fig4("clan_other_hh_mean_full", fig4_last_yr)
+cl_age_first   <- get_fig4("clan_age_mean", fig4_first_yr)
+cl_age_last    <- get_fig4("clan_age_mean", fig4_last_yr)
+cl_age_full_first <- get_fig4("clan_age_mean_full", fig4_first_yr)
+cl_age_full_last  <- get_fig4("clan_age_mean_full", fig4_last_yr)
 
-pct_chg <- function(first, last) 100 * (last - first) / first
+ppl_age_first  <- get_fig4("ppl_age_mean", fig4_first_yr)
+ppl_age_last   <- get_fig4("ppl_age_mean", fig4_last_yr)
+ppl_age_full_first <- get_fig4("ppl_age_mean_full", fig4_first_yr)
+ppl_age_full_last  <- get_fig4("ppl_age_mean_full", fig4_last_yr)
 
-hh_child_pct      <- pct_chg(hh_child_first, hh_child_last)
-cl_child_pct      <- pct_chg(cl_child_first, cl_child_last)
-cl_child_full_pct <- pct_chg(cl_child_full_first, cl_child_full_last)
-hh_other_pct      <- pct_chg(hh_other_first, hh_other_last)
-cl_other_pct      <- pct_chg(cl_other_first, cl_other_last)
-cl_other_full_pct <- pct_chg(cl_other_full_first, cl_other_full_last)
+hh_age_pct       <- pct_chg(hh_age_first, hh_age_last)
+hh_age_full_pct  <- pct_chg(hh_age_full_first, hh_age_full_last)
+cl_age_pct       <- pct_chg(cl_age_first, cl_age_last)
+cl_age_full_pct  <- pct_chg(cl_age_full_first, cl_age_full_last)
+ppl_age_pct      <- pct_chg(ppl_age_first, ppl_age_last)
+ppl_age_full_pct <- pct_chg(ppl_age_full_first, ppl_age_full_last)
 
-# Average selection gap: robust kin group minus full-sample kin group
-avg_child_selection_gap <- round(mean(fig4_dat$clan_children_hh_mean -
-                                       fig4_dat$clan_children_hh_mean_full, na.rm = TRUE), 3)
-avg_other_selection_gap <- round(mean(fig4_dat$clan_other_hh_mean -
-                                       fig4_dat$clan_other_hh_mean_full, na.rm = TRUE), 3)
+avg_hh_ppl_gap <- round(mean(fig4_dat$ppl_age_mean - fig4_dat$hh_age_mean, na.rm = TRUE), 2)
 
 fig4_note <- sprintf(
   paste0(
-    "Note: Figure 4 plots average family composition over time (%d\u2013%d) ",
-    "for households, robust (kin-linked) kin groups, and the full, non-robust ",
-    "sample of kin groups, using weighted PSID data from the income sample. ",
-    "\u201cKin Group (Robust)\u201d and \u201cKin Group (Full Sample)\u201d values are ",
-    "the average across households within each kin group, before and after ",
-    "applying the robust kin-linkage criteria, respectively. ",
-    "Panel A shows the average number of children per household. ",
-    "This changed by %.1f%% for households (%.2f in %d to %.2f in %d), ",
-    "by %.1f%% for robust kin groups (%.2f to %.2f), ",
-    "and by %.1f%% for the full sample of kin groups (%.2f to %.2f). ",
-    "On average, robust kin groups have %.3f more children per household than the full sample. ",
-    "Panel B shows the average number of other family members (non-spouse, non-children) per household. ",
-    "This changed by %.1f%% for households (%.2f in %d to %.2f in %d), ",
-    "by %.1f%% for robust kin groups (%.2f to %.2f), ",
-    "and by %.1f%% for the full sample of kin groups (%.2f to %.2f). ",
-    "On average, robust kin groups have %.3f more other family members per household than the full sample."
+    "Note: Figure 4 plots average age over time (%d\u2013%d) for households, kin groups, ",
+    "and individuals, comparing the robust (kin-linked) sample used elsewhere in this paper ",
+    "against the full, non-robust PSID sample, using unweighted data from the income sample. ",
+    "\u201cHousehold\u201d age is the average, across households, of each household's own mean ",
+    "member age (each household weighted equally); \u201cIndividual\u201d age pools member ages ",
+    "across households before averaging (each person weighted equally); \u201cKin Group\u201d age is ",
+    "the average age of all members of a kin group. ",
+    "Household age changed by %.1f%% for the robust sample (%.1f in %d to %.1f in %d) ",
+    "and by %.1f%% for the full sample (%.1f to %.1f). ",
+    "Kin group age changed by %.1f%% for the robust sample (%.1f to %.1f) ",
+    "and by %.1f%% for the full sample (%.1f to %.1f). ",
+    "Individual age changed by %.1f%% for the robust sample (%.1f to %.1f) ",
+    "and by %.1f%% for the full sample (%.1f to %.1f). ",
+    "On average across all years, individuals are %.2f years older/younger than the average ",
+    "household in the robust sample, reflecting that larger households are weighted more ",
+    "heavily under the individual-level average."
   ),
   fig4_first_yr, fig4_last_yr,
-  hh_child_pct, hh_child_first, fig4_first_yr, hh_child_last, fig4_last_yr,
-  cl_child_pct, cl_child_first, cl_child_last,
-  cl_child_full_pct, cl_child_full_first, cl_child_full_last,
-  avg_child_selection_gap,
-  hh_other_pct, hh_other_first, fig4_first_yr, hh_other_last, fig4_last_yr,
-  cl_other_pct, cl_other_first, cl_other_last,
-  cl_other_full_pct, cl_other_full_first, cl_other_full_last,
-  avg_other_selection_gap
+  hh_age_pct, hh_age_first, fig4_first_yr, hh_age_last, fig4_last_yr,
+  hh_age_full_pct, hh_age_full_first, hh_age_full_last,
+  cl_age_pct, cl_age_first, cl_age_last,
+  cl_age_full_pct, cl_age_full_first, cl_age_full_last,
+  ppl_age_pct, ppl_age_first, ppl_age_last,
+  ppl_age_full_pct, ppl_age_full_first, ppl_age_full_last,
+  avg_hh_ppl_gap
 )
 
-# ── Assemble (same layout as Figure 1) ────────────────────────────────────────
-fig4 <- arrangeGrob(
-  textGrob(
-    "Figure 4. Kin Group Selection Over Time in the PSID",
-    x = unit(0, "npc"), just = "left",
-    gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)),
-  arrangeGrob(
-    arrangeGrob(
-      textGrob("A: Avg. children per household",
-               x = unit(0, "npc"), just = "left",
-               gp = gpar(fontfamily = base_family, fontsize = sub_size)),
-      fig4_children, ncol = 1, heights = c(1, 12)),
-    arrangeGrob(
-      textGrob("B: Avg. other family members per household",
-               x = unit(0, "npc"), just = "left",
-               gp = gpar(fontfamily = base_family, fontsize = sub_size)),
-      fig4_other, ncol = 1, heights = c(1, 12)),
-    ncol = 2),
-  ncol = 1, heights = unit(c(0.5, 9.5), "inches"))
+fig4 <- fig4_plot +
+  ggplot2::labs(title = "Figure 4. Average Age Over Time: Households, Kin Groups, and Individuals") +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(family = base_family, face = "bold",
+                                       size = title_size, hjust = 0))
 
 if (SAVE_FILES) {
-  ggsave(here("9_figures", "output", "figure4.pdf"), fig4, width = 14, height = 11)
+  ggsave(here("9_figures", "output", "figure4.pdf"), fig4, width = 16, height = 7)
   message("Saved: figure4.pdf")
 }
-
-
-# ══════════════════════════════════════════════════════════════════════════
-# FIGURE 4 — Kin Group Selection Over Time in the PSID
-# ══════════════════════════════════════════════════════════════════════════
-# Drop-in additions for the figures script:
-#   0) Add `library(patchwork)` near the top of the script with the other
-#      library() calls (install.packages("patchwork") if not already
-#      installed). This is a new dependency, needed only for combining the
-#      panels with a single shared legend below.
-#   1) Add the two read_csv() calls below near the other read_csv() calls at
-#      the top of the script (with inc_by_year, wealth_by_year, etc.).
-#   2) Add the Figure 4 / Figure 5 code blocks after the Figure 3 section.
-#
-# Each panel has 3 lines: Households, Kin Groups (excl. single-HH groups),
-# and Kin Groups (all) — the last computed on the non-robust "clans" data
-# (see build_family_demo.R). None of plot_helpers.R's functions support a
-# 3-series single panel, so panels are built directly with ggplot2 here,
-# reusing make_x_breaks() and the existing color constants.
-#
-# NOTE ON THE LEGEND: earlier versions of this figure tried to extract a
-# single shared legend manually (via cowplot::get_legend() and then via a
-# hand-rolled gtable search for a "guide-box" grob). Both approaches broke
-# because ggplot2's internal legend-grob naming has changed across versions
-# and isn't stable to rely on. patchwork's plot_layout(guides = "collect")
-# is the maintained, version-robust way to combine multiple ggplots into one
-# figure with a single de-duplicated legend, so the whole assembly below
-# uses patchwork instead of gridExtra::arrangeGrob for Figure 4 and Figure 5.
-
-# ── Data load (place with the other read_csv() calls) ────────────────────────
-inc_family_demo <- read_csv(here("5_summary", "output", "inc_family_demo.csv"),
-                            show_col_types = FALSE)
-inc_family_demo_full <- read_csv(here("5_summary", "output", "inc_family_demo_full.csv"),
-                                 show_col_types = FALSE)
-
-# ── Combine robust + full kin group series, excluding 2023 from the x-axis ───
-fig4_dat <- inc_family_demo %>%
-  dplyr::select(year, hh_children, hh_other,
-                clan_children_hh_mean, clan_other_hh_mean) %>%
-  dplyr::left_join(
-    inc_family_demo_full %>%
-      dplyr::select(year,
-                    clan_children_hh_mean_full = clan_children_hh_mean,
-                    clan_other_hh_mean_full    = clan_other_hh_mean),
-    by = "year"
-  ) %>%
-  dplyr::filter(year != 2023)
-
-fig4_series_colors <- c(
-  "Households"                           = NAVY,
-  "Kin Groups (excl. single-HH groups)"  = PALE_NAVY,
-  "Kin Groups (all)"                     = CORAL)
-fig4_series_linetypes <- c(
-  "Households"                           = "solid",
-  "Kin Groups (excl. single-HH groups)"  = "dotted",
-  "Kin Groups (all)"                     = "dashed")
-fig4_series_levels <- names(fig4_series_colors)
-
-fig4_br <- make_x_breaks(min(fig4_dat$year, na.rm = TRUE), max(fig4_dat$year, na.rm = TRUE))
-
-# ── Panel A: children per household ───────────────────────────────────────────
-plot_a_dat <- fig4_dat %>%
-  dplyr::transmute(
-    year,
-    `Households`                          = hh_children,
-    `Kin Groups (excl. single-HH groups)` = clan_children_hh_mean,
-    `Kin Groups (all)`                    = clan_children_hh_mean_full
-  ) %>%
-  tidyr::pivot_longer(-year, names_to = "Series", values_to = "value") %>%
-  dplyr::mutate(Series = factor(Series, levels = fig4_series_levels))
-
-y4a <- {
-  vals <- plot_a_dat$value[is.finite(plot_a_dat$value)]
-  c(floor(min(vals) * 10) / 10, ceiling(max(vals) * 10) / 10)
-}
-
-fig4_children <- ggplot2::ggplot(plot_a_dat,
-                                  ggplot2::aes(x = year, y = value,
-                                               color = Series, linetype = Series)) +
-  ggplot2::geom_line(linewidth = 1.7) +
-  ggplot2::scale_color_manual(values = fig4_series_colors, name = NULL) +
-  ggplot2::scale_linetype_manual(values = fig4_series_linetypes, name = NULL) +
-  ggplot2::scale_y_continuous(limits = y4a) +
-  ggplot2::scale_x_continuous(breaks = fig4_br,
-                               expand = ggplot2::expansion(mult = c(0.02, 0.02))) +
-  ggplot2::labs(x = NULL, y = "Avg. Children per Household",
-                title = "A: Avg. children per household") +
-  ggplot2::theme(
-    plot.title      = ggplot2::element_text(family = base_family, size = sub_size,
-                                             hjust = 0, face = "plain"),
-    axis.text.x     = ggplot2::element_text(angle = 45, hjust = 1))
-
-# ── Panel B: other family members per household ──────────────────────────────
-plot_b_dat <- fig4_dat %>%
-  dplyr::transmute(
-    year,
-    `Households`                          = hh_other,
-    `Kin Groups (excl. single-HH groups)` = clan_other_hh_mean,
-    `Kin Groups (all)`                    = clan_other_hh_mean_full
-  ) %>%
-  tidyr::pivot_longer(-year, names_to = "Series", values_to = "value") %>%
-  dplyr::mutate(Series = factor(Series, levels = fig4_series_levels))
-
-y4b <- {
-  vals <- plot_b_dat$value[is.finite(plot_b_dat$value)]
-  c(floor(min(vals) * 10) / 10, ceiling(max(vals) * 10) / 10)
-}
-
-fig4_other <- ggplot2::ggplot(plot_b_dat,
-                               ggplot2::aes(x = year, y = value,
-                                            color = Series, linetype = Series)) +
-  ggplot2::geom_line(linewidth = 1.7) +
-  ggplot2::scale_color_manual(values = fig4_series_colors, name = NULL) +
-  ggplot2::scale_linetype_manual(values = fig4_series_linetypes, name = NULL) +
-  ggplot2::scale_y_continuous(limits = y4b) +
-  ggplot2::scale_x_continuous(breaks = fig4_br,
-                               expand = ggplot2::expansion(mult = c(0.02, 0.02))) +
-  ggplot2::labs(x = NULL, y = "Avg. Other Family Members per Household",
-                title = "B: Avg. other family members per household") +
-  ggplot2::theme(
-    plot.title      = ggplot2::element_text(family = base_family, size = sub_size,
-                                             hjust = 0, face = "plain"),
-    axis.text.x     = ggplot2::element_text(angle = 45, hjust = 1))
-
-# ── Combine with a single shared legend via patchwork ─────────────────────────
-fig4_body <- (fig4_children | fig4_other) +
-  patchwork::plot_layout(guides = "collect") &
-  ggplot2::theme(legend.position = "bottom")
-
-fig4 <- fig4_body +
-  patchwork::plot_annotation(
-    title = "Figure 4. Kin Group Selection Over Time in the PSID",
-    theme = ggplot2::theme(
-      plot.title = ggplot2::element_text(family = base_family, face = "bold",
-                                         size = title_size, hjust = 0)))
-
-if (SAVE_FILES) {
-  ggsave(here("9_figures", "output", "figure4.pdf"), fig4, width = 14, height = 11)
-  message("Saved: figure4.pdf")
-}
-
-
-# ── Scalars for the Figure 4 note ─────────────────────────────────────────────
-fig4_first_yr <- min(fig4_dat$year)
-fig4_last_yr  <- max(fig4_dat$year)
-
-get_fig4 <- function(var, yr) fig4_dat[[var]][fig4_dat$year == yr]
-
-hh_child_first <- get_fig4("hh_children", fig4_first_yr)
-hh_child_last  <- get_fig4("hh_children", fig4_last_yr)
-cl_child_first <- get_fig4("clan_children_hh_mean", fig4_first_yr)
-cl_child_last  <- get_fig4("clan_children_hh_mean", fig4_last_yr)
-cl_child_full_first <- get_fig4("clan_children_hh_mean_full", fig4_first_yr)
-cl_child_full_last  <- get_fig4("clan_children_hh_mean_full", fig4_last_yr)
-
-hh_other_first <- get_fig4("hh_other", fig4_first_yr)
-hh_other_last  <- get_fig4("hh_other", fig4_last_yr)
-cl_other_first <- get_fig4("clan_other_hh_mean", fig4_first_yr)
-cl_other_last  <- get_fig4("clan_other_hh_mean", fig4_last_yr)
-cl_other_full_first <- get_fig4("clan_other_hh_mean_full", fig4_first_yr)
-cl_other_full_last  <- get_fig4("clan_other_hh_mean_full", fig4_last_yr)
-
-pct_chg <- function(first, last) 100 * (last - first) / first
-
-hh_child_pct      <- pct_chg(hh_child_first, hh_child_last)
-cl_child_pct      <- pct_chg(cl_child_first, cl_child_last)
-cl_child_full_pct <- pct_chg(cl_child_full_first, cl_child_full_last)
-hh_other_pct      <- pct_chg(hh_other_first, hh_other_last)
-cl_other_pct      <- pct_chg(cl_other_first, cl_other_last)
-cl_other_full_pct <- pct_chg(cl_other_full_first, cl_other_full_last)
-
-avg_child_selection_gap <- round(mean(fig4_dat$clan_children_hh_mean -
-                                       fig4_dat$clan_children_hh_mean_full, na.rm = TRUE), 3)
-avg_other_selection_gap <- round(mean(fig4_dat$clan_other_hh_mean -
-                                       fig4_dat$clan_other_hh_mean_full, na.rm = TRUE), 3)
-
-fig4_note <- sprintf(
-  paste0(
-    "Note: Figure 4 plots average family composition over time (%d\u2013%d; 2023 excluded) ",
-    "for households, robust (kin-linked) kin groups, and the full, non-robust ",
-    "sample of kin groups, using weighted PSID data from the income sample. ",
-    "\u201cKin Groups (excl. single-HH groups)\u201d and \u201cKin Groups (all)\u201d values are ",
-    "the average across households within each kin group, before and after ",
-    "applying the robust kin-linkage criteria, respectively. ",
-    "Panel A shows the average number of children per household. ",
-    "This changed by %.1f%% for households (%.2f in %d to %.2f in %d), ",
-    "by %.1f%% for robust kin groups (%.2f to %.2f), ",
-    "and by %.1f%% for the full sample of kin groups (%.2f to %.2f). ",
-    "On average, robust kin groups have %.3f more children per household than the full sample. ",
-    "Panel B shows the average number of other family members (non-spouse, non-children) per household. ",
-    "This changed by %.1f%% for households (%.2f in %d to %.2f in %d), ",
-    "by %.1f%% for robust kin groups (%.2f to %.2f), ",
-    "and by %.1f%% for the full sample of kin groups (%.2f to %.2f). ",
-    "On average, robust kin groups have %.3f more other family members per household than the full sample."
-  ),
-  fig4_first_yr, fig4_last_yr,
-  hh_child_pct, hh_child_first, fig4_first_yr, hh_child_last, fig4_last_yr,
-  cl_child_pct, cl_child_first, cl_child_last,
-  cl_child_full_pct, cl_child_full_first, cl_child_full_last,
-  avg_child_selection_gap,
-  hh_other_pct, hh_other_first, fig4_first_yr, hh_other_last, fig4_last_yr,
-  cl_other_pct, cl_other_first, cl_other_last,
-  cl_other_full_pct, cl_other_full_first, cl_other_full_last,
-  avg_other_selection_gap
-)
-
-
-# ══════════════════════════════════════════════════════════════════════════
-# FIGURE 5 — Kin Group Size and Age Over Time (Robust vs. Full Sample)
-# ══════════════════════════════════════════════════════════════════════════
-# clan_age_mean, numclan, and num_clan_people have no household-level
-# counterpart, so this figure compares only the robust and non-robust (full)
-# kin group samples over time — 3 panels in a single row, one shared legend
-# via patchwork, 2023 excluded to match Figure 4.
-
-fig5_dat <- inc_family_demo %>%
-  dplyr::select(year, clan_age_mean, numclan, num_clan_people) %>%
-  dplyr::left_join(
-    inc_family_demo_full %>%
-      dplyr::select(year,
-                    clan_age_mean_full    = clan_age_mean,
-                    numclan_full          = numclan,
-                    num_clan_people_full  = num_clan_people),
-    by = "year"
-  ) %>%
-  dplyr::filter(year != 2023)
-
-fig5_series_colors <- c(
-  "Kin Groups (excl. single-HH groups)" = NAVY,
-  "Kin Groups (all)"                    = CORAL)
-fig5_series_linetypes <- c(
-  "Kin Groups (excl. single-HH groups)" = "solid",
-  "Kin Groups (all)"                    = "dashed")
-fig5_series_levels <- names(fig5_series_colors)
-
-fig5_br <- make_x_breaks(min(fig5_dat$year, na.rm = TRUE), max(fig5_dat$year, na.rm = TRUE))
-
-fig5_base_theme <- ggplot2::theme(
-  plot.subtitle = ggplot2::element_text(size = sub_size * 0.6, hjust = 0.5),
-  axis.text.x   = ggplot2::element_text(angle = 45, hjust = 1))
-
-# Panel A: average age of kin group members
-pA_dat <- fig5_dat %>%
-  dplyr::transmute(year,
-                   `Kin Groups (excl. single-HH groups)` = clan_age_mean,
-                   `Kin Groups (all)`                    = clan_age_mean_full) %>%
-  tidyr::pivot_longer(-year, names_to = "Series", values_to = "value") %>%
-  dplyr::mutate(Series = factor(Series, levels = fig5_series_levels))
-
-fig5_A <- ggplot2::ggplot(pA_dat, ggplot2::aes(x = year, y = value,
-                                                color = Series, linetype = Series)) +
-  ggplot2::geom_line(linewidth = 1.7) +
-  ggplot2::scale_color_manual(values = fig5_series_colors, name = NULL) +
-  ggplot2::scale_linetype_manual(values = fig5_series_linetypes, name = NULL) +
-  ggplot2::scale_x_continuous(breaks = fig5_br,
-                               expand = ggplot2::expansion(mult = c(0.02, 0.02))) +
-  ggplot2::labs(x = NULL, y = "Avg. Age of Kin Group Members",
-                subtitle = "A: Avg. Age of Kin Group Members") +
-  fig5_base_theme
-
-# Panel B: average households per kin group
-pB_dat <- fig5_dat %>%
-  dplyr::transmute(year,
-                   `Kin Groups (excl. single-HH groups)` = numclan,
-                   `Kin Groups (all)`                    = numclan_full) %>%
-  tidyr::pivot_longer(-year, names_to = "Series", values_to = "value") %>%
-  dplyr::mutate(Series = factor(Series, levels = fig5_series_levels))
-
-fig5_B <- ggplot2::ggplot(pB_dat, ggplot2::aes(x = year, y = value,
-                                                color = Series, linetype = Series)) +
-  ggplot2::geom_line(linewidth = 1.7) +
-  ggplot2::scale_color_manual(values = fig5_series_colors, name = NULL) +
-  ggplot2::scale_linetype_manual(values = fig5_series_linetypes, name = NULL) +
-  ggplot2::scale_x_continuous(breaks = fig5_br,
-                               expand = ggplot2::expansion(mult = c(0.02, 0.02))) +
-  ggplot2::labs(x = NULL, y = "Avg. Households per Kin Group",
-                subtitle = "B: Avg. Households per Kin Group") +
-  fig5_base_theme
-
-# Panel C: average people per kin group
-pC_dat <- fig5_dat %>%
-  dplyr::transmute(year,
-                   `Kin Groups (excl. single-HH groups)` = num_clan_people,
-                   `Kin Groups (all)`                    = num_clan_people_full) %>%
-  tidyr::pivot_longer(-year, names_to = "Series", values_to = "value") %>%
-  dplyr::mutate(Series = factor(Series, levels = fig5_series_levels))
-
-fig5_C <- ggplot2::ggplot(pC_dat, ggplot2::aes(x = year, y = value,
-                                                color = Series, linetype = Series)) +
-  ggplot2::geom_line(linewidth = 1.7) +
-  ggplot2::scale_color_manual(values = fig5_series_colors, name = NULL) +
-  ggplot2::scale_linetype_manual(values = fig5_series_linetypes, name = NULL) +
-  ggplot2::scale_x_continuous(breaks = fig5_br,
-                               expand = ggplot2::expansion(mult = c(0.02, 0.02))) +
-  ggplot2::labs(x = NULL, y = "Avg. People per Kin Group",
-                subtitle = "C: Avg. People per Kin Group") +
-  fig5_base_theme
-
-# ── Combine with a single shared legend via patchwork ─────────────────────────
-fig5_body <- (fig5_A | fig5_B | fig5_C) +
-  patchwork::plot_layout(guides = "collect") &
-  ggplot2::theme(legend.position = "bottom")
-
-fig5 <- fig5_body +
-  patchwork::plot_annotation(
-    title = "Figure 5. Kin Group Size and Age Over Time",
-    theme = ggplot2::theme(
-      plot.title = ggplot2::element_text(family = base_family, face = "bold",
-                                         size = title_size, hjust = 0)))
-
-if (SAVE_FILES) {
-  ggsave(here("9_figures", "output", "figure5.pdf"), fig5, width = 16, height = 6)
-  message("Saved: figure5.pdf")
-}
-
-fig5_note <- sprintf(
-  paste0(
-    "Note: Figure 5 plots kin group size and age over time (%d\u2013%d; 2023 excluded) ",
-    "for the robust (kin-linked) sample and the full, non-robust sample of kin groups, ",
-    "using weighted PSID data from the income sample. ",
-    "Panel A shows the average age of kin group members. ",
-    "Panel B shows the average number of households per kin group. ",
-    "Panel C shows the average number of people per kin group. ",
-    "In all three panels, robust kin groups differ from the full sample of kin groups ",
-    "because the robust sample is restricted to kin groups meeting the study's ",
-    "kin-linkage criteria."
-  ),
-  min(fig5_dat$year, na.rm = TRUE), max(fig5_dat$year, na.rm = TRUE)
-)
