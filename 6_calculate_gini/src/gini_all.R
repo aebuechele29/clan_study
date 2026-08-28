@@ -59,6 +59,15 @@ neg_r_hh_wealth    <- neg_r_hh_wealth   %>% mutate(wealth_nohouse = wealth_nohou
 neg_r_clans_wealth <- neg_r_clans_wealth %>% mutate(wealth_nohouse = wealth_nohouse / numclan,
                                                       wealth         = wealth         / numclan)
 
+# AGE WEIGHTING (Appendix C7) ------------------------------------------------
+mean_clan_age_inc <- mean(r_clans$clan_age_mean, na.rm = TRUE)
+r_clans <- r_clans %>%
+  mutate(clan_weight_age = clan_weight * mean_clan_age_inc / clan_age_mean)
+
+mean_clan_age_w <- mean(r_clans_wealth$clan_age_mean, na.rm = TRUE)
+r_clans_wealth <- r_clans_wealth %>%
+  mutate(clan_weight_age = clan_weight * mean_clan_age_w / clan_age_mean)
+
 # CALCULATE GINIS ---------------------------------------------------------------
 
 # Income
@@ -70,7 +79,8 @@ inc_dfs <- list(
     run_gini(r_hh,    "inc_all", NULL,          FALSE, FALSE, "r_hh_unw_inc"),
     run_gini(r_clans, "inc_all", NULL,          FALSE, FALSE, "r_cl_unw_inc"),
     run_gini(neg_r_hh,    "inc_all", "fam_weight",  FALSE, TRUE, "neg_r_hh_inc"),
-    run_gini(neg_r_clans, "inc_all", "clan_weight", FALSE, TRUE, "neg_r_cl_inc")
+    run_gini(neg_r_clans, "inc_all", "clan_weight", FALSE, TRUE, "neg_r_cl_inc"),
+    run_gini(r_clans, "inc_all", "clan_weight_age", FALSE, TRUE, "r_cl_agewt_inc")
 )
 
 inc_by_year <- reduce(inc_dfs, full_join, by = "year") %>% arrange(year)
@@ -86,7 +96,8 @@ wealth_nohouse_dfs <- list(
     run_gini(r_hh_wealth,    "wealth_nohouse", NULL,          FALSE, FALSE, "r_hh_unw_wealth"),
     run_gini(r_clans_wealth, "wealth_nohouse", NULL,          FALSE, FALSE, "r_cl_unw_wealth"),
     run_gini(neg_r_hh_wealth,    "wealth_nohouse", "fam_weight",  FALSE, TRUE, "neg_r_hh_wealth"),
-    run_gini(neg_r_clans_wealth, "wealth_nohouse", "clan_weight", FALSE, TRUE, "neg_r_cl_wealth")
+    run_gini(neg_r_clans_wealth, "wealth_nohouse", "clan_weight", FALSE, TRUE, "neg_r_cl_wealth"),
+    run_gini(r_clans_wealth, "wealth_nohouse", "clan_weight_age", FALSE, TRUE, "r_cl_agewt_wealth")
 )
 
 wealth_by_year <- reduce(wealth_nohouse_dfs, full_join, by = "year") %>% arrange(year)
@@ -102,7 +113,8 @@ wealth_dfs <- list(
     run_gini(r_hh_wealth,    "wealth", NULL,          FALSE, FALSE, "r_hh_unw_wealth"),
     run_gini(r_clans_wealth, "wealth", NULL,          FALSE, FALSE, "r_cl_unw_wealth"),
     run_gini(neg_r_hh_wealth,    "wealth", "fam_weight",  FALSE, TRUE, "neg_r_hh_wealth"),
-    run_gini(neg_r_clans_wealth, "wealth", "clan_weight", FALSE, TRUE, "neg_r_cl_wealth")
+    run_gini(neg_r_clans_wealth, "wealth", "clan_weight", FALSE, TRUE, "neg_r_cl_wealth"),
+    run_gini(r_clans_wealth, "wealth", "clan_weight_age", FALSE, TRUE, "r_cl_agewt_wealth")
 )
 
 wealth_by_year <- reduce(wealth_dfs, full_join, by = "year") %>% arrange(year)

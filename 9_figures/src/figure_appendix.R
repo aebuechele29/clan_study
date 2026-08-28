@@ -76,7 +76,7 @@ w_diff_black      <- w_race_all$r_hh_w_wealth_black   - w_race_all$r_cl_w_wealth
 w_diff_nonblack   <- w_race_all$r_hh_w_wealth_nonblack - w_race_all$r_cl_w_wealth_nonblack
 
 
-# ── Appendix C: Gini Sensitivity Analyses (C1–C6) ────────────────────────────
+# ── Appendix C: Gini Sensitivity Analyses (C1–C7) ────────────────────────────
 
 # C1 — Race (Gini by race subgroup) ──────────────────────────────────────────
 shared_y_race <- {
@@ -237,6 +237,35 @@ if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "appendixC6.pdf"),
          sensitivity_gini_c6, width = 14, height = 11)
   message("Saved: appendixC6.pdf")
+}
+
+# C7 — Clan age weighting ──────────────────────────────────────────────────────
+# r_cl_agewt_inc / r_cl_agewt_wealth come from 6_calculate_gini, where clan
+# weight is downweighted for older clans:
+#   mean_clan_age    <- mean(r_clans$clan_age_mean, na.rm = TRUE)
+#   clan_weight_age  <- clan_weight * mean_clan_age / clan_age_mean
+income_c7    <- income_all    %>% dplyr::mutate(r_hh_w_inc_dup    = r_hh_w_inc)
+wealth_wh_c7 <- wealth_wh_all %>% dplyr::mutate(r_hh_w_wealth_dup = r_hh_w_wealth)
+
+gap7_main_inc <- avg_gap(income_all,    "r_hh_w_inc",    "r_cl_w_inc")
+gap7_alt_inc  <- avg_gap(income_all,    "r_hh_w_inc",    "r_cl_agewt_inc")
+gap7_main_w   <- avg_gap(wealth_wh_all, "r_hh_w_wealth", "r_cl_w_wealth")
+gap7_alt_w    <- avg_gap(wealth_wh_all, "r_hh_w_wealth", "r_cl_agewt_wealth")
+
+sensitivity_gini_c7 <- make_sensitivity_figure(
+  make_sensitivity_plot(df = income_c7,
+    main_hh = "r_hh_w_inc",     main_cl = "r_cl_w_inc",
+    alt_hh  = "r_hh_w_inc_dup", alt_cl  = "r_cl_agewt_inc",
+    left_label = "Standard weighting", right_label = "Age-downweighted"),
+  make_sensitivity_plot(df = wealth_wh_c7,
+    main_hh = "r_hh_w_wealth",     main_cl = "r_cl_w_wealth",
+    alt_hh  = "r_hh_w_wealth_dup", alt_cl  = "r_cl_agewt_wealth",
+    left_label = "Standard weighting", right_label = "Age-downweighted"),
+  title_str = "Appendix C7. Sensitivity: Clan Age Weighting", show_title = FALSE)
+if (SAVE_FILES) {
+  ggsave(here("9_figures", "output", "appendixC7.pdf"),
+         sensitivity_gini_c7, width = 14, height = 11)
+  message("Saved: appendixC7.pdf")
 }
 
 
