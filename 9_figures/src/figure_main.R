@@ -55,12 +55,18 @@ summary_stats  <- read_csv(here("5_summary",         "output", "summary_statisti
 wealth_ratios  <- read_csv(here("7_gini_by_race",    "output", "wealth_withhome_race_ratios.csv"),
                            show_col_types = FALSE)
 
-# Family demographic summaries (robust income sample + full/non-robust
-# income sample), used by Figure 4 below.
-inc_family_demo      <- read_csv(here("5_summary", "output", "inc_family_demo.csv"),
-                                 show_col_types = FALSE)
-inc_family_demo_full <- read_csv(here("5_summary", "output", "inc_family_demo_full.csv"),
-                                 show_col_types = FALSE)
+# Family demographic summaries (robust sample), used for average age in Table 2
+inc_family_demo <- read_csv(here("5_summary", "output", "inc_family_demo.csv"),
+                            show_col_types = FALSE)
+
+w_family_demo_path <- here("5_summary", "output", "w_family_demo.csv")
+w_family_demo <- if (file.exists(w_family_demo_path)) {
+  read_csv(w_family_demo_path, show_col_types = FALSE)
+} else {
+  message("Note: ", w_family_demo_path, " not found; ",
+          "wealth-sample ages will be omitted from the Table 1 note.")
+  NULL
+}
 
 
 # Sample size scalars
@@ -445,174 +451,154 @@ if (SAVE_FILES) {
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# FIGURE 4 — Average Age Over Time: Households, Kin Groups, and Individuals
+# TABLE 1 — Characteristics of Households and Kin Groups
 # ══════════════════════════════════════════════════════════════════════════
-# One panel, six lines: three units of analysis (Household, Kin Group,
-# Individual) x two samples (Robust = kin-linked sample used everywhere else
-# in this script, Full Sample = the unrestricted PSID sample, before the
-# robust kin-linkage criteria are applied). Color encodes the unit of
-# analysis; linetype encodes robust vs. full sample, so all six lines are
-# visually distinguishable without needing six separate colors.
-#
-# hh_age_mean:  average age of the average household (households weighted
-#               equally, regardless of size) — see build_family_demo() in
-#               summary.R.
-# ppl_age_mean: average age of the average individual (people weighted
-#               equally) — will differ from hh_age_mean if household size
-#               correlates with age.
-# clan_age_mean: average age of all kin group members (as in the original
-#               Figure 5 Panel A).
+tab1_years    <- c(1984, 2023)
+tab1_periods  <- c(as.character(tab1_years), "All years")
+tab1_labels   <- c(as.character(tab1_years), "All years (1969\u20132023)")
+tab1_pkeys    <- c(paste0("y", tab1_years), "yall")
+tab1_col_keys <- paste0(rep(tab1_pkeys, each = 2), "_", c("hh", "kg"))
 
-fig4_dat <- inc_family_demo %>%
-  dplyr::select(year, hh_age_mean, ppl_age_mean, clan_age_mean) %>%
-  dplyr::left_join(
-    inc_family_demo_full %>%
-      dplyr::select(year,
-                    hh_age_mean_full   = hh_age_mean,
-                    ppl_age_mean_full  = ppl_age_mean,
-                    clan_age_mean_full = clan_age_mean),
-    by = "year"
-  )
-# NOTE: earlier drafts of this script excluded 2023 from the analogous kin
-# group figure (Figure 5), presumably because of an incomplete/small 2023
-# sample for family-demographic variables. If that's still true here, add:
-#   %>% dplyr::filter(year != 2023)
 
-fig4_plot_dat <- fig4_dat %>%
-  tidyr::pivot_longer(-year, names_to = "series", values_to = "value") %>%
-  dplyr::mutate(
-    sample = dplyr::if_else(grepl("_full$", series), "Full Sample", "Robust"),
-    unit = dplyr::case_when(
-      grepl("^hh_age",   series) ~ "Household",
-      grepl("^clan_age", series) ~ "Kin Group",
-      grepl("^ppl_age",  series) ~ "Individual"
-    ),
-    unit   = factor(unit,   levels = c("Household", "Kin Group", "Individual")),
-    sample = factor(sample, levels = c("Robust", "Full Sample"))
-  )
+tab1_wstat <- function(df, var, weight_var, fun, yr = NULL) {
+  if (!is.null(yr)) df <- df[df$year == yr, , drop = FALSE]
+  v  <- df[[var]]
+  w  <- df[[weight_var]]
+  ok <- is.finite(v) & is.finite(w) & w > 0
+  if (!any(ok)) return(NA_real_)
+  fun(v[ok], w[ok])
+}
 
-# Two separate aesthetics (color = unit, linetype = sample) rendered as two
-# separate legends that were hard to read together, and default breaks were
-# too dense for this date range and printed on top of each other. Both are
-# fixed below: one combined "series" factor with 6 explicitly distinct
-# colors (one legend, one glyph per line), and explicit, evenly spaced
-# x-axis breaks with a smaller, rotated text label.
+tab1_n <- function(df, yr = NULL) {
+  if (is.null(yr)) nrow(df) else sum(df$year == yr, na.rm = TRUE)
+}
 
-fig4_plot_dat <- fig4_plot_dat %>%
-  dplyr::mutate(
-    series = factor(
-      paste0(unit, " (", sample, ")"),
-      levels = c("Household (Robust)",   "Household (Full Sample)",
-                "Kin Group (Robust)",   "Kin Group (Full Sample)",
-                "Individual (Robust)",  "Individual (Full Sample)")
-    )
-  )
 
-# One panel per unit of analysis (Household, Kin Group, Individual), each
-# showing Robust vs. Full Sample as solid vs. dotted lines in a shared
-# two-color scheme. Faceting removes the need to color-code the unit itself
-# (the panel label already does that), so the legend collapses to just the
-# two things that vary within a panel: Robust vs. Full Sample.
+tab1_prep_demo <- function(demo) {
+  demo %>%
+    dplyr::mutate(year = suppressWarnings(as.numeric(year))) %>%
+    dplyr::filter(!is.na(year))
+}
 
-fig4_plot_dat <- fig4_plot_dat %>%
-  dplyr::mutate(
-    unit = factor(unit, levels = c("Household", "Kin Group", "Individual"))
-  )
+tab1_age <- function(demo, var, df, yr = NULL) {
+  if (!is.null(yr)) {
+    v <- demo[[var]][demo$year == yr]
+    return(if (length(v) == 0 || !is.finite(v[1])) NA_real_ else v[1])
+  }
+  d <- demo %>%
+    dplyr::select(year, val = dplyr::all_of(var)) %>%
+    dplyr::inner_join(df %>% dplyr::count(year, name = "n"), by = "year") %>%
+    dplyr::filter(is.finite(val))
+  if (nrow(d) == 0) NA_real_ else sum(d$val * d$n) / sum(d$n)
+}
 
-fig4_sample_colors <- c("Robust" = "#185FA5", "Full Sample" = "#D85A30")
+tab1_demo_inc <- tab1_prep_demo(inc_family_demo)
 
-fig4_br <- pretty(fig4_plot_dat$year, n = 6)
+# All statistics for one unit (hh / kg) in one period
+tab1_unit_stats <- function(unit, period) {
+  yr <- if (period == "All years") NULL else as.numeric(period)
+  if (unit == "hh") {
+    list(
+      age      = tab1_age(tab1_demo_inc, "hh_age_mean", r_hh, yr),
+      size_ppl = tab1_wstat(r_hh, "numfu", "fam_weight", wtd_mean, yr),
+      size_hh  = NA_real_,
+      inc      = tab1_wstat(r_hh,        "inc_all", "fam_weight", wtd_median, yr),
+      wealth   = tab1_wstat(r_hh_wealth, "wealth",  "fam_weight", wtd_median, yr),
+      n        = tab1_n(r_hh, yr))
+  } else {
+    list(
+      age      = tab1_age(tab1_demo_inc, "clan_age_mean", r_clans, yr),
+      size_ppl = tab1_wstat(r_clans, "num_clan_people", "clan_weight", wtd_mean, yr),
+      size_hh  = tab1_wstat(r_clans, "numclan",         "clan_weight", wtd_mean, yr),
+      inc      = tab1_wstat(r_clans,        "inc_all", "clan_weight", wtd_median, yr),
+      wealth   = tab1_wstat(r_clans_wealth, "wealth",  "clan_weight", wtd_median, yr),
+      n        = tab1_n(r_clans, yr))
+  }
+}
 
-fig4_plot <- ggplot2::ggplot(
-  fig4_plot_dat,
-  ggplot2::aes(x = year, y = value, color = sample, linetype = sample, group = series)
-) +
-  ggplot2::geom_line(linewidth = 1.5) +
-  ggplot2::facet_wrap(~ unit, nrow = 1) +
-  ggplot2::scale_color_manual(values = fig4_sample_colors, name = NULL) +
-  ggplot2::scale_linetype_manual(values = c("Robust" = "solid", "Full Sample" = "dotted"),
-                                  name = NULL) +
-  ggplot2::scale_x_continuous(breaks = fig4_br,
-                               expand = ggplot2::expansion(mult = c(0.03, 0.03))) +
-  ggplot2::labs(x = NULL, y = "Average Age") +
-  ggplot2::theme(
-    legend.position  = "bottom",
-    legend.text      = ggplot2::element_text(size = base_size * 0.6),
-    strip.text       = ggplot2::element_text(family = base_family, face = "bold",
-                                              size = sub_size * 0.6),
-    axis.text.x      = ggplot2::element_text(angle = 45, hjust = 1,
-                                              size = base_size * 0.55)) +
-  ggplot2::guides(
-    color    = ggplot2::guide_legend(override.aes = list(linewidth = 2.2)),
-    linetype = ggplot2::guide_legend())
+tab1_stats <- purrr::map(tab1_periods, function(p)
+  list(hh = tab1_unit_stats("hh", p), kg = tab1_unit_stats("kg", p)))
+names(tab1_stats) <- tab1_periods
 
-# ── Scalars for the Figure 4 note ─────────────────────────────────────────────
-fig4_first_yr <- min(fig4_dat$year, na.rm = TRUE)
-fig4_last_yr  <- max(fig4_dat$year, na.rm = TRUE)
-
-get_fig4 <- function(var, yr) fig4_dat[[var]][fig4_dat$year == yr]
-pct_chg  <- function(first, last) 100 * (last - first) / first
-
-hh_age_first   <- get_fig4("hh_age_mean", fig4_first_yr)
-hh_age_last    <- get_fig4("hh_age_mean", fig4_last_yr)
-hh_age_full_first <- get_fig4("hh_age_mean_full", fig4_first_yr)
-hh_age_full_last  <- get_fig4("hh_age_mean_full", fig4_last_yr)
-
-cl_age_first   <- get_fig4("clan_age_mean", fig4_first_yr)
-cl_age_last    <- get_fig4("clan_age_mean", fig4_last_yr)
-cl_age_full_first <- get_fig4("clan_age_mean_full", fig4_first_yr)
-cl_age_full_last  <- get_fig4("clan_age_mean_full", fig4_last_yr)
-
-ppl_age_first  <- get_fig4("ppl_age_mean", fig4_first_yr)
-ppl_age_last   <- get_fig4("ppl_age_mean", fig4_last_yr)
-ppl_age_full_first <- get_fig4("ppl_age_mean_full", fig4_first_yr)
-ppl_age_full_last  <- get_fig4("ppl_age_mean_full", fig4_last_yr)
-
-hh_age_pct       <- pct_chg(hh_age_first, hh_age_last)
-hh_age_full_pct  <- pct_chg(hh_age_full_first, hh_age_full_last)
-cl_age_pct       <- pct_chg(cl_age_first, cl_age_last)
-cl_age_full_pct  <- pct_chg(cl_age_full_first, cl_age_full_last)
-ppl_age_pct      <- pct_chg(ppl_age_first, ppl_age_last)
-ppl_age_full_pct <- pct_chg(ppl_age_full_first, ppl_age_full_last)
-
-avg_hh_ppl_gap <- round(mean(fig4_dat$ppl_age_mean - fig4_dat$hh_age_mean, na.rm = TRUE), 2)
-
-fig4_note <- sprintf(
-  paste0(
-    "Note: Figure 4 plots average age over time (%d\u2013%d) for households, kin groups, ",
-    "and individuals, comparing the robust (kin-linked) sample used elsewhere in this paper ",
-    "against the full, non-robust PSID sample, using unweighted data from the income sample. ",
-    "\u201cHousehold\u201d age is the average, across households, of each household's own mean ",
-    "member age (each household weighted equally); \u201cIndividual\u201d age pools member ages ",
-    "across households before averaging (each person weighted equally); \u201cKin Group\u201d age is ",
-    "the average age of all members of a kin group. ",
-    "Household age changed by %.1f%% for the robust sample (%.1f in %d to %.1f in %d) ",
-    "and by %.1f%% for the full sample (%.1f to %.1f). ",
-    "Kin group age changed by %.1f%% for the robust sample (%.1f to %.1f) ",
-    "and by %.1f%% for the full sample (%.1f to %.1f). ",
-    "Individual age changed by %.1f%% for the robust sample (%.1f to %.1f) ",
-    "and by %.1f%% for the full sample (%.1f to %.1f). ",
-    "On average across all years, individuals are %.2f years older/younger than the average ",
-    "household in the robust sample, reflecting that larger households are weighted more ",
-    "heavily under the individual-level average."
-  ),
-  fig4_first_yr, fig4_last_yr,
-  hh_age_pct, hh_age_first, fig4_first_yr, hh_age_last, fig4_last_yr,
-  hh_age_full_pct, hh_age_full_first, hh_age_full_last,
-  cl_age_pct, cl_age_first, cl_age_last,
-  cl_age_full_pct, cl_age_full_first, cl_age_full_last,
-  ppl_age_pct, ppl_age_first, ppl_age_last,
-  ppl_age_full_pct, ppl_age_full_first, ppl_age_full_last,
-  avg_hh_ppl_gap
+# Row definitions: label, formatter, and what to print when a cell is empty
+tab1_rows <- list(
+  age      = list(label = "Average age",        fmt = fmt1, na = "\u2014"),
+  size_ppl = list(label = "Size (individuals)", fmt = fmt2, na = "\u2014"),
+  size_hh  = list(label = "Size (households)",  fmt = fmt2, na = "\u2014"),
+  inc      = list(label = "Median income",      fmt = function(x) paste0("$", fmt_money0(x)), na = "\u2014"),
+  wealth   = list(label = "Median wealth",      fmt = function(x) paste0("$", fmt_money0(x)), na = "\u2014"),
+  n        = list(label = "N (unit-years)",     fmt = fmt0, na = "\u2014")
 )
 
-fig4 <- fig4_plot +
-  ggplot2::labs(title = "Figure 4. Average Age Over Time: Households, Kin Groups, and Individuals") +
-  ggplot2::theme(
-    plot.title = ggplot2::element_text(family = base_family, face = "bold",
-                                       size = title_size, hjust = 0))
+tab1_fmt_cell <- function(x, spec) {
+  if (length(x) == 0 || is.na(x)) spec$na else trimws(spec$fmt(x))
+}
+
+tab1_df <- purrr::imap_dfr(tab1_rows, function(spec, key) {
+  vals <- unlist(purrr::map(tab1_periods, function(p) c(
+    tab1_fmt_cell(tab1_stats[[p]]$hh[[key]], spec),
+    tab1_fmt_cell(tab1_stats[[p]]$kg[[key]], spec))))
+  names(vals) <- tab1_col_keys
+  tibble::as_tibble_row(c(label = spec$label, vals))
+})
+
+# ── Table 1 note ──────────────────────────────────────────────────────────────
+tab1_w_age_txt <- if (!is.null(w_family_demo)) {
+  tab1_demo_w <- tab1_prep_demo(w_family_demo)
+  sprintf(", and an average age of %s for households and %s for kin groups",
+          fmt1(tab1_age(tab1_demo_w, "hh_age_mean",   r_hh_wealth)),
+          fmt1(tab1_age(tab1_demo_w, "clan_age_mean", r_clans_wealth)))
+} else ""
+
+tab1_note <- sprintf(
+  paste0(
+    "Note: HH = households; KG = kin groups. ",
+    "Average age, size, and N are based on the income sample (1969-2023), ",
+    "which contains %s unique kin groups. ",
+    "Median wealth is based on the wealth sample (1984-2023) and includes home equity. ",
+    "Size and median values are weighted using PSID family and kin group weights. ",
+    "Pooled across all years, the wealth sample contains %s household-years and %s kin group-years ",
+    "from %s unique kin groups, with an average size of %s individuals per household ",
+    "and %s individuals (%s households) per kin group%s."
+  ),
+  fmt0(inc_uniq_clans),
+  fmt0(w_hh_years), fmt0(w_cl_years), fmt0(w_uniq_clans),
+  trimws(fmt2(hh_size_w_mean)), trimws(fmt2(w_cl_ppl_mean)), trimws(fmt2(w_cl_hh_mean)),
+  tab1_w_age_txt
+)
+
+# ── Table 1 flextable ─────────────────────────────────────────────────────────
+tab1_border <- officer::fp_border(color = "black", width = 0.75)
+tab1_n_row  <- which(tab1_df$label == "N (unit-years)")
+
+tab1_ft <- flextable::flextable(tab1_df, col_keys = c("label", tab1_col_keys)) %>%
+  flextable::set_header_labels(
+    values = setNames(as.list(c("", rep(c("HH", "KG"), length(tab1_periods)))),
+                      c("label", tab1_col_keys))) %>%
+  flextable::add_header_row(values    = c("", tab1_labels),
+                            colwidths = c(1, rep(2, length(tab1_periods)))) %>%
+  flextable::theme_booktabs() %>%
+  flextable::merge_v(j = 1, part = "header") %>%
+  # thin rule under the spanning year labels
+  flextable::hline(i = 1, j = 2:(1 + length(tab1_col_keys)),
+                   border = tab1_border, part = "header") %>%
+  # rule separating the N row from the statistics above
+  flextable::hline(i = tab1_n_row - 1, border = tab1_border, part = "body") %>%
+  flextable::align(j = 1,  align = "left",   part = "all") %>%
+  flextable::align(j = -1, align = "center", part = "all") %>%
+  flextable::font(fontname = "Times New Roman", part = "all") %>%
+  flextable::fontsize(size = 10, part = "all") %>%
+  flextable::add_footer_lines(tab1_note) %>%
+  flextable::fontsize(size = 9, part = "footer") %>%
+  flextable::font(fontname = "Times New Roman", part = "footer") %>%
+  flextable::set_caption("Table 1. Characteristics of Households and Kin Groups") %>%
+  flextable::autofit()
 
 if (SAVE_FILES) {
-  ggsave(here("9_figures", "output", "figure4.pdf"), fig4, width = 16, height = 7)
-  message("Saved: figure4.pdf")
+  flextable::save_as_docx(
+    tab1_ft,
+    path = here("9_figures", "output", "table1.docx"),
+    pr_section = officer::prop_section(
+      page_size = officer::page_size(orient = "landscape")))
+  message("Saved: table1.docx")
 }

@@ -32,9 +32,6 @@ r_clans_wealth <- readRDS(
 
 
 # APPLY WEIGHTS ---------------------------------------------------------------
-# NOTE: the family demographic summaries below (build_family_demo) are now
-# unweighted and do not use these survey designs. Left in place in case they
-# are used elsewhere in this script / downstream.
 # Adjust weighted designs for lonely PSUs
 options(survey.lonely.psu = "adjust")
 
@@ -70,8 +67,6 @@ clanw_design <- svydesign(
   nest = TRUE
 )
 
-# Non-robust (full) designs — needed to show what family composition looks
-# like before the robustness/kin-linkage restrictions are applied.
 hh_design_full <- svydesign(
   ids = ~cluster,
   strata = ~stratum,
@@ -195,9 +190,6 @@ w_family_demo <- build_family_demo(
 )
 
 # Income sample: full (non-robust) household and clan samples.
-# Used to show the selection effect of the robust kin-linkage criteria —
-# i.e., how family composition in the robust sample compares to the full,
-# unrestricted PSID sample in each year.
 inc_family_demo_full <- build_family_demo(
   hh,
   clans
