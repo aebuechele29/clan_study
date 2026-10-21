@@ -1,3 +1,7 @@
+# Functions used in this script:
+#   Defined in this script: extract_psid_vartables, remove_y, rename_variable,
+#     create_sublist, extract_psid_data
+
 setwd("/Users/amanda/Desktop/clan_project")
 
 # Activate virtual environment -------------------------------------------
@@ -44,6 +48,7 @@ psid_data <- readRDS(psid_file)
 
 # DEFINE FUNCTIONS ---------------------------------------------------------------------------
 # Define Variables to Extract Lists -----------------------------------------
+# Used in: build_panel
 extract_psid_vartables <- function(var_object) {
   tmp <- getNamesPSID(var_object[["var"]], cwf, years = NULL)
 
@@ -56,6 +61,7 @@ extract_psid_vartables <- function(var_object) {
 }
 
 # Define Function to Remove "Y" from Year Var Name ----------------------------
+# Used in: build_panel
 remove_y <- function(var_object) {
   var_object[["df"]] <-
     var_object[["df"]] %>%
@@ -65,6 +71,7 @@ remove_y <- function(var_object) {
 }
 
 # Define Function to Rename Var df Variable Name -------------------------------
+# Used in: build_panel
 rename_variable <- function(var_object) {
   varname <- var_object[["varname"]]
   
@@ -76,6 +83,7 @@ rename_variable <- function(var_object) {
 }
 
 # Define Function to Create Individual and Family Lists -------------------
+# Used in: build_panel
 create_sublist <- function(var_object, type_str) {
   if (str_detect(var_object[["name"]], type_str)) {
     return(var_object[["df"]])
@@ -172,6 +180,7 @@ all_vars <- vartable_list %>%
 
 # BUILD PANEL ---------------------------------------------------------------------------
 # Define Function to Build Individual and Family Panel ---------------------------
+# Used in: build_panel
 extract_psid_data <- function(psid_data, mapping, id_vars = c("ER30000", "ER30001", "ER30002")) {
   year_list <- unique(mapping$year)
   result_list <- purrr::map(year_list, function(yr) {
@@ -215,6 +224,5 @@ saveRDS(psid_data, here("1_build_panel", "output", "build.rds"))
 
 # Clean Up Temporary Files --------------------------------------------------
 rm(cwf, all_vars, vars, vartable_list)
-
 
 

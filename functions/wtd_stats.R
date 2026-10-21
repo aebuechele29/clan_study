@@ -1,13 +1,21 @@
-# wtd_stats.R
-# Weighted summary statistics used across scripts and figures
+# Functions defined in this file:
+#   wtd_mean
+#   wtd_median
+#   lorenz_tbl
+#   wtd_sd
+#   efficient_max
+#   efficient_sum
+
 
 # Weighted mean
+# Used in: figure_main, figure_appendix
 wtd_mean <- function(x, w) {
   keep <- is.finite(x) & is.finite(w) & w > 0
   sum(x[keep] * w[keep]) / sum(w[keep])
 }
 
 # Weighted median
+# Used in: gini_by_race, figure_main, figure_appendix
 wtd_median <- function(x, w) {
   keep <- is.finite(x) & is.finite(w) & w > 0
   x <- x[keep]; w <- w[keep]
@@ -15,16 +23,8 @@ wtd_median <- function(x, w) {
   x[which(cumsum(w) / sum(w) >= 0.5)[1]]
 }
 
-# Weighted quantiles for a vector of probabilities
-wtd_quantile <- function(x, w, probs) {
-  keep <- is.finite(x) & is.finite(w) & w > 0
-  x <- x[keep]; w <- w[keep]
-  ord <- order(x); x <- x[ord]; w <- w[ord]
-  cdf <- cumsum(w) / sum(w)
-  purrr::map_dbl(probs, ~ x[which(cdf >= .x)[1]])
-}
-
 # Lorenz curve as a tibble(p, L) — used by make_lorenz_plot
+# Used in: plot_helpers (inside .lorenz_data)
 lorenz_tbl <- function(x, w) {
   keep <- is.finite(x) & is.finite(w) & w > 0
   x <- x[keep]; w <- w[keep]
@@ -35,25 +35,8 @@ lorenz_tbl <- function(x, w) {
   )
 }
 
-# Weighted mean by year — used in race ratio calculations (7_gini_by_race)
-wtd_mean_by_year <- function(df, value_var, weight_var = NULL) {
-  df %>%
-    dplyr::group_by(year) %>%
-    dplyr::summarise(
-      mean_val = if (is.null(weight_var)) {
-        mean(.data[[value_var]], na.rm = TRUE)
-      } else {
-        keep <- is.finite(.data[[value_var]]) &
-                is.finite(.data[[weight_var]]) &
-                .data[[weight_var]] > 0
-        sum(.data[[value_var]][keep] * .data[[weight_var]][keep]) /
-          sum(.data[[weight_var]][keep])
-      },
-      .groups = "drop"
-    )
-}
-
 # Weighted standard deviation
+# Used in: figure_main
 wtd_sd <- function(x, w) {
   keep <- is.finite(x) & is.finite(w) & w > 0
   x <- x[keep]; w <- w[keep]
@@ -63,12 +46,15 @@ wtd_sd <- function(x, w) {
 
 # Vectorised helpers used inside data pipeline scripts (2_clean_panel,
 # 3_households) — kept here so they are always available after source().
+# Used in: clean_panel
 efficient_max <- function(x, na.rm = FALSE) {
   if (na.rm) x <- x[!is.na(x)]
   if (length(x) == 0) return(-Inf)
   max(x)
 }
 
+# Used in: households
 efficient_sum <- function(x, na.rm = TRUE) {
   sum(x, na.rm = na.rm)
 }
+

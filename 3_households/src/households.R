@@ -1,3 +1,6 @@
+# Functions used in this script:
+#   From functions/wtd_stats.R: efficient_sum
+
 library(here)
 library(dplyr)
 library(data.table)
@@ -384,4 +387,3 @@ saveRDS(
 
 # CLEAN UP TEMPORARY FILES ----------------------------------------------------
 rm(clean, data, dt, fam_wide, ind_wide, long_dt)
-

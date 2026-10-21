@@ -1,3 +1,7 @@
+# Functions used in this script:
+#   From functions/gini_utils.R: run_gini, append_mean_row
+
+
 library(here)
 library(dplyr)
 library(purrr)

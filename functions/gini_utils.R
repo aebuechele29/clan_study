@@ -1,5 +1,9 @@
-# gini_utils.R
-# Core Gini estimation functions called by 6_calculate_gini and 7_gini_by_race.
+# Functions defined in this file:
+#   run_gini
+#   run_gini_race  (contains nested function: run_one)
+#   append_mean_row
+#   C123_by_year
+
 
 
 # run_gini
@@ -13,6 +17,7 @@
 #   weighted   : logical — if FALSE, ignores weight_var entirely
 #   col_label  : character — name for the output Gini column
 
+# Used in: gini_all, figure_appendix
 run_gini <- function(df, value_var, weight_var = NULL,
                      clan = FALSE, weighted = TRUE, col_label) {
   years <- sort(unique(df$year))
@@ -61,10 +66,12 @@ run_gini <- function(df, value_var, weight_var = NULL,
 #   value_var, weight_var, clan, weighted : same as run_gini
 #   col_label   : character — prefix for output columns
 
+# Used in: gini_by_race
 run_gini_race <- function(black_df, nonblack_df,
                           value_var, weight_var = NULL,
                           clan = FALSE, weighted = TRUE, col_label) {
 
+  # Used in: gini_utils (nested inside run_gini_race — only exists while it runs)
   run_one <- function(df, suffix) {
     years <- sort(unique(df$year))
     purrr::map_dfr(years, function(yr) {
@@ -119,6 +126,7 @@ run_gini_race <- function(black_df, nonblack_df,
 
 # append_mean_row
 # Append an "ALL" row equal to the column-wise mean across years.
+# Used in: gini_all, gini_by_race
 append_mean_row <- function(df) {
   all_row <- df %>%
     dplyr::filter(year != "ALL") %>%
@@ -142,6 +150,7 @@ append_mean_row <- function(df) {
 # C2 = standard Gini
 # C3 = 2 * E[(1-F(x)) * x] / mu - 1           (weight on upper tail)
 
+# Used in: calc_nuclear_family
 C123_by_year <- function(df, value_var, weight = TRUE, weight_var = NULL) {
   value_var_str <- deparse(substitute(value_var))
   years <- sort(unique(df$year))
