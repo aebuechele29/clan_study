@@ -1,6 +1,18 @@
-# sims.R
-# Functions for Appendix A to simulate potential results.
+# Functions defined in this file:
+#   run_many_sims_sums
+#   results_from_sims_sums
+#   extreme_indices_sums
+#   plot_lorenz_for_sim_sums
+#   mekko_df_sums
+#   make_two_mekko_sums
+#   simulate_ginis_sums
+#   generate_values_simple
+#   gini_safe_simple
+#   as_num
+#   lorenz_df_safe
+#   lorenz_coords_safe
 
+# Used in: supplemental
 run_many_sims_sums <- function(n_sims = 100, ..., debug_every = NULL) {
   sims <- vector("list", n_sims)
   for (i in seq_len(n_sims)) {
@@ -10,6 +22,7 @@ run_many_sims_sums <- function(n_sims = 100, ..., debug_every = NULL) {
   sims
 }
 
+# Used in: supplemental
 results_from_sims_sums <- function(sims) {
   g_hh <- vapply(sims, function(x) gini_safe_simple(x$data$value), numeric(1))
   g_cs <- vapply(sims, function(x) {
@@ -29,6 +42,7 @@ results_from_sims_sums <- function(sims) {
     dplyr::mutate(diff_sums = gini_households - gini_clan_sums)
 }
 
+# Used in: supplemental
 extreme_indices_sums <- function(df_res) {
   oks <- which(is.finite(df_res$diff_sums))
   if (length(oks) == 0L) stop("No finite values to find extremes.")
@@ -38,6 +52,7 @@ extreme_indices_sums <- function(df_res) {
   )
 }
 
+# Used in: supplemental
 plot_lorenz_for_sim_sums <- function(sim) {
   df <- sim$data
 
@@ -71,6 +86,7 @@ plot_lorenz_for_sim_sums <- function(sim) {
     )
 }
 
+# Used in: sims (inside make_two_mekko_sums)
 mekko_df_sums <- function(sim) {
   df <- sim$data
 
@@ -96,6 +112,7 @@ mekko_df_sums <- function(sim) {
   list(df = cs, diff = g_house - g_clan)
 }
 
+# Used in: supplemental
 make_two_mekko_sums <- function(sims, idx_min_sums, idx_max_sums) {
   cases <- list(
     list(idx = idx_min_sums, facet = "Lowest simulated difference"),
@@ -142,6 +159,7 @@ make_two_mekko_sums <- function(sims, idx_min_sums, idx_max_sums) {
     ggplot2::theme(plot.margin = ggplot2::margin(t = 12, r = 8, b = 8, l = 8))
 }
 
+# Used in: sims (inside run_many_sims_sums)
 simulate_ginis_sums <- function(
   n_clans = 10,
   hh_per_clan = 20,
@@ -193,6 +211,7 @@ simulate_ginis_sums <- function(
   )
 }
 
+# Used in: sims (inside simulate_ginis_sums)
 generate_values_simple <- function(n, dist = "lognormal", dist_params = list(meanlog = 0, sdlog = 1)) {
   if (dist == "lognormal") {
     return(rlnorm(n, meanlog = dist_params$meanlog %||% 0, sdlog = dist_params$sdlog %||% 1))
@@ -217,6 +236,7 @@ generate_values_simple <- function(n, dist = "lognormal", dist_params = list(mea
   stop("Distribution not implemented. Use 'lognormal', 'normal', or 'two_sided_lognormal'.")
 }
 
+# Used in: sims (inside mekko_df_sums, results_from_sims_sums, simulate_ginis_sums)
 gini_safe_simple <- function(x, eps = 1e-8) {
   x <- as_num(x)
   x <- x[is.finite(x)]
@@ -228,17 +248,20 @@ gini_safe_simple <- function(x, eps = 1e-8) {
   ineq::ineq(x + shift, type = "Gini")
 }
 
+# Used in: sims (inside gini_safe_simple, lorenz_coords_safe)
 as_num <- function(x) {
   if (is.null(x)) return(numeric(0))
   if (is.list(x)) x <- unlist(x, recursive = TRUE, use.names = FALSE)
   as.numeric(x)
 }
 
+# Used in: sims (inside plot_lorenz_for_sim_sums)
 lorenz_df_safe <- function(x, label) {
   tmp <- lorenz_coords_safe(x)
   data.frame(p = tmp$lc$p, L = tmp$lc$L, group = label)
 }
 
+# Used in: sims (inside lorenz_df_safe)
 lorenz_coords_safe <- function(x, eps = 1e-8) {
   x <- as_num(x)
   x <- x[is.finite(x)]
@@ -248,9 +271,4 @@ lorenz_coords_safe <- function(x, eps = 1e-8) {
   shift <- if (xmin < 0) (-xmin + eps) else 0
   lc <- ineq::Lc(x + shift)
   list(lc = lc, shift = shift)
-}
-
-lorenz_df_safe <- function(x, label) {
-  tmp <- lorenz_coords_safe(x)
-  data.frame(p = tmp$lc$p, L = tmp$lc$L, group = label)
 }

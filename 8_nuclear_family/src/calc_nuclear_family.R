@@ -1,3 +1,7 @@
+# Functions used in this script:
+#   Defined in this script: join_hh_clan
+#   From functions/gini_utils.R: C123_by_year
+
 library(here)
 library(dplyr)
 library(tidyr)
@@ -34,6 +38,7 @@ out_dir  <- here("8_nuclear_family", "output")
 dir.create(out_dir,  recursive = TRUE, showWarnings = FALSE)
 
 # Adds an "ALL" row = mean across years for each numeric column.
+# Used in: calc_nuclear_family
 join_hh_clan <- function(hh_df, clan_df, var_label) {
   out <- hh_df %>%
     rename_with(~ paste0(.x, "_hh"), starts_with("C")) %>%

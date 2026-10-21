@@ -1,3 +1,6 @@
+# Functions used in this script:
+#   From functions/wtd_stats.R: efficient_max
+
 library(here)
 library(dplyr)
 library(tidyr)
@@ -9,12 +12,18 @@ library(openxlsx)
 build <- readRDS(here("1_build_panel", "output", "build.rds"))
 
 # Load Inflation Data -----------------------------------------------------
-  # This file contains annual consumer price index (CPI) data for inflation adjustment from the Bureau of Labor Statistics
+  # BLS CPI-U, all items, U.S. city average (1982-84 = 100), monthly + annual average.
+  # All dollar values are converted to constant CPI_BASE_YEAR dollars:
+  #   real = nominal * CPI[base year] / CPI[reference year]
+CPI_BASE_YEAR <- 2023
+
 cpi <- openxlsx::read.xlsx(here("0_data", "cpi", "cpi.xlsx")) %>%
   as_tibble() %>%
-  rename(inflation_value = Jan, year = Year) %>%
-  select(year, inflation_value) %>%
-  filter(year >= 1967)
+  transmute(year = as.integer(Year), cpi = as.numeric(Annual)) %>%  # annual average, not January
+  filter(year >= 1967, !is.na(cpi))
+
+cpi_base <- cpi$cpi[cpi$year == CPI_BASE_YEAR]
+stopifnot(length(cpi_base) == 1)
 
 # LIMIT TO THOSE PRESENT IN THE FU EACH YEAR -------------------------------------------------
 build <- build %>%
@@ -217,15 +226,30 @@ rm(topcode_rules, topcodes, topcodes_wide)
 
 
 # Join inflation, adjust, and rename
+  # PSID income reported in survey year t refers to calendar year t-1, so income is
+  # deflated with the prior year's CPI. Wealth is measured at interview (year t).
+inc_vars    <- money_vars[startsWith(money_vars, "inc_")]
+wealth_vars <- setdiff(money_vars, inc_vars)
+
+cpi_join <- cpi %>%
+  transmute(year,
+            defl_wealth = cpi_base / cpi) %>%
+  left_join(cpi %>% transmute(year = year + 1L, defl_inc = cpi_base / cpi),
+            by = "year")
+
+# Every panel year must have both deflators; otherwise money vars would silently become NA
+missing_cpi <- setdiff(unique(build$year), cpi_join$year[!is.na(cpi_join$defl_inc)])
+if (length(missing_cpi) > 0) stop("No CPI for panel year(s): ", paste(sort(missing_cpi), collapse = ", "))
+
 build <- build %>%
-  left_join(cpi, by = "year", relationship = "many-to-one") %>%
-  mutate(across(
-    all_of(money_vars),
-    ~ .x * inflation_value / 100,
-    .names = "infl_{.col}"
-  )) %>%
-  select(-all_of(money_vars), -inflation_value) %>%
-  rename_with(~ gsub("^infl_", "", .x), starts_with("infl_"))
+  left_join(cpi_join, by = "year", relationship = "many-to-one") %>%
+  mutate(
+    across(all_of(inc_vars),    ~ .x * defl_inc),
+    across(all_of(wealth_vars), ~ .x * defl_wealth)
+  ) %>%
+  select(-defl_inc, -defl_wealth)
+
+rm(cpi_join, missing_cpi)
 
 
 # CLEAN FAMILY RACE -------------------------------------------------------------
@@ -365,4 +389,3 @@ saveRDS(build, here("2_clean_panel", "output", "clean.rds"))
 
 # Clean Up Temporary Files --------------------------------------------------
 rm(sample_fast, psid_data, pid_lookup)
-

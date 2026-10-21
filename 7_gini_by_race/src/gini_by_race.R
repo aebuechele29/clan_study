@@ -1,3 +1,8 @@
+# Functions used in this script:
+#   Defined in this script: wtd_mean_yr, wtd_median_yr, make_ratio_wide
+#   From functions/gini_utils.R: run_gini_race, append_mean_row
+#   From functions/wtd_stats.R: wtd_median
+
 library(here)
 library(dplyr)
 library(purrr)
@@ -156,6 +161,7 @@ wh_by_year_race <- list(r_hh_w_wh, r_cl_w_wh) %>%
 
 # PART 2: RACE RATIOS
 
+# Used in: gini_by_race
 wtd_mean_yr <- function(df, value_var, weight_var = NULL) {
   df %>%
     group_by(year) %>%
@@ -172,6 +178,7 @@ wtd_mean_yr <- function(df, value_var, weight_var = NULL) {
     )
 }
 
+# Used in: gini_by_race
 wtd_median_yr <- function(df, value_var, weight_var = NULL) {
   df %>%
     group_by(year) %>%
@@ -185,6 +192,7 @@ wtd_median_yr <- function(df, value_var, weight_var = NULL) {
     )
 }
 
+# Used in: gini_by_race
 make_ratio_wide <- function(specs) {
   purrr::map(specs, function(s) {
     b_mean  <- wtd_mean_yr(s$black_df,    s$value_var, s$weight_var) %>%

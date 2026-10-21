@@ -1,3 +1,7 @@
+# Functions used in this script:
+#   Defined in this script: make_clans
+#   From functions/data_utils.R: clear_output
+
 library(here)
 library(dplyr)
 
@@ -27,6 +31,7 @@ clear_output(
 
 
 # CREATE CLAN FILES -----------------------------------------------------------
+# Used in: clans
 make_clans <- function(
     households,
     prefix = "",
@@ -251,5 +256,3 @@ files_to_remove <- c(
 )
 
 file.remove(files_to_remove)
-
-

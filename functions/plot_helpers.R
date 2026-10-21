@@ -1,6 +1,3 @@
-# plot_helpers.R
-# All ggplot2 / cowplot figure-building functions.
-#
 # Color scheme (Option B — Navy / Coral):
 #   NAVY       #185FA5  main HH, diff main line, race HH
 #   PALE_NAVY  #85B7EB  main KG, race KG
@@ -10,13 +7,38 @@
 #   TEAL       #0F6E56  C3 coefficient
 #   NAVY                C2 coefficient
 
+# Functions defined in this file:
+#   make_x_breaks
+#   make_sub_draw
+#   make_gini_plot
+#   .lorenz_data
+#   make_lorenz_plot
+#   make_ratio_plot
+#   .sens_base_t
+#   .sens_sub_t
+#   .sens_legend
+#   .race_sens_legend
+#   make_sensitivity_plot
+#   make_sensitivity_figure
+#   make_single_sensitivity_figure
+#   make_race_sensitivity_plot
+#   make_c123_panel
+#   make_ratio_sensitivity_plot
+#   make_ratio_sensitivity_figure
 
+# Functions from other files used in this file:
+#   functions/wtd_stats.R: lorenz_tbl
+
+
+
+# Used in: plot_helpers (inside make_c123_panel, make_gini_plot, make_race_sensitivity_plot, make_ratio_plot, make_ratio_sensitivity_plot, make_sensitivity_plot)
 make_x_breaks <- function(min_yr, max_yr) {
   br <- seq(ceiling(min_yr / 10) * 10, floor(max_yr / 10) * 10, by = 10)
   br <- br[br >= (min_yr + 5) & br <= (max_yr - 2)]
   sort(unique(c(min_yr, br, max_yr)))
 }
 
+# Used in: figure_appendix, plot_helpers (inside make_ratio_sensitivity_figure, make_sensitivity_figure)
 make_sub_draw <- function(txt) {
   cowplot::ggdraw() +
     cowplot::draw_label(txt, x = 0, hjust = 0,
@@ -24,11 +46,13 @@ make_sub_draw <- function(txt) {
 }
 
 # Figure 1 style: Gini over time (HH solid NAVY / KG dotted PALE_NAVY)
-make_gini_plot <- function(by_year_df, hh_col, cl_col, ylab, y_limits = NULL) {
+# Used in: figure_main
+make_gini_plot <- function(by_year_df, hh_col, cl_col, ylab, y_limits = NULL,
+                           x_breaks_fn = make_x_breaks) {
   dat <- by_year_df %>%
     dplyr::filter(year != "ALL") %>%
     dplyr::mutate(year = as.numeric(year))
-  br <- make_x_breaks(min(dat$year, na.rm = TRUE), max(dat$year, na.rm = TRUE))
+  br <- x_breaks_fn(min(dat$year, na.rm = TRUE), max(dat$year, na.rm = TRUE))
 
   if (is.null(y_limits)) {
     vals <- c(dplyr::pull(dat, {{ hh_col }}), dplyr::pull(dat, {{ cl_col }}))
@@ -56,6 +80,7 @@ make_gini_plot <- function(by_year_df, hh_col, cl_col, ylab, y_limits = NULL) {
 }
 
 # Figure 2 style: Lorenz curves
+# Used in: plot_helpers (inside make_lorenz_plot)
 .lorenz_data <- function(df, value_var, weight_var, years, unit_label) {
   df %>%
     dplyr::filter(year %in% years, is.finite(.data[[value_var]])) %>%
@@ -69,6 +94,7 @@ make_gini_plot <- function(by_year_df, hh_col, cl_col, ylab, y_limits = NULL) {
     })
 }
 
+# Used in: figure_main
 make_lorenz_plot <- function(df_hh, df_cl, value_var, years, ylab, colors) {
   dat <- dplyr::bind_rows(
     .lorenz_data(df_hh, value_var, "fam_weight",  years, "Household"),
@@ -98,10 +124,12 @@ make_lorenz_plot <- function(df_hh, df_cl, value_var, years, ylab, colors) {
 }
 
 # Figure 3 style: ratio plot (HH solid NAVY / KG dotted PALE_NAVY)
-make_ratio_plot <- function(dat, ylab, y_limits = NULL, hline = 1) {
+# Used in: figure_main, figure_appendix
+make_ratio_plot <- function(dat, ylab, y_limits = NULL, hline = 1,
+                            x_breaks_fn = make_x_breaks) {
   d <- dat %>%
     dplyr::filter(is.finite(year), is.finite(r_hh_w_ratio), is.finite(r_cl_w_ratio))
-  br <- make_x_breaks(min(d$year, na.rm = TRUE), max(d$year, na.rm = TRUE))
+  br <- x_breaks_fn(min(d$year, na.rm = TRUE), max(d$year, na.rm = TRUE))
 
   if (is.null(y_limits)) {
     vals     <- c(d$r_hh_w_ratio, d$r_cl_w_ratio)
@@ -134,6 +162,7 @@ make_ratio_plot <- function(dat, ylab, y_limits = NULL, hline = 1) {
 
 # ── Sensitivity helpers ───────────────────────────────────────────────────────
 
+# Used in: plot_helpers (inside make_c123_panel, make_race_sensitivity_plot, make_ratio_sensitivity_plot, make_sensitivity_plot)
 .sens_base_t <- function() {
   ggplot2::theme(
     legend.position = "none",
@@ -141,6 +170,7 @@ make_ratio_plot <- function(dat, ylab, y_limits = NULL, hline = 1) {
     axis.text.x     = ggplot2::element_text(angle = 45, hjust = 1))
 }
 
+# Used in: plot_helpers (inside make_c123_panel, make_race_sensitivity_plot, make_ratio_sensitivity_plot, make_sensitivity_plot)
 .sens_sub_t <- function() {
   ggplot2::theme(
     plot.subtitle = ggplot2::element_text(size = sub_size * 0.6, hjust = 0.5))
@@ -148,6 +178,7 @@ make_ratio_plot <- function(dat, ylab, y_limits = NULL, hline = 1) {
 
 # Legend: main = NAVY/PALE_NAVY, alt = CORAL/PALE_CORAL,
 #         diff lines = NAVY (main) and CORAL (alt)
+# Used in: plot_helpers (inside make_ratio_sensitivity_figure, make_sensitivity_figure, make_single_sensitivity_figure)
 .sens_legend <- function() {
   leg_df <- data.frame(
     x   = 1:2, y = 1:2,
@@ -180,6 +211,7 @@ make_ratio_plot <- function(dat, ylab, y_limits = NULL, hline = 1) {
 }
 
 # Race sensitivity legend: HH = NAVY, KG = PALE_NAVY for both subgroups
+# Used in: plot_helpers (inside make_sensitivity_figure)
 .race_sens_legend <- function() {
   leg_df <- data.frame(
     x   = 1:2, y = 1:2,
@@ -201,11 +233,13 @@ make_ratio_plot <- function(dat, ylab, y_limits = NULL, hline = 1) {
 # Left panel (main):   NAVY/PALE_NAVY
 # Middle panel (alt):  CORAL/PALE_CORAL
 # Right panel (diff):  NAVY (main diff), CORAL (alt diff)
+# Used in: figure_appendix
 make_sensitivity_plot <- function(df, main_hh, main_cl, alt_hh, alt_cl,
                                    left_label  = "Main Results",
                                    right_label = "Alternative",
                                    y_limits    = NULL,
-                                   diff_limits = NULL) {
+                                   diff_limits = NULL,
+                                   x_breaks_fn = make_x_breaks) {
   dat <- df %>%
     dplyr::filter(year != "ALL") %>%
     dplyr::mutate(year = as.numeric(year)) %>%
@@ -225,7 +259,7 @@ make_sensitivity_plot <- function(df, main_hh, main_cl, alt_hh, alt_cl,
     diff_limits <- c(floor(min(vals) * 20) / 20, ceiling(max(vals) * 20) / 20 + 0.05)
   }
 
-  br <- make_x_breaks(min(dat$year, na.rm = TRUE), max(dat$year, na.rm = TRUE))
+  br <- x_breaks_fn(min(dat$year, na.rm = TRUE), max(dat$year, na.rm = TRUE))
 
   pA <- ggplot2::ggplot(
     dat %>% dplyr::select(year, Household = main_hh_, `Kin Group` = main_cl_) %>%
@@ -277,6 +311,7 @@ make_sensitivity_plot <- function(df, main_hh, main_cl, alt_hh, alt_cl,
   cowplot::plot_grid(pA, pB, pC, nrow = 1)
 }
 
+# Used in: figure_appendix
 make_sensitivity_figure <- function(plot_inc, plot_w, title_str,
                                      sub_a = "Panel A: Income",
                                      sub_b = "Panel B: Wealth",
@@ -297,6 +332,7 @@ make_sensitivity_figure <- function(plot_inc, plot_w, title_str,
   }
 }
 
+# Used in: figure_appendix
 make_single_sensitivity_figure <- function(plot_w, title_str, show_title = TRUE) {
   leg <- .sens_legend()
   if (show_title) {
@@ -312,10 +348,12 @@ make_single_sensitivity_figure <- function(plot_w, title_str, show_title = TRUE)
 # ── Appendix C1: race sensitivity ─────────────────────────────────────────────
 # Both Black and Non-Black panels use NAVY (HH) / PALE_NAVY (KG).
 # Diff panel uses NAVY for Black diff, CORAL for Non-Black diff.
+# Used in: figure_appendix
 make_race_sensitivity_plot <- function(dat, hh_black, cl_black, hh_nonblack, cl_nonblack,
                                         y_limits = NULL, diff_limits = NULL,
-                                        ylab = "Gini Coefficient") {
-  br <- make_x_breaks(min(dat$year, na.rm = TRUE), max(dat$year, na.rm = TRUE))
+                                        ylab = "Gini Coefficient",
+                                        x_breaks_fn = make_x_breaks) {
+  br <- x_breaks_fn(min(dat$year, na.rm = TRUE), max(dat$year, na.rm = TRUE))
 
   if (is.null(y_limits)) {
     vals <- c(dat[[hh_black]], dat[[cl_black]], dat[[hh_nonblack]], dat[[cl_nonblack]])
@@ -381,10 +419,12 @@ make_race_sensitivity_plot <- function(dat, hh_black, cl_black, hh_nonblack, cl_
 
 # ── Appendix D: C1/C2/C3 panel ───────────────────────────────────────────────
 # C1 = PURPLE, C2 = NAVY, C3 = TEAL
+# Used in: figure_appendix
 make_c123_panel <- function(dat, y_limits = NULL, show_unit,
-                             ylab = "Inequality Coefficient") {
+                             ylab = "Inequality Coefficient",
+                             x_breaks_fn = make_x_breaks) {
   coef_colors <- c("C1 (Bonferroni)" = PURPLE, "C2 (Gini)" = NAVY, "C3 (Upper Tail)" = TEAL)
-  br <- make_x_breaks(min(dat$year, na.rm = TRUE), max(dat$year, na.rm = TRUE))
+  br <- x_breaks_fn(min(dat$year, na.rm = TRUE), max(dat$year, na.rm = TRUE))
 
   if (show_unit == "Diff") {
     diff_dat <- dat %>%
@@ -445,11 +485,13 @@ make_c123_panel <- function(dat, y_limits = NULL, show_unit,
 # Left panel (main):   NAVY/PALE_NAVY
 # Middle panel (alt):  CORAL/PALE_CORAL
 # Right panel (diff):  NAVY (main diff), CORAL (alt diff)
+# Used in: figure_appendix
 make_ratio_sensitivity_plot <- function(dat, main_hh, main_cl, alt_hh, alt_cl,
                                          left_label  = "Main Results",
                                          right_label = "Alternative",
                                          y_limits    = NULL,
-                                         diff_limits = NULL) {
+                                         diff_limits = NULL,
+                                         x_breaks_fn = make_x_breaks) {
   wide <- dat %>%
     dplyr::filter(is.finite(year)) %>%
     dplyr::mutate(main_diff = .data[[main_hh]] - .data[[main_cl]],
@@ -466,7 +508,7 @@ make_ratio_sensitivity_plot <- function(dat, main_hh, main_cl, alt_hh, alt_cl,
     diff_limits <- c(floor(min(vals) * 20) / 20, ceiling(max(vals) * 20) / 20 + 0.05)
   }
 
-  br <- make_x_breaks(min(wide$year, na.rm = TRUE), max(wide$year, na.rm = TRUE))
+  br <- x_breaks_fn(min(wide$year, na.rm = TRUE), max(wide$year, na.rm = TRUE))
 
   pA <- ggplot2::ggplot(wide, ggplot2::aes(x = year)) +
     ggplot2::geom_hline(yintercept = 1, linetype = "dotted", color = "grey60") +
@@ -514,6 +556,7 @@ make_ratio_sensitivity_plot <- function(dat, main_hh, main_cl, alt_hh, alt_cl,
   cowplot::plot_grid(pA, pB, pC, nrow = 1)
 }
 
+# Used in: figure_appendix
 make_ratio_sensitivity_figure <- function(plot_a, plot_b, title_str,
                                            sub_a = "Panel A: Median wealth ratio",
                                            sub_b = "Panel B: Mean wealth ratio",

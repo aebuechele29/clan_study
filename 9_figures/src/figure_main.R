@@ -1,3 +1,14 @@
+# Functions used in this script:
+#   Defined in this script: tab1_fmt2, tab1_fmt1, tab1_fmt0, get_legend_safe,
+#     .race_means, .race_medians, tab1_wstat, tab1_n, tab1_prep_demo,
+#     tab1_age, tab1_unit_stats, tab1_fmt_cell, tab1_make_df, tab1_make_ft
+
+#   From functions/data_utils.R: get_gini_at
+#   From functions/wtd_stats.R: wtd_mean, wtd_median, wtd_sd
+#   From functions/plot_helpers.R: make_gini_plot, make_lorenz_plot,
+#     make_ratio_plot
+#   From functions/table_helpers.R: fmt_money0
+
 library(here)
 library(dplyr)
 library(tidyr)
@@ -12,11 +23,13 @@ library(gridExtra)
 
 source(here::here("functions", "all_functions.R"))
 
-# Formatting helpers (mirrors those in the RMD setup chunk)
-fmt2 <- function(x) format(round(x, 2), nsmall = 2)
-fmt1 <- function(x) format(round(x, 1), nsmall = 1)
-fmt0 <- function(x) format(round(x, 0), big.mark = ",")
-fmtp <- function(x) paste0(format(round(x, 2), nsmall = 2), "%")
+# Formatting helpers for Table 1. Same code as fmt0/fmt1/fmt2 in write.rmd, but renamed so the two sets no longer overwrite each other.
+# Used in: figure_main
+tab1_fmt2 <- function(x) format(round(x, 2), nsmall = 2)
+# Used in: figure_main
+tab1_fmt1 <- function(x) format(round(x, 1), nsmall = 1)
+# Used in: figure_main
+tab1_fmt0 <- function(x) format(round(x, 0), big.mark = ",")
 
 if (!exists("SAVE_FILES")) SAVE_FILES <- TRUE
 dir.create(here("9_figures", "output"), recursive = TRUE, showWarnings = FALSE)
@@ -37,6 +50,15 @@ TEAL        <- "#0F6E56"
 GREY_HDR    <- "#F2F2F2"
 
 theme_set(theme_minimal(base_size = base_size, base_family = base_family))
+
+# Version-safe legend extraction (cowplot::get_legend returns empty with ggplot2 >= 3.5)
+# Used in: figure_main, figure_appendix
+get_legend_safe <- function(p) {
+  g   <- ggplotGrob(p)
+  idx <- which(grepl("^guide-box", g$layout$name) &
+               !vapply(g$grobs, inherits, logical(1), "zeroGrob"))
+  if (length(idx) == 0) grid::nullGrob() else g$grobs[[idx[1]]]
+}
 
 
 # Load data
@@ -156,6 +178,7 @@ avg_w_med_ratio_gap <- round(mean(wealth_ratios$r_hh_w_median_ratio - wealth_rat
                                   na.rm = TRUE), 3)
 
 # ── Pooled race means and medians ─────────────────────────────────────────────
+# Used in: figure_main
 .race_means <- function(df, value_var, weight_var, race_var) {
   df_s <- df %>% dplyr::filter(is.finite(.data[[value_var]]),
                                 is.finite(.data[[weight_var]]),
@@ -168,6 +191,7 @@ avg_w_med_ratio_gap <- round(mean(wealth_ratios$r_hh_w_median_ratio - wealth_rat
   )
 }
 
+# Used in: figure_main
 .race_medians <- function(df, value_var, weight_var, race_var) {
   df_s <- df %>% dplyr::filter(is.finite(.data[[value_var]]),
                                 is.finite(.data[[weight_var]]),
@@ -253,31 +277,31 @@ fig1_inc <- make_gini_plot(inc_by_year, r_hh_w_inc, r_cl_w_inc,
 fig1_w   <- make_gini_plot(wealth_by_year, r_hh_w_wealth, r_cl_w_wealth,
                            "Gini Coefficient", y_limits = shared_y_fig1)
 
+# Single shared legend and integer decade breaks on the year axis
+fig1_legend <- get_legend_safe(fig1_inc + theme(legend.position = "bottom"))
+fig1_inc <- fig1_inc +
+  scale_x_continuous(breaks = seq(1970, 2020, 10), limits = c(1969, 2023)) +
+  theme(legend.position = "none")
+fig1_w   <- fig1_w +
+  scale_x_continuous(breaks = seq(1985, 2020, 5), limits = c(1984, 2023)) +
+  theme(legend.position = "none")
+
 fig1_note <- sprintf(
   paste0(
-    "Note: Figure 1 plots Gini coefficients for income (1969\u20132023) and wealth (1984\u20132023) ",
-    "at the household and kin group level. ",
-    "Gini coefficients are estimated from weighted PSID data. ",
-    "Panel A shows that Gini coefficients for income are higher at the household level than at the kin group level. ",
-    "There are %s household-years and %s kin group-years. ",
-    "Among these, the weighted mean income is $%s (households) and $%s (kin groups). ",
+    "Note: Gini coefficients estimated from weighted PSID data. ",
+    "Weighted mean income: $%s (households), $%s (kin groups). ",
+    "Weighted mean wealth: $%s (households), $%s (kin groups; includes home equity). ",
     "Income Ginis changed by %.1f%% for households (%.2f in 1969 to %.2f in 2023) ",
     "and by %.1f%% for kin groups (%.2f to %.2f). ",
-    "Panel B shows that Gini coefficients for wealth are also higher at the household level than at the kin group level. ",
-    "There are %s household-years and %s kin group-years. ",
-    "Among these, the weighted mean wealth is $%s (households) and $%s (kin groups). ",
-    "Wealth includes home equity. ",
     "Wealth Ginis changed by %.1f%% for households (%.2f in 1984 to %.2f in 2023) ",
     "and by %.1f%% for kin groups (%.2f to %.2f). ",
     "On average across all years, the income Gini is %.3f higher for households than kin groups; ",
     "the wealth Gini is %.3f higher."
   ),
-  fmt0(inc_hh_years), fmt0(inc_cl_years),
   fmt_money0(inc_mean_hh_w), fmt_money0(inc_mean_cl_w),
+  fmt_money0(w_mean_hh_w), fmt_money0(w_mean_cl_w),
   inc_hh_pct, inc_hh_1969, inc_hh_2023,
   inc_cl_pct, inc_cl_1969, inc_cl_2023,
-  fmt0(w_hh_years), fmt0(w_cl_years),
-  fmt_money0(w_mean_hh_w), fmt_money0(w_mean_cl_w),
   w_hh_pct, w_hh_1984, w_hh_2023,
   w_cl_pct, w_cl_1984, w_cl_2023,
   inc_gini_diff, w_gini_diff
@@ -300,7 +324,8 @@ fig1 <- arrangeGrob(
                gp = gpar(fontfamily = base_family, fontsize = sub_size)),
       fig1_w, ncol = 1, heights = c(1, 12)),
     ncol = 2),
-  ncol = 1, heights = unit(c(0.5, 9.5), "inches"))
+  fig1_legend,
+  ncol = 1, heights = unit(c(0.5, 9.5, 0.7), "inches"))
 
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "figure1.pdf"), fig1, width = 14, height = 11)
@@ -318,6 +343,18 @@ fig2_w <- make_lorenz_plot(
   ylab   = "Cumulative Proportion of Wealth",
   colors = c("1984" = NAVY, "2023" = CORAL))
 
+# Single shared legend below both panels
+fig2_legend_donor <- ggplot(
+  tidyr::expand_grid(Year = c("1984", "2023"), Unit = c("Households", "Kin Groups"), x = 0:1),
+  aes(x = x, y = x, color = Year, linetype = Unit, group = interaction(Year, Unit))) +
+  geom_line(linewidth = 1.2) +
+  scale_color_manual(values = c("1984" = NAVY, "2023" = CORAL), name = NULL) +
+  scale_linetype_manual(values = c("Households" = "solid", "Kin Groups" = "dotted"), name = NULL) +
+  theme(legend.position = "bottom", legend.key.width = unit(1.5, "cm"))
+fig2_legend <- get_legend_safe(fig2_legend_donor)
+fig2_inc    <- fig2_inc + theme(legend.position = "none")
+fig2_w      <- fig2_w   + theme(legend.position = "none")
+
 inc_stats_hh <- r_hh %>%
   filter(year %in% c(1984, 2023), is.finite(inc_all),
          is.finite(fam_weight), fam_weight > 0) %>%
@@ -334,28 +371,11 @@ inc_stats_cl <- r_clans %>%
 
 fig2_note <- sprintf(
   paste0(
-    "Note: Figure 2 plots Lorenz curves for income and wealth in 1984 and 2023 ",
-    "at the household and kin group levels. ",
-    "Lorenz curves are estimated from weighted data using PSID family and kin group weights. ",
+    "Note: Lorenz curves are estimated from weighted data using PSID family and kin group weights. ",
     "Wealth includes home equity. ",
-    "Panel A shows the distribution of income. ",
-    "The 1984 estimates are based on %s households and %s kin groups, ",
-    "while the 2023 estimates are based on %s households and %s kin groups. ",
-    "In 1984, weighted mean (median) income was $%s ($%s) for households ",
-    "and $%s ($%s) for kin groups. ",
-    "By 2023, weighted mean (median) income had increased to $%s ($%s) for households ",
-    "and $%s ($%s) for kin groups. ",
-    "Panel B shows the distribution of wealth. ",
-    "The 1984 estimates are based on %s households and %s kin groups, ",
-    "while the 2023 estimates are based on %s households and %s kin groups. ",
-    "In 1984, weighted mean (median) wealth was $%s ($%s) for households ",
-    "and $%s ($%s) for kin groups. ",
-    "By 2023, weighted mean (median) wealth had increased to $%s ($%s) for households ",
-    "and $%s ($%s) for kin groups."
+    "Income in 1984: weighted mean (median) $%s ($%s) for households, $%s ($%s) for kin groups. ",
+    "Income in 2023: $%s ($%s) for households, $%s ($%s) for kin groups."
   ),
-  # Panel A: sample sizes
-  fmt0(inc_hh_years_1984), fmt0(inc_cl_years_1984),
-  fmt0(inc_hh_years_2023), fmt0(inc_cl_years_2023),
   # Panel A: income stats 1984
   fmt_money0(inc_stats_hh$mean[inc_stats_hh$year == 1984]),
   fmt_money0(inc_stats_hh$med [inc_stats_hh$year == 1984]),
@@ -365,20 +385,7 @@ fig2_note <- sprintf(
   fmt_money0(inc_stats_hh$mean[inc_stats_hh$year == 2023]),
   fmt_money0(inc_stats_hh$med [inc_stats_hh$year == 2023]),
   fmt_money0(inc_stats_cl$mean[inc_stats_cl$year == 2023]),
-  fmt_money0(inc_stats_cl$med [inc_stats_cl$year == 2023]),
-  # Panel B: sample sizes
-  fmt0(w_hh_years_1984), fmt0(w_cl_years_1984),
-  fmt0(w_hh_years_2023), fmt0(w_cl_years_2023),
-  # Panel B: wealth stats 1984
-  fmt_money0(w_stats_hh$mean[w_stats_hh$year == 1984]),
-  fmt_money0(w_stats_hh$med [w_stats_hh$year == 1984]),
-  fmt_money0(w_stats_cl$mean[w_stats_cl$year == 1984]),
-  fmt_money0(w_stats_cl$med [w_stats_cl$year == 1984]),
-  # Panel B: wealth stats 2023
-  fmt_money0(w_stats_hh$mean[w_stats_hh$year == 2023]),
-  fmt_money0(w_stats_hh$med [w_stats_hh$year == 2023]),
-  fmt_money0(w_stats_cl$mean[w_stats_cl$year == 2023]),
-  fmt_money0(w_stats_cl$med [w_stats_cl$year == 2023])
+  fmt_money0(inc_stats_cl$med [inc_stats_cl$year == 2023])
 )
 
 fig2 <- arrangeGrob(
@@ -398,7 +405,8 @@ fig2 <- arrangeGrob(
                gp = gpar(fontfamily = base_family, fontsize = sub_size)),
       fig2_w, ncol = 1, heights = c(1, 12)),
     ncol = 2),
-  ncol = 1, heights = unit(c(0.5, 8.4), "inches"))
+  fig2_legend,
+  ncol = 1, heights = unit(c(0.5, 7.8, 0.6), "inches"))
 
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "figure2.pdf"), fig2, width = 14, height = 9)
@@ -411,24 +419,22 @@ fig3_med_plot <- make_ratio_plot(
   wealth_ratios %>% select(year,
                            r_hh_w_ratio = r_hh_w_median_ratio,
                            r_cl_w_ratio = r_cl_w_median_ratio),
-  ylab = "Black / Non-Black")
+  ylab = "Black / Non-Black") +
+  scale_x_continuous(breaks = seq(1985, 2020, 5), limits = c(1984, 2023))
 
 fig3_note <- sprintf(
   paste0(
-    "Note: Figure 3 shows the ratio of Black to Non-Black wealth for households and kin groups ",
-    "(including home equity), using weighted medians. ",
-    "Household estimates are based on %s household-years and kin group estimates are based on ",
-    "%s kin group-years across the study period. ",
+    "Note: Lines show the ratio of Black to Non-Black wealth for households and kin groups ",
+    "(includes home equity), using weighted medians. ",
     "Across all years, weighted median wealth is $%s for Black households ",
     "and $%s for Non-Black households. ",
     "For kin groups, the weighted median wealth is $%s for Black kin groups ",
     "and $%s for Non-Black kin groups. ",
-    "The median wealth ratio changed by %.1f%% for households (%.3f in %d to %.3f in %d) ",
-    "and increased by %.1f%% for kin groups (%.3f to %.3f). ",
+    "The median ratio changed by %.1f%% for households (%.3f in %d to %.3f in %d) ",
+    "and %.1f%% for kin groups (%.3f to %.3f). ",
     "On average across all years, the median wealth ratio for kin groups is %.3f higher than for households. ",
-    "See the Supplemental Information for mean wealth ratios."
+    "See Appendix E7 for mean wealth ratios."
   ),
-  fmt0(w_hh_years), fmt0(w_cl_years),
   fmt_money0(w_med_hh$black),    fmt_money0(w_med_hh$nonblack),
   fmt_money0(w_med_cl$black),    fmt_money0(w_med_cl$nonblack),
   w_med_ratio_hh_pct, w_med_ratio_hh_first, w_first_yr, w_med_ratio_hh_last, w_last_yr,
@@ -460,6 +466,7 @@ tab1_pkeys    <- c(paste0("y", tab1_years), "yall")
 tab1_col_keys <- paste0(rep(tab1_pkeys, each = 2), "_", c("hh", "kg"))
 
 
+# Used in: figure_main
 tab1_wstat <- function(df, var, weight_var, fun, yr = NULL) {
   if (!is.null(yr)) df <- df[df$year == yr, , drop = FALSE]
   v  <- df[[var]]
@@ -469,17 +476,20 @@ tab1_wstat <- function(df, var, weight_var, fun, yr = NULL) {
   fun(v[ok], w[ok])
 }
 
+# Used in: figure_main
 tab1_n <- function(df, yr = NULL) {
   if (is.null(yr)) nrow(df) else sum(df$year == yr, na.rm = TRUE)
 }
 
 
+# Used in: figure_main
 tab1_prep_demo <- function(demo) {
   demo %>%
     dplyr::mutate(year = suppressWarnings(as.numeric(year))) %>%
     dplyr::filter(!is.na(year))
 }
 
+# Used in: figure_main
 tab1_age <- function(demo, var, df, yr = NULL) {
   if (!is.null(yr)) {
     v <- demo[[var]][demo$year == yr]
@@ -495,6 +505,7 @@ tab1_age <- function(demo, var, df, yr = NULL) {
 tab1_demo_inc <- tab1_prep_demo(inc_family_demo)
 
 # All statistics for one unit (hh / kg) in one period
+# Used in: figure_main
 tab1_unit_stats <- function(unit, period) {
   yr <- if (period == "All years") NULL else as.numeric(period)
   if (unit == "hh") {
@@ -504,7 +515,8 @@ tab1_unit_stats <- function(unit, period) {
       size_hh  = NA_real_,
       inc      = tab1_wstat(r_hh,        "inc_all", "fam_weight", wtd_median, yr),
       wealth   = tab1_wstat(r_hh_wealth, "wealth",  "fam_weight", wtd_median, yr),
-      n        = tab1_n(r_hh, yr))
+      n        = tab1_n(r_hh, yr),
+      n_black  = tab1_n(r_hh[which(r_hh$black_head == 1), , drop = FALSE], yr))
   } else {
     list(
       age      = tab1_age(tab1_demo_inc, "clan_age_mean", r_clans, yr),
@@ -512,7 +524,8 @@ tab1_unit_stats <- function(unit, period) {
       size_hh  = tab1_wstat(r_clans, "numclan",         "clan_weight", wtd_mean, yr),
       inc      = tab1_wstat(r_clans,        "inc_all", "clan_weight", wtd_median, yr),
       wealth   = tab1_wstat(r_clans_wealth, "wealth",  "clan_weight", wtd_median, yr),
-      n        = tab1_n(r_clans, yr))
+      n        = tab1_n(r_clans, yr),
+      n_black  = tab1_n(r_clans[which(r_clans$black_clan == 1), , drop = FALSE], yr))
   }
 }
 
@@ -522,68 +535,84 @@ names(tab1_stats) <- tab1_periods
 
 # Row definitions: label, formatter, and what to print when a cell is empty
 tab1_rows <- list(
-  age      = list(label = "Average age",        fmt = fmt1, na = "\u2014"),
-  size_ppl = list(label = "Size (individuals)", fmt = fmt2, na = "\u2014"),
-  size_hh  = list(label = "Size (households)",  fmt = fmt2, na = "\u2014"),
+  age      = list(label = "Average age (years)",     fmt = tab1_fmt1, na = "\u2014"),
+  size_ppl = list(label = "Average # of people",     fmt = tab1_fmt2, na = "\u2014"),
+  size_hh  = list(label = "Average # of households", fmt = tab1_fmt2, na = "\u2014"),
   inc      = list(label = "Median income",      fmt = function(x) paste0("$", fmt_money0(x)), na = "\u2014"),
   wealth   = list(label = "Median wealth",      fmt = function(x) paste0("$", fmt_money0(x)), na = "\u2014"),
-  n        = list(label = "N (unit-years)",     fmt = fmt0, na = "\u2014")
+  n        = list(label = "N (unit-years)",     fmt = tab1_fmt0, na = "\u2014"),
+  n_black  = list(label = "N Black (unit-years)", fmt = tab1_fmt0, na = "\u2014")
 )
 
+# Used in: figure_main
 tab1_fmt_cell <- function(x, spec) {
   if (length(x) == 0 || is.na(x)) spec$na else trimws(spec$fmt(x))
 }
 
-tab1_df <- purrr::imap_dfr(tab1_rows, function(spec, key) {
-  vals <- unlist(purrr::map(tab1_periods, function(p) c(
-    tab1_fmt_cell(tab1_stats[[p]]$hh[[key]], spec),
-    tab1_fmt_cell(tab1_stats[[p]]$kg[[key]], spec))))
-  names(vals) <- tab1_col_keys
-  tibble::as_tibble_row(c(label = spec$label, vals))
-})
+# Used in: figure_main
+tab1_make_df <- function(periods, col_keys) {
+  purrr::imap_dfr(tab1_rows, function(spec, key) {
+    vals <- unlist(purrr::map(periods, function(p) c(
+      tab1_fmt_cell(tab1_stats[[p]]$hh[[key]], spec),
+      tab1_fmt_cell(tab1_stats[[p]]$kg[[key]], spec))))
+    names(vals) <- col_keys
+    tibble::as_tibble_row(c(label = spec$label, vals))
+  })
+}
 
 # ── Table 1 note ──────────────────────────────────────────────────────────────
 tab1_w_age_txt <- if (!is.null(w_family_demo)) {
   tab1_demo_w <- tab1_prep_demo(w_family_demo)
   sprintf(", and an average age of %s for households and %s for kin groups",
-          fmt1(tab1_age(tab1_demo_w, "hh_age_mean",   r_hh_wealth)),
-          fmt1(tab1_age(tab1_demo_w, "clan_age_mean", r_clans_wealth)))
+          tab1_fmt1(tab1_age(tab1_demo_w, "hh_age_mean",   r_hh_wealth)),
+          tab1_fmt1(tab1_age(tab1_demo_w, "clan_age_mean", r_clans_wealth)))
 } else ""
 
 tab1_note <- sprintf(
   paste0(
-    "Note: HH = households; KG = kin groups. ",
-    "Average age, size, and N are based on the income sample (1969-2023), ",
+    "Note: Average age, number of people, and number of households are based on the income sample (1969-2023), ",
     "which contains %s unique kin groups. ",
     "Median wealth is based on the wealth sample (1984-2023) and includes home equity. ",
-    "Size and median values are weighted using PSID family and kin group weights. ",
+    "Size and median values are weighted using PSID family and constructed kin group weights (see Methods). ",
     "Pooled across all years, the wealth sample contains %s household-years and %s kin group-years ",
+    "(%s and %s Black, respectively) ",
     "from %s unique kin groups, with an average size of %s individuals per household ",
-    "and %s individuals (%s households) per kin group%s."
+    "and %s individuals (%s households) per kin group%s. Estimates are adjusted for inflation and expressed in 2023 dollars."
   ),
-  fmt0(inc_uniq_clans),
-  fmt0(w_hh_years), fmt0(w_cl_years), fmt0(w_uniq_clans),
-  trimws(fmt2(hh_size_w_mean)), trimws(fmt2(w_cl_ppl_mean)), trimws(fmt2(w_cl_hh_mean)),
+  tab1_fmt0(inc_uniq_clans),
+  tab1_fmt0(w_hh_years), tab1_fmt0(w_cl_years),
+  trimws(tab1_fmt0(sum(r_hh_wealth$black_head == 1, na.rm = TRUE))),
+  trimws(tab1_fmt0(sum(r_clans_wealth$black_clan == 1, na.rm = TRUE))),
+  tab1_fmt0(w_uniq_clans),
+  trimws(tab1_fmt2(hh_size_w_mean)), trimws(tab1_fmt2(w_cl_ppl_mean)), trimws(tab1_fmt2(w_cl_hh_mean)),
   tab1_w_age_txt
 )
 
 # ── Table 1 flextable ─────────────────────────────────────────────────────────
 tab1_border <- officer::fp_border(color = "black", width = 0.75)
-tab1_n_row  <- which(tab1_df$label == "N (unit-years)")
 
-tab1_ft <- flextable::flextable(tab1_df, col_keys = c("label", tab1_col_keys)) %>%
+# Used in: figure_main, figure_appendix
+# width: total table width in inches. NULL (default) keeps autofit widths;
+#        a number stretches the table to that width, with the label column
+#        taking label_share of it and the data columns splitting the rest.
+tab1_make_ft <- function(periods, labels, pkeys, caption,
+                         width = NULL, label_share = 0.4) {
+  col_keys <- paste0(rep(pkeys, each = 2), "_", c("hh", "kg"))
+  df       <- tab1_make_df(periods, col_keys)
+  n_row    <- which(df$label == "N (unit-years)")
+  ft <- flextable::flextable(df, col_keys = c("label", col_keys)) %>%
   flextable::set_header_labels(
-    values = setNames(as.list(c("", rep(c("HH", "KG"), length(tab1_periods)))),
-                      c("label", tab1_col_keys))) %>%
-  flextable::add_header_row(values    = c("", tab1_labels),
-                            colwidths = c(1, rep(2, length(tab1_periods)))) %>%
+    values = setNames(as.list(c("", rep(c("Households", "Kin Groups"), length(periods)))),
+                      c("label", col_keys))) %>%
+  flextable::add_header_row(values    = c("", labels),
+                            colwidths = c(1, rep(2, length(periods)))) %>%
   flextable::theme_booktabs() %>%
   flextable::merge_v(j = 1, part = "header") %>%
   # thin rule under the spanning year labels
-  flextable::hline(i = 1, j = 2:(1 + length(tab1_col_keys)),
+  flextable::hline(i = 1, j = 2:(1 + length(col_keys)),
                    border = tab1_border, part = "header") %>%
   # rule separating the N row from the statistics above
-  flextable::hline(i = tab1_n_row - 1, border = tab1_border, part = "body") %>%
+  flextable::hline(i = n_row - 1, border = tab1_border, part = "body") %>%
   flextable::align(j = 1,  align = "left",   part = "all") %>%
   flextable::align(j = -1, align = "center", part = "all") %>%
   flextable::font(fontname = "Times New Roman", part = "all") %>%
@@ -591,8 +620,24 @@ tab1_ft <- flextable::flextable(tab1_df, col_keys = c("label", tab1_col_keys)) %
   flextable::add_footer_lines(tab1_note) %>%
   flextable::fontsize(size = 9, part = "footer") %>%
   flextable::font(fontname = "Times New Roman", part = "footer") %>%
-  flextable::set_caption("Table 1. Characteristics of Households and Kin Groups") %>%
+  flextable::set_caption(caption) %>%
   flextable::autofit()
+
+  if (!is.null(width)) {
+    ft <- ft %>%
+      flextable::width(j = 1,  width = width * label_share) %>%
+      flextable::width(j = -1, width = width * (1 - label_share) / length(col_keys)) %>%
+      flextable::set_table_properties(layout = "fixed")
+  }
+  ft
+}
+
+# Table 1 reports pooled all-years columns only; 1984/2023 columns go to the appendix table
+# width = 6.5 fills the text width of a letter page with 1-inch margins
+# (the default for both the PDF and Word output of write.rmd)
+tab1_ft <- tab1_make_ft("All years", "All years (1969–2023)", "yall",
+                        "Table 1. Characteristics of Households and Kin Groups",
+                        width = 6.5)
 
 if (SAVE_FILES) {
   flextable::save_as_docx(

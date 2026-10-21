@@ -1,3 +1,7 @@
+# Functions used in this script:
+#   Defined in this script: get_wtd_median, build_family_demo,
+#     build_quartile_rows, assign_quartile, fmt_table, doc_write
+
 library(here)
 library(survey)
 library(dplyr)
@@ -102,6 +106,7 @@ clanw_design_full <- svydesign(
 
 # FUNCTIONS FOR SUMMARY TABLES ------------------------------------------------
 # Function for a weighted median
+# Used in: summary
 get_wtd_median <- function(design, var) {
   q <- svyquantile(
     as.formula(paste0("~", var)),
@@ -129,6 +134,7 @@ get_wtd_median <- function(design, var) {
 #     individual's age," and will differ from hh_age_mean whenever household
 #     size correlates with age (e.g. larger households pull ppl_age_mean
 #     toward their composition more than hh_age_mean does).
+# Used in: summary
 build_family_demo <- function(hh_data, clan_data) {
 
   # Household-level variables:
@@ -225,6 +231,7 @@ write_csv(
 
 
 # Function to build quartile summary rows
+# Used in: summary
 build_quartile_rows <- function(hh_df, cl_df, var, year,
                                 hh_black_var = "black_head",
                                 cl_black_var = "black_clan") {
@@ -276,6 +283,7 @@ build_quartile_rows <- function(hh_df, cl_df, var, year,
 }
 
 # Functions nested within the quartile summary function
+# Used in: summary
 assign_quartile <- function(design, var,
                             probs = c(0, .25, .5, .75, 1),
                             labs = c("Q1 (Lowest 25%)", "Q2", "Q3", "Q4 (Highest 25%)")) {
@@ -287,6 +295,7 @@ assign_quartile <- function(design, var,
   design
 }
 
+# Used in: summary
 fmt_table <- function(dat) {
   flextable(dat) |>
     autofit() |>
@@ -295,6 +304,7 @@ fmt_table <- function(dat) {
     fontsize(size = 10, part = "body") |>
     align(align = "center", part = "all")
 }
+# Used in: summary
 doc_write <- function(ft, caption, note, outpath) {
   note_style <- fp_text(italic = TRUE, font.size = 10)
   ft <- set_caption(ft, caption)
