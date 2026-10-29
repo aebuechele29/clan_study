@@ -1,7 +1,5 @@
 ---
-title: "Supplemental Information: Kin Group Gini: An Extended Family Approach to Income and Wealth Inequality in the U.S."
-author: "Doron Shiffer-Sebba, Amanda Buechele, Julia A. Behrman, Limor Gabay Egozi"
-date: "`r format(Sys.Date(), '%B %d, %Y')`"
+title: "Supplementary Information"
 bibliography: bibliography_clan.bib
 csl: council-of-science-editors-brackets.csl
 always_allow_html: true
@@ -171,6 +169,7 @@ Appendix B shows three alternative measures of inequality proposed by Aaberge [@
 \newpage
 
 # Appendix C: Simulating Gini Coefficients
+Appendix C illustrates extreme cases from simulated household and kin group data. The simulation demonstrates that kin group-level Gini coefficients are not necessarily lower than household-level Gini coefficients. The direction of the difference depends on the relationship between kin group size, the overall distribution of resources, and the selection of households into kin groups. C1 and C2 plot the minimum and maximum simulated differences between kin groups and households, respectively, while C3 plots the full range of possible values.
 
 ```{r fig-c-sim}
 set.seed(123)
@@ -189,7 +188,7 @@ ext    <- extreme_indices_sums(df_res)
 plot_lorenz_for_sim_sums(sims[[ext$idx_min_sums]])
 ```
 
-Appendix C1 illustrates the minimum possible difference between kin group and household Gini coefficients in the simulated data. This case demonstrates that Gini coefficients at the kin group level can exceed those of households.
+Appendix C1 illustrates the minimum possible difference between kin group and household Gini coefficients in the simulated data. The area between the Lorenz curve and the 45-degree line of perfect equality is larger for kin groups than for households. This case demonstrates that Gini coefficients at the kin group level can exceed those of households.
 
 \newpage
 
@@ -199,7 +198,7 @@ Appendix C1 illustrates the minimum possible difference between kin group and ho
 plot_lorenz_for_sim_sums(sims[[ext$idx_max_sums]])
 ```
 
-Appendix C2 shows the maximum possible difference between kin group and household Gini coefficients in the simulated data. This case also demonstrates that Gini coefficients at the kin group level can exceed those of households.
+Appendix C2 shows the maximum possible difference between kin group and household Gini coefficients in the simulated data. In this case, the area between the Lorenz curve and the 45-degree line of perfect equality is larger for households than kin groups.
 
 \newpage
 
@@ -209,9 +208,7 @@ Appendix C2 shows the maximum possible difference between kin group and househol
 make_two_mekko_sums(sims, ext$idx_min_sums, ext$idx_max_sums)
 ```
 
-Appendix C illustrates extreme cases from simulated household and kin group data. The simulation demonstrates that kin group-level Gini coefficients are not necessarily lower than household-level Gini coefficients. The direction of the difference depends on the relationship between kin group size, the overall distribution of resources, and the selection of households into kin groups.
-
-Appendix C1 shows the minimum possible difference between kin group and household Gini coefficients in the simulated data, while Appendix C2 shows the maximum possible difference. Curves show that Gini coefficients at the kin group level can exceed those of households. Appendix C3 illustrates that, while it is more likely for Gini coefficients at the household level to exceed Gini coefficients at the kin group level, whether this effect is observed depends on the combination between kin group size and income or wealth distribution.
+Appendix C3 plots the difference between household and kin group Gini coefficients based on simulated data. Appendix C1 shows the minimum possible difference between kin group and household Gini coefficients (right side of C3) in the simulated data, while Appendix C2 shows the maximum possible difference (left side of C3). Curves show that Gini coefficients at the kin group level can exceed those of households. While it is more likely for Gini coefficients at the household level to exceed Gini coefficients at the kin group level, Appendix C3 illustrates that, whether this effect is observed depends on the combination of kin group size and the income or wealth distribution.
 
 \newpage
 
@@ -237,7 +234,7 @@ Results presented in the main text include home equity for measures of wealth. A
 sensitivity_gini_c4
 ```
 
-Results presented in the main text exclude negative values for income and wealth. Appendix D2 shows Gini coefficients when negative values are included (middle graphs), and reports the difference between Gini coefficients at the household and kin group levels (graphs on the right). Including negative values does not change estimated Gini coefficients at the household or kin group levels.
+Results presented in the main text set negative values for household or kin group income and wealth to zero. Appendix D2 shows Gini coefficients when negative values are retained (middle graphs), and reports the difference between Gini coefficients at the household and kin group levels (graphs on the right). Including negative values does not change estimated Gini coefficients at the household or kin group levels.
 
 \newpage
 
@@ -257,7 +254,7 @@ All results presented in the main paper are weighted. Household-level Gini coeff
 sensitivity_gini_c5
 ```
 
-Results in the main text standardize income, wealth, and resulting Gini coefficients by household and kin group size. Estimated inequality is higher when results are not standardized by size and the gap between household and kin group Gini coefficients is smaller. However, Gini coefficients are higher at the kin group versus household level irrespective of whether measurements are adjusted by size.
+Results in the main text standardize income, wealth, and resulting Gini coefficients by household and kin group size. Estimated inequality is higher when results are not standardized by size and the gap between household and kin group Gini coefficients is smaller. However, Gini coefficients are higher at the household versus kin group level irrespective of whether measurements are adjusted by size.
 
 \newpage
 
@@ -267,7 +264,7 @@ Results in the main text standardize income, wealth, and resulting Gini coeffici
 sensitivity_gini_c2
 ```
 
-In reality, all households belong to kin groups that consist of multiple households. However, some households in the PSID do not have kin groups due to the survey design and attrition. The survey is genealogical, meaning that initial households only have measurable kin groups once their descendants respond to the survey. Attrition also might limit responses from some households, thereby erasing kin groups for the households they are connected to.
+In reality, all households belong to kin groups that consist of multiple households. However, some households in the PSID do not have kin groups due to survey design and attrition. The survey is genealogical, meaning that initial households only have measurable kin groups once their descendants respond to the survey. Attrition also might limit responses from some households, thereby erasing kin groups for the households they are connected to.
 
 Because these limitations are imposed by the survey design, not social reality, we exclude household-years where households are alone in their kin group from both household and kin group measurements. The graphs on the left side show this. When including these single-household kin groups, or "kin groupless" households, the difference in Gini coefficients at the household and kin groups levels is minimized but not eliminated. The graphs in the middle show Gini coefficients when single-household kin groups are included. The graphs on the right side show the difference between household and kin group (HH - kin group) Gini coefficients for each group. Differences in estimated inequality at the kin group and household levels are smaller when including kin groupless households, however, they still exist and are increasing over time.
 
@@ -295,93 +292,106 @@ Appendix D7 shows that the differences between Gini coefficients at the househol
 
 # Appendix E: Sensitivity Analyses — Race Ratios
 
+Racial wealth gaps estimated using mean, rather than median, wealth are about the same at the household and kin group levels. Appendix E1 plots the difference between the mean and median wealth ratios and explains why median racial wealth gaps are presented.
+
 Across a range of specifications, estimated median racial wealth gaps are lower when kin groups are used as the unit of analysis instead of households. This pattern does not disappear when expanding the sample, excluding home equity in measures of wealth, including negative wealth values, standardizing by household size, or applying weights. For each specification, results are recalculated and displayed alongside the main results.
 
-Mean racial wealth gaps are about the same at the household and kin group levels. This finding is also robust across each specification. Appendix E7 explains the difference between the mean and median wealth ratios and why median racial wealth gaps are presented.
 
 \newpage
 
-## Appendix E1: Race Ratios — Wealth With and Without Home Equity
+## Appendix E1: Mean and Median Wealth Ratios
 
 ```{r fig-e1, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_ratio_e3
-```
-
-Appendix E1 compares racial wealth ratios when home equity is included (main specification, left panels) versus excluded (middle panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios. The median racial wealth gap between kin groups, versus households, shows less inequality irrespective of whether wealth measures include home equity.
-
-\newpage
-
-## Appendix E2: Race Ratios — Negative Values
-
-```{r fig-e2, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_ratio_e4
-```
-
-Appendix E2 shows Black / Non-Black wealth ratios when negative wealth values are excluded (main specification, left panels) versus included (middle panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios. Including negative values does not change the estimated race ratios.
-
-\newpage
-
-## Appendix E3: Race Ratios — Weighting
-
-```{r fig-e3, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_ratio_e6
-```
-
-Appendix E3 shows Black / Non-Black wealth ratios using weighted estimates (main specification, left panels) versus unweighted estimates (middle panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios. Weighting does not substantially change the estimated race ratios.
-
-\newpage
-
-## Appendix E4: Race Ratios — Size Standardization
-
-```{r fig-e4, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_ratio_e5
-```
-
-Appendix E4 compares Black / Non-Black wealth ratios when wealth is size-standardized by household and kin group size (main specification, left panels) versus unadjusted (middle panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios. Standardizing by size does not substantially change the estimated median wealth race ratios from 1984–2015. From 2015–2023, the difference between median wealth gaps at the kin group versus household level widen.
-
-\newpage
-
-## Appendix E5: Race Ratios — Single-Household Kin Groups
-
-```{r fig-e5, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_ratio_e2
-```
-
-Appendix E5 shows Black / Non-Black wealth ratios when single-household kin groups are excluded (main specification, left panels) versus included (middle panels). Panel A shows median wealth ratios and Panel B shows mean wealth ratios. Including single-household kin groups does little to change racial wealth gaps using median or mean wealth (right panels). In particular, the median racial wealth gap between kin groups, versus households, shows less inequality irrespective of whether single-household kin groups are included.
-
-\newpage
-
-## Appendix E6: Race Ratios — Age Weighting
-
-```{r fig-e6, fig.width=14, fig.height=11, out.width="100%"}
-sensitivity_ratio_agewt
-```
-
-Appendix E6 shows Black / Non-Black wealth ratios using standard weights (main specification, left panels) versus weights that downweight older households and kin groups (middle panels). Each weight is multiplied by the sample mean age divided by the unit's mean age. Panel A shows median wealth ratios and Panel B shows mean wealth ratios.
-
-\newpage
-
-## Appendix E7: Mean and Median Wealth Ratios
-
-```{r fig-e7, fig.width=14, fig.height=11, out.width="100%"}
 grid::grid.draw(appendix_e1)
 ```
 
-Appendix E7 reports Black / non-Black wealth ratios using weighted means for both households and kin groups. Panel A reproduces the median wealth ratios (as in Figure 3 of the main paper), while Panel B presents mean wealth ratios. Using medians, the racial wealth gap differs between households and kin groups (Panel A), whereas using means, the two are about the same (Panel B).
+Appendix E1 reports Black / non-Black wealth ratios for both households and kin groups. Panel A reproduces the median wealth ratios (as in Figure 3 of the main paper), while Panel B presents mean wealth ratios. Using medians, the racial wealth gap differs between households and kin groups (Panel A), whereas using means, the two are about the same (Panel B).
 
-Race ratios using mean wealth, when pooled across all years, show that Black households hold 19 cents for every dollar of wealth held by non-Black households, while Black kin groups hold 18 cents for every dollar held by non-Black kin groups. The convergence in mean-based estimates is driven by a small number of high-wealth Black households in the PSID, particularly in 2004–2005, which skew household-level averages. These results highlight the sensitivity of mean-based measures to outliers, which is why we present race ratios based on median wealth in the main text.
+Race ratios using mean wealth, when pooled across all years, show that Black households hold 19 cents for every dollar of wealth held by non-Black households, while Black kin groups hold 18 cents for every dollar held by non-Black kin groups. The convergence in mean-based estimates is driven by a small number of high-wealth Black households in the PSID, particularly in 2004–2005, which skew household-level averages. These results highlight the sensitivity of mean-based measures to outliers, which is why we present race ratios based on median wealth in the main text and in Appendices E2–E7.
+
+\newpage
+
+## Appendix E2: Race Ratios — Wealth With and Without Home Equity
+
+```{r fig-e2, fig.width=14, fig.height=7, out.width="100%"}
+sensitivity_ratio_e3
+```
+
+Appendix E2 compares median Black / Non-Black wealth ratios when home equity is included (main specification, left panel) versus excluded (middle panel). The median racial wealth gap between kin groups, versus households, shows less inequality irrespective of whether wealth measures include home equity.
+
+\newpage
+
+## Appendix E3: Race Ratios — Negative Values
+
+```{r fig-e3, fig.width=14, fig.height=7, out.width="100%"}
+sensitivity_ratio_e4
+```
+
+Appendix E3 shows median Black / Non-Black wealth ratios when negative wealth values are excluded (main specification, left panel) versus included (middle panel). Including negative values does not change the estimated race ratios.
+
+\newpage
+
+## Appendix E4: Race Ratios — Weighting
+
+```{r fig-e4, fig.width=14, fig.height=7, out.width="100%"}
+sensitivity_ratio_e6
+```
+
+Appendix E4 shows median Black / Non-Black wealth ratios using weighted estimates (main specification, left panel) versus unweighted estimates (middle panel). Weighting does not substantially change the estimated race ratios.
+
+\newpage
+
+## Appendix E5: Race Ratios — Size Standardization
+
+```{r fig-e5, fig.width=14, fig.height=7, out.width="100%"}
+sensitivity_ratio_e5
+```
+
+Appendix E5 compares median Black / Non-Black wealth ratios when wealth is size-standardized by household and kin group size (main specification, left panel) versus unadjusted (middle panel). Standardizing by size does not substantially change the estimated median wealth race ratios from 1984–2015. From 2015–2023, the difference between median wealth gaps at the kin group versus household level widens.
+
+\newpage
+
+## Appendix E6: Race Ratios — Single-Household Kin Groups
+
+```{r fig-e6, fig.width=14, fig.height=7, out.width="100%"}
+sensitivity_ratio_e2
+```
+
+Appendix E6 shows median Black / Non-Black wealth ratios when single-household kin groups are excluded (main specification, left panel) versus included (middle panel). Including single-household kin groups does little to change median racial wealth gaps (right panel). In particular, the median racial wealth gap between kin groups, versus households, shows less inequality irrespective of whether single-household kin groups are included.
+
+\newpage
+
+## Appendix E7: Race Ratios — Age Weighting
+
+```{r fig-e7, fig.width=14, fig.height=7, out.width="100%"}
+sensitivity_ratio_agewt
+```
+
+Appendix E7 shows median Black / Non-Black wealth ratios using standard weights (main specification, left panel) versus weights that downweight older households and kin groups (middle panel). Each weight is multiplied by the sample mean age divided by the unit's mean age.
+
+\newpage
+
+## Appendix E8: Racial Composition of Black Households and Kin Groups
+
+```{r fig-e8, fig.width=18, fig.height=16, out.width="100%"}
+appendix_e8
+```
+
+Appendix E8 describes the racial composition of Black households and kin groups. Race is measured for heads and spouses only. Panel A shows the weighted share of Black households with a non-Black spouse and the weighted share of Black kin groups with at least one non-Black head or spouse. Panel B divides the number of non-Black heads and spouses in each kin group by the number of households within the kin group. All panels use the wealth sample (1984–2023). Panels A and B include `r fmt_n(e8_n_ab$bhh_years)` Black household-years and `r fmt_n(e8_n_ab$bkg_years)` Black kin group-years from `r fmt_n(e8_n_ab$bkg_unique)` unique Black kin groups. Panel C reproduces Figure 3 under four definitions of a Black kin group. The number of Black kin group-years (`r fmt_n(e8_bkg_years_min)` to `r fmt_n(e8_bkg_years_max)`) and unique Black kin groups (`r fmt_n(e8_bkg_unique_min)` to `r fmt_n(e8_bkg_unique_max)`) does not vary substantially across definitions.
+
+Because kin groups span several households, they are more likely than households to include non-Black individuals. In `r e8_last_year`, `r scales::percent(e8_any_kg_last, 0.1)` of Black kin groups included at least one non-Black head or spouse, compared with `r scales::percent(e8_any_hh_last, 0.1)` of Black households with a non-Black spouse (Panel A). Per household, however, the two are similar (`r scales::number(e8_perhh_kg_last, 0.001)` vs. `r scales::number(e8_perhh_hh_last, 0.001)` non-Black heads and spouses per household; Panel B): the difference reflects the size of kin groups rather than higher rates of interracial partnership within them. Panel C shows that the median racial wealth gap is smaller for kin groups than for households whether a Black kin group is defined as having any, half or more, more than half (main specification), or all Black-headed households.
 
 \newpage
 
 # Appendix F: Household and Kin Group Size and Age
 
-## Appendix F1: Characteristics of Households and Kin Groups, 1984 and 2023
+## Appendix F1: Characteristics of Households and Kin Group Sample Members, 1984 and 2023
 
 ```{r table-f1}
 appendix_tab_a1_ft %>% fit_to_width(max_width = 6.5)
 ```
 
-Appendix F1 reports the household and kin group characteristics shown in Table 1 of the main paper separately for 1984 and 2023.
+
 
 \newpage
 

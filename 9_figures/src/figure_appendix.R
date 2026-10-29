@@ -1,6 +1,8 @@
 # Functions used in this script:
 #   Defined in this script: make_x_breaks_appendix, add_sens_legend,
 #     add_hh_age_wt, add_clan_age_wt, race_ratios_by_year, ratio_diff_limits,
+#     make_ratio_median_figure, ratio_sens_median, spread_labels,
+#     end_label_layers, e8_ab_plot, e8_ratio,
 #     make_f_plot, wtd_by_year, n_by_year, f4_panel
 
 #   From 9_figures/src/figure_main.R: get_legend_safe, tab1_make_ft
@@ -10,8 +12,7 @@
 #   From functions/plot_helpers.R: make_sub_draw, make_ratio_plot,
 #     make_sensitivity_plot, make_sensitivity_figure,
 #     make_single_sensitivity_figure, make_race_sensitivity_plot,
-#     make_c123_panel, make_ratio_sensitivity_plot,
-#     make_ratio_sensitivity_figure
+#     make_c123_panel, make_ratio_sensitivity_plot
 #   From functions/table_helpers.R: fmt_money0
 
 
@@ -103,21 +104,43 @@ w_diff_black      <- w_race_all$r_hh_w_wealth_black   - w_race_all$r_cl_w_wealth
 w_diff_nonblack   <- w_race_all$r_hh_w_wealth_nonblack - w_race_all$r_cl_w_wealth_nonblack
 
 
-# Shared legend for D1–D6 and E1–E6: colour = specification, linetype = unit
+# Shared legend for D1–D6, E2–E7 and F4: colour = specification, linetype = unit
+# The legend gets its own absolute height (measured from the legend grob) instead of a
+# fixed share of the figure, so it is never clipped at the bottom; if its natural width
+# exceeds max_width_in, each legend row wraps onto two lines so it is not clipped at the sides.
 # Used in: figure_appendix
-add_sens_legend <- function(fig, left_label, right_label, show_diff = TRUE) {
-  left_label  <- paste0(left_label,  " (main text)")
-  right_label <- paste0(right_label, " (sensitivity)")
+add_sens_legend <- function(fig, left_label, right_label, show_diff = TRUE,
+                            max_width_in = 13, pad_in = 0.3,
+                            suffixes = c(" (main text)", " (sensitivity)")) {
+  left_label  <- paste0(left_label,  suffixes[1])
+  right_label <- paste0(right_label, suffixes[2])
   lines <- c("Households", "Kin Groups", "HH − Kin Group difference")[seq_len(if (show_diff) 3 else 2)]
-  donor <- ggplot(
-    tidyr::expand_grid(Version = factor(c(left_label, right_label), levels = c(left_label, right_label)),
-                       Line    = factor(lines, levels = lines), x = 0:1),
-    aes(x = x, y = x, color = Version, linetype = Line, group = interaction(Version, Line))) +
-    geom_line(linewidth = 1.2) +
-    scale_color_manual(values = setNames(c(NAVY, CORAL), c(left_label, right_label)), name = NULL) +
-    scale_linetype_manual(values = setNames(c("solid", "dotted", "dashed")[seq_along(lines)], lines), name = NULL) +
-    theme(legend.position = "bottom", legend.box = "vertical", legend.key.width = unit(1.5, "cm"))
-  cowplot::plot_grid(fig, get_legend_safe(donor), ncol = 1, rel_heights = c(1, 0.12))
+  make_legend <- function(nrow) {
+    donor <- ggplot(
+      tidyr::expand_grid(Version = factor(c(left_label, right_label), levels = c(left_label, right_label)),
+                         Line    = factor(lines, levels = lines), x = 0:1),
+      aes(x = x, y = x, color = Version, linetype = Line, group = interaction(Version, Line))) +
+      geom_line(linewidth = 1.2) +
+      scale_color_manual(values = setNames(c(NAVY, CORAL), c(left_label, right_label)), name = NULL) +
+      scale_linetype_manual(values = setNames(c("solid", "dotted", "dashed")[seq_along(lines)], lines), name = NULL) +
+      guides(color    = guide_legend(order = 1, nrow = nrow),
+             linetype = guide_legend(order = 2, nrow = nrow)) +
+      theme(legend.position = "bottom", legend.box = "vertical", legend.key.width = unit(1.5, "cm"))
+    get_legend_safe(donor)
+  }
+  leg_in <- function(leg, dim) {
+    if (inherits(leg, "null")) return(0)
+    u <- if (dim == "w") sum(leg$widths) else sum(leg$heights)
+    if (dim == "w") grid::convertWidth(u, "in", valueOnly = TRUE)
+    else            grid::convertHeight(u, "in", valueOnly = TRUE)
+  }
+  leg <- make_legend(1)
+  if (leg_in(leg, "w") > max_width_in) leg <- make_legend(2)
+  g <- gridExtra::arrangeGrob(
+    fig, leg, ncol = 1,
+    heights = grid::unit.c(grid::unit(1, "null"), grid::unit(leg_in(leg, "h") + pad_in, "in")))
+  # Wrap as a ggplot so it prints in Rmd chunks as well as in ggsave()
+  cowplot::ggdraw() + cowplot::draw_grob(g)
 }
 
 # ── Appendix C: Gini Sensitivity Analyses (C1–C7) ────────────────────────────
@@ -151,12 +174,16 @@ race6_w <- make_race_sensitivity_plot(
   "r_hh_w_wealth_nonblack", "r_cl_w_wealth_nonblack",
   y_limits = shared_y_race, diff_limits = shared_diff_race, x_breaks_fn = make_x_breaks_appendix)
 
-sensitivity_gini_c1 <- make_sensitivity_figure(
-  race6_inc, race6_w,
-  title_str = "Appendix D7. Gini Coefficients by Race Subgroup", show_title = FALSE,
-  sub_a = "Panel A: Income",
-  sub_b = "Panel B: Wealth (incl. home equity)",
-  race_legend = TRUE)
+# Built here rather than with make_sensitivity_figure(race_legend = TRUE): that
+# legend comes from cowplot::get_legend(), which returns an empty grob with
+# ggplot2 >= 3.5, so D7 printed with no legend. Panels are Black | Non-Black | diff,
+# coloured like the main | sensitivity panels elsewhere (left = NAVY, middle = CORAL).
+sensitivity_gini_c1 <- add_sens_legend(
+  cowplot::plot_grid(
+    make_sub_draw("Panel A: Income"),                     race6_inc,
+    make_sub_draw("Panel B: Wealth (incl. home equity)"), race6_w,
+    ncol = 1, rel_heights = c(0.05, 1, 0.05, 1)),
+  "Black", "Non-Black", suffixes = c("", ""))
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "appendixD7.pdf"),
          sensitivity_gini_c1, width = 14, height = 11)
@@ -415,7 +442,7 @@ if (SAVE_FILES) {
 }
 
 
-# ── Appendix E1: Mean and Median Wealth Ratios ────────────────────────────────
+# ── Appendix E1 (formerly E7): Mean and Median Wealth Ratios ────────────────────────────
 appendix_e1_med_plot <- make_ratio_plot(
   wealth_ratios %>% select(year,
                            r_hh_w_ratio = r_hh_w_median_ratio,
@@ -460,7 +487,7 @@ appendix_e1_note <- sprintf(
 
 appendix_e1 <- arrangeGrob(
   textGrob(
-    "Appendix E7. Black / Non-Black Wealth Ratios: Households vs. Kin Groups",
+    "Appendix E1. Black / Non-Black Wealth Ratios: Households vs. Kin Groups",
     x = unit(0, "npc"), just = "left",
     gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)),
   arrangeGrob(
@@ -478,195 +505,132 @@ appendix_e1 <- arrangeGrob(
   ncol = 1, heights = unit(c(0.5, 10.0), "inches"))
 
 if (SAVE_FILES) {
-  ggsave(here("9_figures", "output", "appendixE7.pdf"),
+  ggsave(here("9_figures", "output", "appendixE1.pdf"),
          appendix_e1, width = 14, height = 11)
-  message("Saved: appendixE7.pdf")
+  message("Saved: appendixE1.pdf")
 }
 
 
-# ── Appendix E: Race Ratio Sensitivity Analyses (E2–E6) ──────────────────────
-# Panel A = median wealth ratio, Panel B = mean wealth ratio throughout.
-# E2–E6 mirror C2–C6 but for race ratios rather than Gini coefficients.
+# ── Appendix E2–E7: Race Ratio Sensitivity Analyses (median ratios only) ─────
+# E2–E7 mirror D1–D6 but for race ratios rather than Gini coefficients.
+# Each figure shows the median Black / Non-Black wealth ratio only; mean ratios
+# are reported in Appendix E1.
 
 all_ratio_vals <- c(
-  unlist(wealth_ratios %>% select(ends_with("_mean_ratio"))),
   unlist(wealth_ratios %>% select(ends_with("_median_ratio"))),
-  unlist(wnh_ratios    %>% select(ends_with("_mean_ratio"))),
   unlist(wnh_ratios    %>% select(ends_with("_median_ratio"))))
 all_ratio_vals <- all_ratio_vals[is.finite(all_ratio_vals)]
 shared_y_rsens <- c(floor(min(all_ratio_vals) * 20) / 20,
                     ceiling(max(all_ratio_vals) * 20) / 20 + 0.05)
 
+# Used in: figure_appendix
+ratio_diff_limits <- function(df, a_hh, a_cl, b_hh, b_cl) {
+  vals <- c(df[[a_hh]] - df[[a_cl]], df[[b_hh]] - df[[b_cl]])
+  vals <- vals[is.finite(vals)]
+  c(floor(min(vals) * 20) / 20, ceiling(max(vals) * 20) / 20 + 0.05)
+}
 
-# E2 — Sample: single-household kin groups ────────────────────────────────────
-sensitivity_ratio_e2 <- add_sens_legend(make_ratio_sensitivity_figure(
-  make_ratio_sensitivity_plot(wealth_ratios,
+# Single-panel (median ratio) race-ratio sensitivity figure with title
+# Used in: figure_appendix
+# Untitled by default, like the D figures, since the supplement Rmd labels
+# figures with headings; set show_title = TRUE for a standalone PDF.
+make_ratio_median_figure <- function(p, title_str, show_title = FALSE) {
+  body <- cowplot::plot_grid(make_sub_draw("Median wealth ratio"), p,
+                             ncol = 1, rel_heights = c(0.05, 1))
+  if (!show_title) return(body)
+  cowplot::plot_grid(
+    cowplot::ggdraw() +
+      cowplot::draw_label(title_str, fontfamily = base_family, fontface = "bold",
+                          size = title_size, x = 0, hjust = 0),
+    body, ncol = 1, rel_heights = c(0.06, 1.05))
+}
+
+# Median-ratio sensitivity plot comparing main vs. alternative columns
+# Used in: figure_appendix
+ratio_sens_median <- function(df, alt_hh, alt_cl, left_label, right_label) {
+  make_ratio_sensitivity_plot(df,
     main_hh = "r_hh_w_median_ratio", main_cl = "r_cl_w_median_ratio",
-    alt_hh  = "hh_w_median_ratio",   alt_cl  = "cl_w_median_ratio",
-    left_label = "Excl. single-HH kin groups", right_label = "Incl. single-HH kin groups",
+    alt_hh  = alt_hh,                alt_cl  = alt_cl,
+    left_label = left_label, right_label = right_label,
     y_limits    = shared_y_rsens,
-    diff_limits = {
-      vals <- c(wealth_ratios$r_hh_w_median_ratio - wealth_ratios$r_cl_w_median_ratio,
-                wealth_ratios$hh_w_median_ratio   - wealth_ratios$cl_w_median_ratio)
-      vals <- vals[is.finite(vals)]
-      c(floor(min(vals) * 20) / 20, ceiling(max(vals) * 20) / 20 + 0.05)
-    }, x_breaks_fn = make_x_breaks_appendix),
-  make_ratio_sensitivity_plot(wealth_ratios,
-    main_hh = "r_hh_w_mean_ratio", main_cl = "r_cl_w_mean_ratio",
-    alt_hh  = "hh_w_mean_ratio",   alt_cl  = "cl_w_mean_ratio",
-    left_label = "Excl. single-HH kin groups", right_label = "Incl. single-HH kin groups",
-    y_limits    = shared_y_rsens,
-    diff_limits = {
-      vals <- c(wealth_ratios$r_hh_w_mean_ratio - wealth_ratios$r_cl_w_mean_ratio,
-                wealth_ratios$hh_w_mean_ratio   - wealth_ratios$cl_w_mean_ratio)
-      vals <- vals[is.finite(vals)]
-      c(floor(min(vals) * 20) / 20, ceiling(max(vals) * 20) / 20 + 0.05)
-    }, x_breaks_fn = make_x_breaks_appendix),
-  title_str = "Appendix E5. Race Ratios: Single-Household Kin Groups"),
-  "Excl. single-HH kin groups", "Incl. single-HH kin groups")
-if (SAVE_FILES) {
-  ggsave(here("9_figures", "output", "appendixE5.pdf"),
-         sensitivity_ratio_e2, width = 14, height = 11)
-  message("Saved: appendixE5.pdf")
+    diff_limits = ratio_diff_limits(df, "r_hh_w_median_ratio", "r_cl_w_median_ratio", alt_hh, alt_cl),
+    x_breaks_fn = make_x_breaks_appendix)
 }
 
 
-# E3 — Wealth without home equity ─────────────────────────────────────────────
+# E2 — Wealth without home equity ─────────────────────────────────────────────
 wealth_e3 <- wealth_ratios %>%
   left_join(
     wnh_ratios %>% dplyr::select(year,
-                                  r_hh_w_mean_ratio_nh   = r_hh_w_mean_ratio,
-                                  r_cl_w_mean_ratio_nh   = r_cl_w_mean_ratio,
                                   r_hh_w_median_ratio_nh = r_hh_w_median_ratio,
                                   r_cl_w_median_ratio_nh = r_cl_w_median_ratio),
     by = "year")
 
-sensitivity_ratio_e3 <- add_sens_legend(make_ratio_sensitivity_figure(
-  make_ratio_sensitivity_plot(wealth_e3,
-    main_hh = "r_hh_w_median_ratio",    main_cl = "r_cl_w_median_ratio",
-    alt_hh  = "r_hh_w_median_ratio_nh", alt_cl  = "r_cl_w_median_ratio_nh",
-    left_label = "Incl. home equity", right_label = "Excl. home equity",
-    y_limits    = shared_y_rsens,
-    diff_limits = {
-      vals <- c(wealth_e3$r_hh_w_median_ratio    - wealth_e3$r_cl_w_median_ratio,
-                wealth_e3$r_hh_w_median_ratio_nh - wealth_e3$r_cl_w_median_ratio_nh)
-      vals <- vals[is.finite(vals)]
-      c(floor(min(vals) * 20) / 20, ceiling(max(vals) * 20) / 20 + 0.05)
-    }, x_breaks_fn = make_x_breaks_appendix),
-  make_ratio_sensitivity_plot(wealth_e3,
-    main_hh = "r_hh_w_mean_ratio",    main_cl = "r_cl_w_mean_ratio",
-    alt_hh  = "r_hh_w_mean_ratio_nh", alt_cl  = "r_cl_w_mean_ratio_nh",
-    left_label = "Incl. home equity", right_label = "Excl. home equity",
-    y_limits    = shared_y_rsens,
-    diff_limits = {
-      vals <- c(wealth_e3$r_hh_w_mean_ratio    - wealth_e3$r_cl_w_mean_ratio,
-                wealth_e3$r_hh_w_mean_ratio_nh - wealth_e3$r_cl_w_mean_ratio_nh)
-      vals <- vals[is.finite(vals)]
-      c(floor(min(vals) * 20) / 20, ceiling(max(vals) * 20) / 20 + 0.05)
-    }, x_breaks_fn = make_x_breaks_appendix),
-  title_str = "Appendix E1. Race Ratios: Wealth With and Without Home Equity"),
+sensitivity_ratio_e3 <- add_sens_legend(make_ratio_median_figure(
+  ratio_sens_median(wealth_e3, "r_hh_w_median_ratio_nh", "r_cl_w_median_ratio_nh",
+                    "Incl. home equity", "Excl. home equity"),
+  "Appendix E2. Race Ratios: Wealth With and Without Home Equity"),
   "Incl. home equity", "Excl. home equity")
 if (SAVE_FILES) {
-  ggsave(here("9_figures", "output", "appendixE1.pdf"),
-         sensitivity_ratio_e3, width = 14, height = 11)
-  message("Saved: appendixE1.pdf")
-}
-
-
-# E4 — Negative values ────────────────────────────────────────────────────────
-sensitivity_ratio_e4 <- add_sens_legend(make_ratio_sensitivity_figure(
-  make_ratio_sensitivity_plot(wealth_ratios,
-    main_hh = "r_hh_w_median_ratio",     main_cl = "r_cl_w_median_ratio",
-    alt_hh  = "neg_r_hh_w_median_ratio", alt_cl  = "neg_r_cl_w_median_ratio",
-    left_label = "Excl. negative values", right_label = "Incl. negative values",
-    y_limits    = shared_y_rsens,
-    diff_limits = {
-      vals <- c(wealth_ratios$r_hh_w_median_ratio     - wealth_ratios$r_cl_w_median_ratio,
-                wealth_ratios$neg_r_hh_w_median_ratio - wealth_ratios$neg_r_cl_w_median_ratio)
-      vals <- vals[is.finite(vals)]
-      c(floor(min(vals) * 20) / 20, ceiling(max(vals) * 20) / 20 + 0.05)
-    }, x_breaks_fn = make_x_breaks_appendix),
-  make_ratio_sensitivity_plot(wealth_ratios,
-    main_hh = "r_hh_w_mean_ratio",     main_cl = "r_cl_w_mean_ratio",
-    alt_hh  = "neg_r_hh_w_mean_ratio", alt_cl  = "neg_r_cl_w_mean_ratio",
-    left_label = "Excl. negative values", right_label = "Incl. negative values",
-    y_limits    = shared_y_rsens,
-    diff_limits = {
-      vals <- c(wealth_ratios$r_hh_w_mean_ratio     - wealth_ratios$r_cl_w_mean_ratio,
-                wealth_ratios$neg_r_hh_w_mean_ratio - wealth_ratios$neg_r_cl_w_mean_ratio)
-      vals <- vals[is.finite(vals)]
-      c(floor(min(vals) * 20) / 20, ceiling(max(vals) * 20) / 20 + 0.05)
-    }, x_breaks_fn = make_x_breaks_appendix),
-  title_str = "Appendix E2. Race Ratios: Negative Values"),
-  "Excl. negative values", "Incl. negative values")
-if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "appendixE2.pdf"),
-         sensitivity_ratio_e4, width = 14, height = 11)
+         sensitivity_ratio_e3, width = 14, height = 11)
   message("Saved: appendixE2.pdf")
 }
 
 
-# E5 — Size standardization ───────────────────────────────────────────────────
-sensitivity_ratio_e5 <- add_sens_legend(make_ratio_sensitivity_figure(
-  make_ratio_sensitivity_plot(wealth_ratios,
-    main_hh = "r_hh_w_median_ratio",       main_cl = "r_cl_w_median_ratio",
-    alt_hh  = "r_hh_w_unadj_median_ratio", alt_cl  = "r_cl_w_unadj_median_ratio",
-    left_label = "Size-standardised", right_label = "Unadjusted",
-    y_limits    = shared_y_rsens,
-    diff_limits = {
-      vals <- c(wealth_ratios$r_hh_w_median_ratio       - wealth_ratios$r_cl_w_median_ratio,
-                wealth_ratios$r_hh_w_unadj_median_ratio - wealth_ratios$r_cl_w_unadj_median_ratio)
-      vals <- vals[is.finite(vals)]
-      c(floor(min(vals) * 20) / 20, ceiling(max(vals) * 20) / 20 + 0.05)
-    }, x_breaks_fn = make_x_breaks_appendix),
-  make_ratio_sensitivity_plot(wealth_ratios,
-    main_hh = "r_hh_w_mean_ratio",       main_cl = "r_cl_w_mean_ratio",
-    alt_hh  = "r_hh_w_unadj_mean_ratio", alt_cl  = "r_cl_w_unadj_mean_ratio",
-    left_label = "Size-standardised", right_label = "Unadjusted",
-    y_limits    = shared_y_rsens,
-    diff_limits = c(-0.05, 0.20), x_breaks_fn = make_x_breaks_appendix),
-  title_str = "Appendix E4. Race Ratios: Size Standardization"),
-  "Size-standardised", "Unadjusted")
+# E3 — Negative values ────────────────────────────────────────────────────────
+sensitivity_ratio_e4 <- add_sens_legend(make_ratio_median_figure(
+  ratio_sens_median(wealth_ratios, "neg_r_hh_w_median_ratio", "neg_r_cl_w_median_ratio",
+                    "Excl. negative values", "Incl. negative values"),
+  "Appendix E3. Race Ratios: Negative Values"),
+  "Excl. negative values", "Incl. negative values")
+if (SAVE_FILES) {
+  ggsave(here("9_figures", "output", "appendixE3.pdf"),
+         sensitivity_ratio_e4, width = 14, height = 11)
+  message("Saved: appendixE3.pdf")
+}
+
+
+# E4 — Weighting ──────────────────────────────────────────────────────────────
+sensitivity_ratio_e6 <- add_sens_legend(make_ratio_median_figure(
+  ratio_sens_median(wealth_ratios, "r_hh_u_median_ratio", "r_cl_u_median_ratio",
+                    "Weighted", "Unweighted"),
+  "Appendix E4. Race Ratios: Weighting"),
+  "Weighted", "Unweighted")
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "appendixE4.pdf"),
-         sensitivity_ratio_e5, width = 14, height = 11)
+         sensitivity_ratio_e6, width = 14, height = 11)
   message("Saved: appendixE4.pdf")
 }
 
 
-# E6 — Weighting ──────────────────────────────────────────────────────────────
-sensitivity_ratio_e6 <- add_sens_legend(make_ratio_sensitivity_figure(
-  make_ratio_sensitivity_plot(wealth_ratios,
-    main_hh = "r_hh_w_median_ratio", main_cl = "r_cl_w_median_ratio",
-    alt_hh  = "r_hh_u_median_ratio", alt_cl  = "r_cl_u_median_ratio",
-    left_label = "Weighted", right_label = "Unweighted",
-    y_limits    = shared_y_rsens,
-    diff_limits = {
-      vals <- c(wealth_ratios$r_hh_w_median_ratio - wealth_ratios$r_cl_w_median_ratio,
-                wealth_ratios$r_hh_u_median_ratio - wealth_ratios$r_cl_u_median_ratio)
-      vals <- vals[is.finite(vals)]
-      c(floor(min(vals) * 20) / 20, ceiling(max(vals) * 20) / 20 + 0.05)
-    }, x_breaks_fn = make_x_breaks_appendix),
-  make_ratio_sensitivity_plot(wealth_ratios,
-    main_hh = "r_hh_w_mean_ratio", main_cl = "r_cl_w_mean_ratio",
-    alt_hh  = "r_hh_u_mean_ratio", alt_cl  = "r_cl_u_mean_ratio",
-    left_label = "Weighted", right_label = "Unweighted",
-    y_limits    = shared_y_rsens,
-    diff_limits = {
-      vals <- c(wealth_ratios$r_hh_w_mean_ratio - wealth_ratios$r_cl_w_mean_ratio,
-                wealth_ratios$r_hh_u_mean_ratio - wealth_ratios$r_cl_u_mean_ratio)
-      vals <- vals[is.finite(vals)]
-      c(floor(min(vals) * 20) / 20, ceiling(max(vals) * 20) / 20 + 0.05)
-    }, x_breaks_fn = make_x_breaks_appendix),
-  title_str = "Appendix E3. Race Ratios: Weighting"),
-  "Weighted", "Unweighted")
+# E5 — Size standardization ───────────────────────────────────────────────────
+sensitivity_ratio_e5 <- add_sens_legend(make_ratio_median_figure(
+  ratio_sens_median(wealth_ratios, "r_hh_w_unadj_median_ratio", "r_cl_w_unadj_median_ratio",
+                    "Size-standardised", "Unadjusted"),
+  "Appendix E5. Race Ratios: Size Standardization"),
+  "Size-standardised", "Unadjusted")
 if (SAVE_FILES) {
-  ggsave(here("9_figures", "output", "appendixE3.pdf"),
-         sensitivity_ratio_e6, width = 14, height = 11)
-  message("Saved: appendixE3.pdf")
+  ggsave(here("9_figures", "output", "appendixE5.pdf"),
+         sensitivity_ratio_e5, width = 14, height = 11)
+  message("Saved: appendixE5.pdf")
 }
 
-# Race ratios with household and clan age weights (new age-weighting race-ratio appendix)
+
+# E6 — Sample: single-household kin groups ────────────────────────────────────
+sensitivity_ratio_e2 <- add_sens_legend(make_ratio_median_figure(
+  ratio_sens_median(wealth_ratios, "hh_w_median_ratio", "cl_w_median_ratio",
+                    "Excl. single-HH kin groups", "Incl. single-HH kin groups"),
+  "Appendix E6. Race Ratios: Single-Household Kin Groups"),
+  "Excl. single-HH kin groups", "Incl. single-HH kin groups")
+if (SAVE_FILES) {
+  ggsave(here("9_figures", "output", "appendixE6.pdf"),
+         sensitivity_ratio_e2, width = 14, height = 11)
+  message("Saved: appendixE6.pdf")
+}
+
+
+# E7 — Household and clan age weighting ───────────────────────────────────────
 # Used in: figure_appendix
 add_clan_age_wt <- function(df) {
   mean_clan_age <- mean(df$clan_age_mean, na.rm = TRUE)
@@ -682,8 +646,6 @@ race_ratios_by_year <- function(df, value_var, weight_var, race_var, prefix) {
     dplyr::summarise(
       median_ratio = wtd_median(.data[[value_var]][.data[[race_var]] == 1], .data[[weight_var]][.data[[race_var]] == 1]) /
                      wtd_median(.data[[value_var]][.data[[race_var]] == 0], .data[[weight_var]][.data[[race_var]] == 0]),
-      mean_ratio   = wtd_mean(.data[[value_var]][.data[[race_var]] == 1], .data[[weight_var]][.data[[race_var]] == 1]) /
-                     wtd_mean(.data[[value_var]][.data[[race_var]] == 0], .data[[weight_var]][.data[[race_var]] == 0]),
       .groups = "drop") %>%
     dplyr::mutate(year = as.numeric(year)) %>%
     dplyr::rename_with(~ paste0(prefix, "_", .x), -year)
@@ -703,36 +665,268 @@ wealth_ratios_agewt <- wealth_ratios %>%
   dplyr::left_join(race_ratios_by_year(r_hh_w_agewt, "wealth_pc", "fam_weight_age",  "black_head", "r_hh_agewt"), by = "year") %>%
   dplyr::left_join(race_ratios_by_year(r_cl_w_agewt, "wealth_pc", "clan_weight_age", "black_clan", "r_cl_agewt"), by = "year")
 
-# Used in: figure_appendix
-ratio_diff_limits <- function(df, a_hh, a_cl, b_hh, b_cl) {
-  vals <- c(df[[a_hh]] - df[[a_cl]], df[[b_hh]] - df[[b_cl]])
-  vals <- vals[is.finite(vals)]
-  c(floor(min(vals) * 20) / 20, ceiling(max(vals) * 20) / 20 + 0.05)
-}
-
-sensitivity_ratio_agewt <- add_sens_legend(make_ratio_sensitivity_figure(
-  make_ratio_sensitivity_plot(wealth_ratios_agewt,
-    main_hh = "r_hh_w_median_ratio",      main_cl = "r_cl_w_median_ratio",
-    alt_hh  = "r_hh_agewt_median_ratio", alt_cl  = "r_cl_agewt_median_ratio",
-    left_label = "Standard weighting", right_label = "Age-downweighted",
-    y_limits    = shared_y_rsens,
-    diff_limits = ratio_diff_limits(wealth_ratios_agewt,
-                                    "r_hh_w_median_ratio", "r_cl_w_median_ratio",
-                                    "r_hh_agewt_median_ratio", "r_cl_agewt_median_ratio"), x_breaks_fn = make_x_breaks_appendix),
-  make_ratio_sensitivity_plot(wealth_ratios_agewt,
-    main_hh = "r_hh_w_mean_ratio",      main_cl = "r_cl_w_mean_ratio",
-    alt_hh  = "r_hh_agewt_mean_ratio", alt_cl  = "r_cl_agewt_mean_ratio",
-    left_label = "Standard weighting", right_label = "Age-downweighted",
-    y_limits    = shared_y_rsens,
-    diff_limits = ratio_diff_limits(wealth_ratios_agewt,
-                                    "r_hh_w_mean_ratio", "r_cl_w_mean_ratio",
-                                    "r_hh_agewt_mean_ratio", "r_cl_agewt_mean_ratio"), x_breaks_fn = make_x_breaks_appendix),
-  title_str = "Appendix E6. Race Ratios: Household and Clan Age Weighting"),
+sensitivity_ratio_agewt <- add_sens_legend(make_ratio_median_figure(
+  ratio_sens_median(wealth_ratios_agewt, "r_hh_agewt_median_ratio", "r_cl_agewt_median_ratio",
+                    "Standard weighting", "Age-downweighted"),
+  "Appendix E7. Race Ratios: Household and Clan Age Weighting"),
   "Standard weighting", "Age-downweighted")
 if (SAVE_FILES) {
-  ggsave(here("9_figures", "output", "appendixE6.pdf"),
+  ggsave(here("9_figures", "output", "appendixE7.pdf"),
          sensitivity_ratio_agewt, width = 14, height = 11)
-  message("Saved: appendixE6.pdf")
+  message("Saved: appendixE7.pdf")
+}
+
+
+# ── Appendix E8: Racial composition of Black households and kin groups ───────
+# E8a  Share of Black households with a non-Black spouse, and share of Black kin
+#      groups with at least one non-Black head or spouse.
+# E8b  Non-Black heads and spouses per household (count / number of households).
+# E8c  Figure 3 robustness: Black / Non-Black median wealth ratio under four
+#      definitions of a Black kin group, all on one graph.
+# All panels use the robust wealth sample (1984-2023), matching Figure 3.
+# Heads and spouses only: race is reported for them; children mostly have none.
+# Race codes of -Inf (people who never reported a race; see 2_clean_panel) are
+# treated as missing here, and kin group race is recounted from the household
+# file, so a head with no race does not force a kin group to non-Black.
+
+# Spread end-of-line labels so they never overlap (y in data units)
+# Used in: figure_appendix
+spread_labels <- function(y, min_gap) {
+  o <- order(y); ys <- y[o]
+  for (i in seq_along(ys)[-1]) if (ys[i] - ys[i - 1] < min_gap) ys[i] <- ys[i - 1] + min_gap
+  ys <- ys - (mean(ys) - mean(y[o]))           # re-centre on the original values
+  out <- y; out[o] <- ys; out
+}
+
+# End labels: text at the right of the last point, with a leader line when moved
+# Used in: figure_appendix
+end_label_layers <- function(lab_df, x_pad = 0.6, size = 5.6) {
+  list(
+    geom_segment(data = lab_df, aes(x = x_end, xend = x_end + x_pad * 0.8, y = y_end, yend = y_lab),
+                 inherit.aes = FALSE, color = "grey60", linewidth = 0.4),
+    geom_text(data = lab_df, aes(x = x_end + x_pad, y = y_lab, label = label),
+              inherit.aes = FALSE, hjust = 0, lineheight = 0.9, size = size,
+              family = base_family, color = "grey15"))
+}
+
+e8_theme <- theme(legend.position = "none",
+                  panel.grid.minor = element_blank(),
+                  plot.title = element_text(family = base_family, size = sub_size * 0.85, hjust = 0,
+                                            lineheight = 0.95, margin = margin(b = 8)),
+                  plot.title.position = "plot",
+                  plot.margin = margin(10, 20, 10, 10))
+
+# ── E8 data: heads and spouses, wealth sample ─────────────────────────────────
+e8_hs <- readRDS(here("2_clean_panel", "output", "clean.rds")) %>%
+  dplyr::filter(relation %in% c(1, 2)) %>%
+  dplyr::transmute(year = as.numeric(year), fam_id, pid, relation,
+                   black = dplyr::if_else(is.finite(black), black, NA_real_))
+
+e8_hh_ab <- r_hh_w_raw %>%
+  dplyr::transmute(year = as.numeric(year), fam_id, id1968, fam_weight,
+                   black_head = dplyr::if_else(is.finite(black_head), black_head, NA_real_))
+e8_cl_ab <- r_cl_w_raw %>%
+  dplyr::transmute(year = as.numeric(year), id1968, numclan, clan_weight) %>%
+  dplyr::left_join(e8_hh_ab %>% dplyr::group_by(year, id1968) %>%
+                     dplyr::summarise(black_share = mean(black_head %in% 1), .groups = "drop"),
+                   by = c("year", "id1968")) %>%
+  dplyr::mutate(black_clan_e8 = as.integer(black_share > 0.5))
+
+e8_m <- e8_hs %>%
+  dplyr::inner_join(e8_hh_ab, by = c("year", "fam_id"), relationship = "many-to-many")
+
+# Black households: head Black; outcome = non-Black spouse
+e8_bhh <- e8_m %>%
+  dplyr::distinct(year, fam_id, pid, .keep_all = TRUE) %>%
+  dplyr::group_by(year, fam_id) %>%
+  dplyr::summarise(black_head = dplyr::first(black_head), w = dplyr::first(fam_weight),
+                   id1968 = dplyr::first(id1968),
+                   any_nb = as.integer(any(relation == 2 & black == 0, na.rm = TRUE)),
+                   n_nb   = sum(black == 0, na.rm = TRUE), .groups = "drop") %>%
+  dplyr::filter(black_head == 1) %>%
+  dplyr::mutate(per_hh = n_nb)
+
+# Black kin groups: > 50% Black-headed households; outcome = any non-Black head/spouse
+e8_bkg <- e8_m %>%
+  dplyr::distinct(year, id1968, pid, .keep_all = TRUE) %>%
+  dplyr::group_by(year, id1968) %>%
+  dplyr::summarise(n_nb = sum(black == 0, na.rm = TRUE), .groups = "drop") %>%
+  dplyr::inner_join(e8_cl_ab, by = c("year", "id1968")) %>%
+  dplyr::filter(black_clan_e8 == 1) %>%
+  dplyr::mutate(w = clan_weight, any_nb = as.integer(n_nb > 0), per_hh = n_nb / numclan)
+
+e8_ab <- dplyr::bind_rows(
+  e8_bhh %>% dplyr::group_by(year) %>%
+    dplyr::summarise(any = wtd_mean(any_nb, w), per_hh = wtd_mean(per_hh, w), .groups = "drop") %>%
+    dplyr::mutate(unit = "Black households"),
+  e8_bkg %>% dplyr::group_by(year) %>%
+    dplyr::summarise(any = wtd_mean(any_nb, w), per_hh = wtd_mean(per_hh, w), .groups = "drop") %>%
+    dplyr::mutate(unit = "Black kin groups")) %>%
+  dplyr::mutate(unit = factor(unit, c("Black households", "Black kin groups")))
+
+e8_ab_cols <- c("Black households" = NAVY, "Black kin groups" = CORAL)
+e8_ab_ltys <- c("Black households" = "solid", "Black kin groups" = "dotted")
+e8_ab_x    <- range(e8_ab$year)
+
+# Used in: figure_appendix
+e8_ab_plot <- function(yvar, ylab, title, ylab_fmt, val_fmt, gap_frac = 0.13) {
+  ends <- e8_ab %>% dplyr::group_by(unit) %>% dplyr::filter(year == max(year)) %>% dplyr::ungroup()
+  rng  <- diff(range(c(0, e8_ab[[yvar]]), na.rm = TRUE))
+  lab_df <- ends %>% dplyr::transmute(
+    x_end = year, y_end = .data[[yvar]],
+    y_lab = spread_labels(.data[[yvar]], gap_frac * rng),
+    label = paste0(c("Black households" = "Households", "Black kin groups" = "Kin groups")[as.character(unit)],
+                   "\n", val_fmt(.data[[yvar]])))
+  ggplot(e8_ab, aes(year, .data[[yvar]], color = unit, linetype = unit)) +
+    geom_line(linewidth = 1.4) +
+    end_label_layers(lab_df) +
+    scale_color_manual(values = e8_ab_cols, name = NULL) +
+    scale_linetype_manual(values = e8_ab_ltys, name = NULL) +
+    scale_x_continuous(breaks = seq(1985, 2020, 5), limits = c(e8_ab_x[1], e8_ab_x[2] + 10)) +
+    scale_y_continuous(labels = ylab_fmt, limits = c(0, NA), expand = expansion(mult = c(0, 0.08))) +
+    labs(x = NULL, y = ylab, title = title) +
+    e8_theme
+}
+
+appendix_e8a <- e8_ab_plot(
+  "any", "Share of Black units",
+  "Panel A: Share of Black units with a\nnon-Black spouse or head",
+  scales::percent_format(accuracy = 1), function(x) scales::percent(x, 0.1))
+appendix_e8b <- e8_ab_plot(
+  "per_hh", "Non-Black heads and spouses\nper household",
+  "Panel B: Non-Black heads and spouses\nper household",
+  scales::number_format(accuracy = 0.01), function(x) scales::number(x, 0.001))
+
+# Shared legend for panels A and B
+e8_ab_legend <- get_legend_safe(
+  ggplot(e8_ab, aes(year, any, color = unit, linetype = unit)) + geom_line(linewidth = 1.4) +
+    scale_color_manual(values = e8_ab_cols, name = NULL) +
+    scale_linetype_manual(values = e8_ab_ltys, name = NULL) +
+    theme(legend.position = "bottom", legend.key.width = unit(1.5, "cm")))
+
+# ── E8c: Figure 3 under four definitions of a Black kin group ─────────────────
+e8_hh_w <- r_hh_w_raw %>%
+  dplyr::transmute(year = as.numeric(year), id1968, v = wealth / numfu, w = fam_weight,
+                   black_head = dplyr::if_else(is.finite(black_head), black_head, NA_real_))
+e8_cl_w <- r_cl_w_raw %>%
+  dplyr::transmute(year = as.numeric(year), id1968, v = wealth / numclan, w = clan_weight) %>%
+  dplyr::left_join(e8_hh_w %>% dplyr::group_by(year, id1968) %>%
+                     dplyr::summarise(black_share = mean(black_head %in% 1), .groups = "drop"),
+                   by = c("year", "id1968"))
+
+# Weighted median ratio, Black / Non-Black, by year
+# Used in: figure_appendix
+e8_ratio <- function(df, g) {
+  df %>% dplyr::mutate(g = g) %>%
+    dplyr::filter(is.finite(v), is.finite(w), w > 0, g %in% c(0, 1)) %>%
+    dplyr::group_by(year) %>%
+    dplyr::summarise(ratio = wtd_median(v[g == 1], w[g == 1]) / wtd_median(v[g == 0], w[g == 0]),
+                     .groups = "drop")
+}
+
+e8_defs <- list(
+  "Any Black-headed household"   = list(f = function(s) s > 0,    role = "sensitivity"),
+  "Half or more Black-headed"    = list(f = function(s) s >= 0.5, role = "sensitivity"),
+  "More than half Black-headed"  = list(f = function(s) s > 0.5,  role = "main"),
+  "All Black-headed households"  = list(f = function(s) s == 1,   role = "sensitivity"))
+
+e8c_df <- dplyr::bind_rows(
+  e8_ratio(e8_hh_w, e8_hh_w$black_head) %>% dplyr::mutate(series = "Households", role = "main"),
+  purrr::imap_dfr(e8_defs, ~ e8_ratio(e8_cl_w, as.integer(.x$f(e8_cl_w$black_share))) %>%
+                    dplyr::mutate(series = paste("Kin groups:", .y), role = .x$role))) %>%
+  dplyr::mutate(series_lab = paste0(series, " (", role, ")"))
+
+e8c_levels <- c("Households (main)",
+                "Kin groups: More than half Black-headed (main)",
+                "Kin groups: Any Black-headed household (sensitivity)",
+                "Kin groups: Half or more Black-headed (sensitivity)",
+                "Kin groups: All Black-headed households (sensitivity)")
+e8c_df <- e8c_df %>% dplyr::mutate(series_lab = factor(series_lab, e8c_levels))
+
+# Main lines keep Figure 3's colours; sensitivity lines use validated categorical slots
+e8c_cols <- setNames(c(NAVY, CORAL, "#1baf7a", "#eda100", "#e87ba4"), e8c_levels)
+e8c_ltys <- setNames(c("solid", "dotted", "dashed", "longdash", "dotdash"), e8c_levels)
+e8c_lwd  <- setNames(c(1.6, 1.6, 1.1, 1.1, 1.1), e8c_levels)
+
+e8c_ends <- e8c_df %>% dplyr::filter(is.finite(ratio)) %>%
+  dplyr::group_by(series_lab) %>% dplyr::filter(year == max(year)) %>% dplyr::ungroup()
+e8c_rng <- diff(range(c(0, e8c_df$ratio), na.rm = TRUE))
+e8c_lab <- e8c_ends %>% dplyr::transmute(
+  x_end = year, y_end = ratio,
+  y_lab = spread_labels(ratio, 0.075 * e8c_rng),
+  # Short one-line tags; the legend below gives the full definition of each line
+  label = paste0(c("Households"                              = "Households",
+                   "Kin groups: More than half Black-headed" = "More than half",
+                   "Kin groups: Any Black-headed household"  = "Any",
+                   "Kin groups: Half or more Black-headed"   = "Half or more",
+                   "Kin groups: All Black-headed households" = "All")[series],
+                 " (", role, ")"))
+
+appendix_e8c <- ggplot(e8c_df, aes(year, ratio, color = series_lab, linetype = series_lab,
+                                   linewidth = series_lab)) +
+  geom_line() +
+  end_label_layers(e8c_lab, x_pad = 0.5, size = 5.6) +
+  scale_color_manual(values = e8c_cols, name = NULL) +
+  scale_linetype_manual(values = e8c_ltys, name = NULL) +
+  scale_linewidth_manual(values = e8c_lwd, name = NULL) +
+  scale_x_continuous(breaks = seq(1985, 2020, 5), limits = c(1984, 2032)) +
+  scale_y_continuous(limits = c(0, NA), expand = expansion(mult = c(0, 0.08))) +
+  labs(x = NULL, y = "Black / Non-Black",
+       title = "Panel C: Median wealth ratio under alternative definitions of a Black kin group") +
+  e8_theme +
+  theme(legend.position = "bottom", legend.key.width = unit(1.6, "cm"),
+        legend.text = element_text(size = base_size * 0.75)) +
+  guides(color = guide_legend(ncol = 2), linetype = guide_legend(ncol = 2),
+         linewidth = guide_legend(ncol = 2))
+
+# ── E8 N's for the note ───────────────────────────────────────────────────────
+fmt_n <- function(x) format(x, big.mark = ",", trim = TRUE)
+e8_n_ab <- list(
+  bhh_years   = nrow(e8_bhh),
+  bhh_kg      = dplyr::n_distinct(e8_bhh$id1968),
+  bkg_years   = nrow(e8_bkg),
+  bkg_unique  = dplyr::n_distinct(e8_bkg$id1968))
+
+e8_ok_cl <- is.finite(e8_cl_w$v) & is.finite(e8_cl_w$w) & e8_cl_w$w > 0
+e8_n_c <- purrr::imap_dfr(e8_defs, function(d, nm) {
+  g <- d$f(e8_cl_w$black_share) & e8_ok_cl
+  ng <- !d$f(e8_cl_w$black_share) & e8_ok_cl
+  tibble::tibble(definition = nm, role = d$role,
+                 black_years = sum(g), black_unique = dplyr::n_distinct(e8_cl_w$id1968[g]),
+                 nonblack_years = sum(ng), nonblack_unique = dplyr::n_distinct(e8_cl_w$id1968[ng]))
+})
+e8_ok_hh <- is.finite(e8_hh_w$v) & is.finite(e8_hh_w$w) & e8_hh_w$w > 0
+e8_n_hh_c <- list(
+  black_years    = sum(e8_hh_w$black_head %in% 1 & e8_ok_hh),
+  black_unique   = dplyr::n_distinct(e8_hh_w$id1968[e8_hh_w$black_head %in% 1 & e8_ok_hh]),
+  nonblack_years = sum(e8_hh_w$black_head %in% 0 & e8_ok_hh),
+  nonblack_unique = dplyr::n_distinct(e8_hh_w$id1968[e8_hh_w$black_head %in% 0 & e8_ok_hh]))
+
+# Scalars for the Appendix E8 text in the supplement (no figure note)
+e8_n_main          <- e8_n_c %>% dplyr::filter(role == "main")
+e8_bkg_years_main  <- e8_n_main$black_years
+e8_bkg_unique_main <- e8_n_main$black_unique
+e8_bkg_years_min   <- min(e8_n_c$black_years);  e8_bkg_years_max   <- max(e8_n_c$black_years)
+e8_bkg_unique_min  <- min(e8_n_c$black_unique); e8_bkg_unique_max  <- max(e8_n_c$black_unique)
+
+# Latest-year values for inline text in the supplement
+e8_last <- e8_ab %>% dplyr::filter(year == max(year))
+e8_last_year     <- max(e8_ab$year)
+e8_any_hh_last   <- e8_last$any[e8_last$unit == "Black households"]
+e8_any_kg_last   <- e8_last$any[e8_last$unit == "Black kin groups"]
+e8_perhh_hh_last <- e8_last$per_hh[e8_last$unit == "Black households"]
+e8_perhh_kg_last <- e8_last$per_hh[e8_last$unit == "Black kin groups"]
+
+# ── E8 assembled figure: A | B on top, C full width below ─────────────────────
+appendix_e8 <- cowplot::plot_grid(
+  cowplot::plot_grid(appendix_e8a, appendix_e8b, nrow = 1),
+  e8_ab_legend,
+  appendix_e8c,
+  ncol = 1, rel_heights = c(1, 0.08, 1.35))
+
+if (SAVE_FILES) {
+  ggsave(here("9_figures", "output", "appendixE8.pdf"), appendix_e8, width = 18, height = 16)
+  message("Saved: appendixE8.pdf")
 }
 
 
