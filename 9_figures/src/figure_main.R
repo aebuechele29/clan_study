@@ -1,7 +1,8 @@
 # Functions used in this script:
 #   Defined in this script: tab1_fmt2, tab1_fmt1, tab1_fmt0, get_legend_safe,
 #     .race_means, .race_medians, tab1_wstat, tab1_n, tab1_prep_demo,
-#     tab1_age, tab1_unit_stats, tab1_fmt_cell, tab1_make_df, tab1_make_ft
+#     tab1_age, tab1_unit_stats, tab1_fmt_cell, tab1_make_df, tab1_make_ft,
+#     neg_wstats, neg_race_wstats, money
 
 #   From functions/data_utils.R: get_gini_at
 #   From functions/wtd_stats.R: wtd_mean, wtd_median, wtd_sd
@@ -68,11 +69,49 @@ r_hh_wealth    <- readRDS(here("3_households", "output", "robust_households_weal
 r_clans_wealth <- readRDS(here("4_clans",      "output", "robust_clans_wealth.rds"))
 mismatched     <- readRDS(here("3_households", "output", "mismatched.rds"))
 
+# Negative-robust versions of the robust samples (negative income/wealth retained).
+# Used for every median/mean reported in Table 1, Appendix F1, and the Figure 1–3 notes.
+NEG_HH_PATH        <- here("3_households", "output", "neg_robust_households.rds")
+NEG_CLANS_PATH     <- here("4_clans",      "output", "neg_robust_clans.rds")
+NEG_HH_W_PATH      <- here("3_households", "output", "neg_robust_households_wealth.rds")
+NEG_CLANS_W_PATH   <- here("4_clans",      "output", "neg_robust_clans_wealth.rds")
+neg_paths <- c(NEG_HH_PATH, NEG_CLANS_PATH, NEG_HH_W_PATH, NEG_CLANS_W_PATH)
+if (!all(file.exists(neg_paths))) {
+  stop("Negative-robust datasets not found:\n  ",
+       paste(neg_paths[!file.exists(neg_paths)], collapse = "\n  "),
+       "\nUpdate NEG_*_PATH in figure_main.R to the files that retain negative values.")
+}
+neg_hh           <- readRDS(NEG_HH_PATH)
+neg_clans        <- readRDS(NEG_CLANS_PATH)
+neg_hh_wealth    <- readRDS(NEG_HH_W_PATH)
+neg_clans_wealth <- readRDS(NEG_CLANS_W_PATH)
+
+# Weighted median and mean of `var` (optionally divided by `denom`), optionally for one year
+# Used in: figure_main
+neg_wstats <- function(df, var, weight_var, yr = NULL, denom = NULL) {
+  if (!is.null(yr)) df <- df[df$year == yr, , drop = FALSE]
+  v  <- df[[var]]
+  if (!is.null(denom)) v <- v / df[[denom]]
+  w  <- df[[weight_var]]
+  ok <- is.finite(v) & is.finite(w) & w > 0
+  if (!any(ok)) return(list(med = NA_real_, mean = NA_real_))
+  list(med = wtd_median(v[ok], w[ok]), mean = wtd_mean(v[ok], w[ok]))
+}
+
+# Same, split by race (race_var == 1 Black, 0 Non-Black)
+# Used in: figure_main
+neg_race_wstats <- function(df, var, weight_var, race_var, denom = NULL) {
+  list(black    = neg_wstats(df[which(df[[race_var]] == 1), , drop = FALSE], var, weight_var, denom = denom),
+       nonblack = neg_wstats(df[which(df[[race_var]] == 0), , drop = FALSE], var, weight_var, denom = denom))
+}
+
+# "$12,345" formatter for notes
+# Used in: figure_main
+money <- function(x) paste0("$", trimws(fmt_money0(x)))
+
 inc_by_year    <- read_csv(here("6_calculate_gini", "output", "income.csv"),
                            show_col_types = FALSE)
 wealth_by_year <- read_csv(here("6_calculate_gini", "output", "wealth_withhome.csv"),
-                           show_col_types = FALSE)
-summary_stats  <- read_csv(here("5_summary",         "output", "summary_statistics.csv"),
                            show_col_types = FALSE)
 wealth_ratios  <- read_csv(here("7_gini_by_race",    "output", "wealth_withhome_race_ratios.csv"),
                            show_col_types = FALSE)
@@ -121,6 +160,14 @@ w_hh_2023   <- get_gini_at(wealth_by_year, 2023, r_hh_w_wealth)
 w_cl_1984   <- get_gini_at(wealth_by_year, 1984, r_cl_w_wealth)
 w_cl_2023   <- get_gini_at(wealth_by_year, 2023, r_cl_w_wealth)
 
+# Early-1970s household income Gini, compared in the text with the 2023 kin group income Gini
+inc_hh_1971 <- get_gini_at(inc_by_year, 1971, r_hh_w_inc)
+inc_hh_1972 <- get_gini_at(inc_by_year, 1972, r_hh_w_inc)
+inc_hh_1973 <- get_gini_at(inc_by_year, 1973, r_hh_w_inc)
+inc_hh_early70s      <- c(inc_hh_1971, inc_hh_1972, inc_hh_1973)
+inc_hh_early70s_mean <- mean(inc_hh_early70s, na.rm = TRUE)
+inc_cl2023_vs_hh_early70s <- inc_hh_early70s_mean - inc_cl_2023  # positive = kin group 2023 lower
+
 inc_hh_pct <- 100 * (inc_hh_2023 - inc_hh_1969) / inc_hh_1969
 inc_cl_pct <- 100 * (inc_cl_2023 - inc_cl_1969) / inc_cl_1969
 w_hh_pct   <- 100 * (w_hh_2023   - w_hh_1984)   / w_hh_1984
@@ -143,14 +190,21 @@ inc_gini_pct_red <- 100 * inc_gini_diff / avg_inc_hh
 w_gini_diff      <- avg_w_hh   - avg_w_cl
 w_gini_pct_red   <- 100 * w_gini_diff  / avg_w_hh
 
-inc_mean_hh_w <- summary_stats %>%
-  filter(Table == "Income",  Unit == "Household") %>% pull(mean_val_w) %>% first()
-inc_mean_cl_w <- summary_stats %>%
-  filter(Table == "Income",  Unit == "Clan")      %>% pull(mean_val_w) %>% first()
-w_mean_hh_w   <- summary_stats %>%
-  filter(Table == "Wealth",  Unit == "Household") %>% pull(mean_val_w) %>% first()
-w_mean_cl_w   <- summary_stats %>%
-  filter(Table == "Wealth",  Unit == "Clan")      %>% pull(mean_val_w) %>% first()
+# ── Pooled weighted means and medians, all years (negative values retained) 
+neg_inc_hh_all <- neg_wstats(neg_hh,           "inc_all", "fam_weight")
+neg_inc_cl_all <- neg_wstats(neg_clans,        "inc_all", "clan_weight")
+neg_w_hh_all   <- neg_wstats(neg_hh_wealth,    "wealth",  "fam_weight")
+neg_w_cl_all   <- neg_wstats(neg_clans_wealth, "wealth",  "clan_weight")
+
+
+inc_mean_hh_w <- neg_inc_hh_all$mean
+inc_mean_cl_w <- neg_inc_cl_all$mean
+w_mean_hh_w   <- neg_w_hh_all$mean
+w_mean_cl_w   <- neg_w_cl_all$mean
+inc_med_hh_w  <- neg_inc_hh_all$med
+inc_med_cl_w  <- neg_inc_cl_all$med
+w_med_hh_w    <- neg_w_hh_all$med
+w_med_cl_w    <- neg_w_cl_all$med
 
 # ── Figure 3 scalars: Mean wealth ratios (retained for Appendix E) ────────────
 w_ratio_hh_first <- wealth_ratios %>% arrange(year) %>% slice(1)   %>% pull(r_hh_w_mean_ratio)
@@ -286,11 +340,15 @@ fig1_w   <- fig1_w +
   scale_x_continuous(breaks = seq(1985, 2020, 5), limits = c(1984, 2023)) +
   theme(legend.position = "none")
 
+# Figure 1 note: pooled medians/means come from neg_*_all (defined above)
 fig1_note <- sprintf(
   paste0(
     "Note: Gini coefficients estimated from weighted PSID data. ",
-    "Weighted mean income: $%s (households), $%s (kin groups). ",
-    "Weighted mean wealth: $%s (households), $%s (kin groups; includes home equity). ",
+    "Across all years, median (mean) income is %s (%s) for households and %s (%s) for kin groups. ",
+    "Median (mean) wealth is %s (%s) for households and %s (%s) for kin groups, including home equity. ",
+    "Negative income and wealth values are set to zero for calculating Gini coefficients, ",
+    "but are retained in the median and mean estimates reported here. ",
+    "Estimates are weighted, adjusted for inflation, and expressed in 2023 dollars. ",
     "Income Ginis changed by %.1f%% for households (%.2f in 1969 to %.2f in 2023) ",
     "and by %.1f%% for kin groups (%.2f to %.2f). ",
     "Wealth Ginis changed by %.1f%% for households (%.2f in 1984 to %.2f in 2023) ",
@@ -298,8 +356,10 @@ fig1_note <- sprintf(
     "On average across all years, the income Gini is %.3f higher for households than kin groups; ",
     "the wealth Gini is %.3f higher."
   ),
-  fmt_money0(inc_mean_hh_w), fmt_money0(inc_mean_cl_w),
-  fmt_money0(w_mean_hh_w), fmt_money0(w_mean_cl_w),
+  money(neg_inc_hh_all$med), money(neg_inc_hh_all$mean),
+  money(neg_inc_cl_all$med), money(neg_inc_cl_all$mean),
+  money(neg_w_hh_all$med),   money(neg_w_hh_all$mean),
+  money(neg_w_cl_all$med),   money(neg_w_cl_all$mean),
   inc_hh_pct, inc_hh_1969, inc_hh_2023,
   inc_cl_pct, inc_cl_1969, inc_cl_2023,
   w_hh_pct, w_hh_1984, w_hh_2023,
@@ -369,23 +429,33 @@ inc_stats_cl <- r_clans %>%
   summarise(mean = wtd_mean(inc_all, clan_weight),
             med  = wtd_median(inc_all, clan_weight), .groups = "drop")
 
+# 1984 / 2023 medians/means for the Figure 2 note (negative values retained)
+neg_fig2 <- purrr::map(c(`1984` = 1984, `2023` = 2023), function(yr) list(
+  inc_hh = neg_wstats(neg_hh,           "inc_all", "fam_weight",  yr),
+  inc_cl = neg_wstats(neg_clans,        "inc_all", "clan_weight", yr),
+  w_hh   = neg_wstats(neg_hh_wealth,    "wealth",  "fam_weight",  yr),
+  w_cl   = neg_wstats(neg_clans_wealth, "wealth",  "clan_weight", yr)))
+
 fig2_note <- sprintf(
   paste0(
-    "Note: Lorenz curves are estimated from weighted data using PSID family and kin group weights. ",
-    "Wealth includes home equity. ",
-    "Income in 1984: weighted mean (median) $%s ($%s) for households, $%s ($%s) for kin groups. ",
-    "Income in 2023: $%s ($%s) for households, $%s ($%s) for kin groups."
+    "Note: Lorenz curves are estimated using PSID family and kin group weights. ",
+    "In 1984, median (mean) income was %s (%s) for households and %s (%s) for kin groups; ",
+    "in 2023, it was %s (%s) for households and %s (%s) for kin groups. ",
+    "Median (mean) wealth was %s (%s) for households and %s (%s) for kin groups in 1984, ",
+    "compared with %s (%s) and %s (%s), respectively, in 2023. ",
+    "Wealth measures include home equity. ",
+    "Negative income and wealth values are set to zero when constructing Lorenz curves ",
+    "but retained when calculating the reported medians and means. ",
+    "All estimates are weighted, adjusted for inflation, and expressed in 2023 dollars."
   ),
-  # Panel A: income stats 1984
-  fmt_money0(inc_stats_hh$mean[inc_stats_hh$year == 1984]),
-  fmt_money0(inc_stats_hh$med [inc_stats_hh$year == 1984]),
-  fmt_money0(inc_stats_cl$mean[inc_stats_cl$year == 1984]),
-  fmt_money0(inc_stats_cl$med [inc_stats_cl$year == 1984]),
-  # Panel A: income stats 2023
-  fmt_money0(inc_stats_hh$mean[inc_stats_hh$year == 2023]),
-  fmt_money0(inc_stats_hh$med [inc_stats_hh$year == 2023]),
-  fmt_money0(inc_stats_cl$mean[inc_stats_cl$year == 2023]),
-  fmt_money0(inc_stats_cl$med [inc_stats_cl$year == 2023])
+  money(neg_fig2$`1984`$inc_hh$med), money(neg_fig2$`1984`$inc_hh$mean),
+  money(neg_fig2$`1984`$inc_cl$med), money(neg_fig2$`1984`$inc_cl$mean),
+  money(neg_fig2$`2023`$inc_hh$med), money(neg_fig2$`2023`$inc_hh$mean),
+  money(neg_fig2$`2023`$inc_cl$med), money(neg_fig2$`2023`$inc_cl$mean),
+  money(neg_fig2$`1984`$w_hh$med),   money(neg_fig2$`1984`$w_hh$mean),
+  money(neg_fig2$`1984`$w_cl$med),   money(neg_fig2$`1984`$w_cl$mean),
+  money(neg_fig2$`2023`$w_hh$med),   money(neg_fig2$`2023`$w_hh$mean),
+  money(neg_fig2$`2023`$w_cl$med),   money(neg_fig2$`2023`$w_cl$mean)
 )
 
 fig2 <- arrangeGrob(
@@ -422,21 +492,30 @@ fig3_med_plot <- make_ratio_plot(
   ylab = "Black / Non-Black") +
   scale_x_continuous(breaks = seq(1985, 2020, 5), limits = c(1984, 2023))
 
+# Pooled wealth by race for the Figure 3 note 
+neg_race_hh <- neg_race_wstats(neg_hh_wealth,    "wealth", "fam_weight",  "black_head", denom = "numfu")
+neg_race_cl <- neg_race_wstats(neg_clans_wealth, "wealth", "clan_weight", "black_clan", denom = "numclan")
+
 fig3_note <- sprintf(
   paste0(
-    "Note: Lines show the ratio of Black to Non-Black wealth for households and kin groups ",
-    "(includes home equity), using weighted medians. ",
-    "Across all years, weighted median wealth is $%s for Black households ",
-    "and $%s for Non-Black households. ",
-    "For kin groups, the weighted median wealth is $%s for Black kin groups ",
-    "and $%s for Non-Black kin groups. ",
+    "Note: Lines show the ratio of Black to Non-Black wealth for households and kin groups. ",
+    "Wealth measures include home equity and use weighted medians. ",
+    "Across all years, weighted median (mean) wealth is %s (%s) for Black households ",
+    "and %s (%s) for Non-Black households. ",
+    "For kin groups, the weighted median (mean) wealth is %s (%s) for Black kin groups ",
+    "and %s (%s) for Non-Black kin groups. ",
+    "Negative wealth values are set to zero for calculating race ratios, ",
+    "but are retained in the mean and median estimates reported here. ",
+    "Estimates are weighted, adjusted for inflation, and expressed in 2023 dollars. ",
     "The median ratio changed by %.1f%% for households (%.3f in %d to %.3f in %d) ",
     "and %.1f%% for kin groups (%.3f to %.3f). ",
     "On average across all years, the median wealth ratio for kin groups is %.3f higher than for households. ",
-    "See Appendix E7 for mean wealth ratios."
+    "See Appendix E1 for mean wealth ratios."
   ),
-  fmt_money0(w_med_hh$black),    fmt_money0(w_med_hh$nonblack),
-  fmt_money0(w_med_cl$black),    fmt_money0(w_med_cl$nonblack),
+  money(neg_race_hh$black$med),    money(neg_race_hh$black$mean),
+  money(neg_race_hh$nonblack$med), money(neg_race_hh$nonblack$mean),
+  money(neg_race_cl$black$med),    money(neg_race_cl$black$mean),
+  money(neg_race_cl$nonblack$med), money(neg_race_cl$nonblack$mean),
   w_med_ratio_hh_pct, w_med_ratio_hh_first, w_first_yr, w_med_ratio_hh_last, w_last_yr,
   w_med_ratio_cl_pct, w_med_ratio_cl_first, w_med_ratio_cl_last,
   -avg_w_med_ratio_gap
@@ -456,9 +535,8 @@ if (SAVE_FILES) {
 }
 
 
-# ══════════════════════════════════════════════════════════════════════════
+
 # TABLE 1 — Characteristics of Households and Kin Groups
-# ══════════════════════════════════════════════════════════════════════════
 tab1_years    <- c(1984, 2023)
 tab1_periods  <- c(as.character(tab1_years), "All years")
 tab1_labels   <- c(as.character(tab1_years), "All years (1969\u20132023)")
@@ -513,8 +591,9 @@ tab1_unit_stats <- function(unit, period) {
       age      = tab1_age(tab1_demo_inc, "hh_age_mean", r_hh, yr),
       size_ppl = tab1_wstat(r_hh, "numfu", "fam_weight", wtd_mean, yr),
       size_hh  = NA_real_,
-      inc      = tab1_wstat(r_hh,        "inc_all", "fam_weight", wtd_median, yr),
-      wealth   = tab1_wstat(r_hh_wealth, "wealth",  "fam_weight", wtd_median, yr),
+      # Medians use the negative-robust samples (negative values retained)
+      inc      = tab1_wstat(neg_hh,        "inc_all", "fam_weight", wtd_median, yr),
+      wealth   = tab1_wstat(neg_hh_wealth, "wealth",  "fam_weight", wtd_median, yr),
       n        = tab1_n(r_hh, yr),
       n_black  = tab1_n(r_hh[which(r_hh$black_head == 1), , drop = FALSE], yr))
   } else {
@@ -522,8 +601,9 @@ tab1_unit_stats <- function(unit, period) {
       age      = tab1_age(tab1_demo_inc, "clan_age_mean", r_clans, yr),
       size_ppl = tab1_wstat(r_clans, "num_clan_people", "clan_weight", wtd_mean, yr),
       size_hh  = tab1_wstat(r_clans, "numclan",         "clan_weight", wtd_mean, yr),
-      inc      = tab1_wstat(r_clans,        "inc_all", "clan_weight", wtd_median, yr),
-      wealth   = tab1_wstat(r_clans_wealth, "wealth",  "clan_weight", wtd_median, yr),
+      # Medians use the negative-robust samples (negative values retained)
+      inc      = tab1_wstat(neg_clans,        "inc_all", "clan_weight", wtd_median, yr),
+      wealth   = tab1_wstat(neg_clans_wealth, "wealth",  "clan_weight", wtd_median, yr),
       n        = tab1_n(r_clans, yr),
       n_black  = tab1_n(r_clans[which(r_clans$black_clan == 1), , drop = FALSE], yr))
   }
@@ -577,7 +657,9 @@ tab1_note <- sprintf(
     "Pooled across all years, the wealth sample contains %s household-years and %s kin group-years ",
     "(%s and %s Black, respectively) ",
     "from %s unique kin groups, with an average size of %s individuals per household ",
-    "and %s individuals (%s households) per kin group%s. Estimates are adjusted for inflation and expressed in 2023 dollars."
+    "and %s individuals (%s households) per kin group%s. ",
+    "Median income and wealth include households and kin groups with negative income or wealth. ",
+    "Estimates are weighted, adjusted for inflation, and expressed in 2023 dollars."
   ),
   tab1_fmt0(inc_uniq_clans),
   tab1_fmt0(w_hh_years), tab1_fmt0(w_cl_years),
@@ -592,9 +674,6 @@ tab1_note <- sprintf(
 tab1_border <- officer::fp_border(color = "black", width = 0.75)
 
 # Used in: figure_main, figure_appendix
-# width: total table width in inches. NULL (default) keeps autofit widths;
-#        a number stretches the table to that width, with the label column
-#        taking label_share of it and the data columns splitting the rest.
 tab1_make_ft <- function(periods, labels, pkeys, caption,
                          width = NULL, label_share = 0.4) {
   col_keys <- paste0(rep(pkeys, each = 2), "_", c("hh", "kg"))
@@ -633,8 +712,6 @@ tab1_make_ft <- function(periods, labels, pkeys, caption,
 }
 
 # Table 1 reports pooled all-years columns only; 1984/2023 columns go to the appendix table
-# width = 6.5 fills the text width of a letter page with 1-inch margins
-# (the default for both the PDF and Word output of write.rmd)
 tab1_ft <- tab1_make_ft("All years", "All years (1969–2023)", "yall",
                         "Table 1. Characteristics of Households and Kin Groups",
                         width = 6.5)
