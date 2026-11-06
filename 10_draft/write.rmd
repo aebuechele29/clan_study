@@ -1,5 +1,5 @@
 ---
-title: "Kin group Gini: Extended family and economic inequality in the U.S."
+title: "Kin group Gini: Extended families and economic inequality in the U.S."
 author: "Doron Shiffer-Sebba^1,\\*^, Amanda Buechele^1^, Julia A. Behrman^1^, Limor Gabay Egozi^2^"
 keywords: ["put keywords here"]
 bibliography: bibliography_clan.bib
@@ -244,7 +244,7 @@ The choice to examine both households and kin groups as analytical units matters
 
 The patterns documented in our paper should not be interpreted as evidence that inequality in the U.S. is somehow less severe than previously understood. Ultimately, inequality between households is nested in, and compounds with, inequality between kin groups. It is thus important to understand how the two, and for that matter individual-level inequality as well, interact to shape overall inequality. It is possible that families behave differently along the economic distribution, as our Lorenz curves suggest. If, for example, kin groups in the middle of the distribution have different motivations for accumulating wealth than those at the top, they may also spread resources differently within kin groups, across households [@rapp_economies_2025]. To fully understand patterns of inequality, we must examine interactions across levels.
 
-One possible mechanism shaping differences between household and kin group inequality, for both income and wealth, is intergenerational mobility. Mechanically, lower mobility between households produces greater homogeneity within kin groups; low mobility means descendants' households mimic the status of their ancestors, producing kin groups made up of similar households. Higher mobility would have the opposite effect. Persistently high inequality at both the household and kin group levels indicates that mobility has not been high. This finding conforms with existing estimates of low mobility in the United States (Chetty et al., 2014; Chetty et al., 2020).
+One possible mechanism shaping differences between household and kin group inequality, for both income and wealth, is intergenerational mobility. Mechanically, lower mobility between households produces greater homogeneity within kin groups; low mobility means descendants' households mimic the status of their ancestors, producing kin groups made up of similar households. Higher mobility would have the opposite effect. Persistently high inequality at both the household and kin group levels indicates that mobility has not been high. This finding conforms with existing estimates of low mobility in the United States [@song_long-term_2020].
 
 Additionally, high kin group inequality may further reduce mobility. If extended family members are important for upward mobility, high inequality across kin groups means that lower-resourced households have less access to higher-resourced households within their kin group. In other words, the prevalent concern that high inequality undermines intergenerational mobility [@corak_income_2013; @jerrim_income_2015; @ermisch_parents_2012] may operate on both the household and kin group levels, fueling future patterns of inequality.
 
@@ -334,13 +334,13 @@ Second, other factors may influence which kin groups are observable in the PSID.
 
 Supplementary Information is available for this paper.
 
-**Funding.** If the work in the paper is within scope of a grant and arose directly from a specific grant, funding should be declared in a separate funding statement.
+**Funding.** This research was supported by grant no. 2022265 from the United States Israel Binational Science Foundation (BSF), Jerusalem, Israel.
 
-**Author contributions.** You must include a statement that specifies the individual contributions of each co-author. For example: "A.P.M. 'contributed' Y and Z; B.T.R. 'contributed' Y," etc. See our authorship policies for more details.
+**Author contributions.** D.S.S. and L.G.E. conceptualized the project; D.S.S. and A.B. prepared the data; D.S.S., A.B., and J.A.B. refined the analytic strategy and interpreted results; all authors wrote the manuscript.
 
 **Competing interests.** The authors declare no competing interests.
 
-**Materials & Correspondence.** Indicate the author to whom correspondence and material requests should be addressed.
+**Materials & Correspondence.** Please direct correspondence to Doron Shiffer-Sebba at doron@northwestern.edu.
 
 
 # References
