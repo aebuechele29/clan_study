@@ -1,9 +1,9 @@
 # Functions used in this script:
-#   Defined in this script: make_x_breaks_appendix, add_sens_legend,
+#   Defined in this script: make_x_breaks_appendix, add_sens_legend, neg_share,
 #     add_hh_age_wt, add_clan_age_wt, race_ratios_by_year, ratio_diff_limits,
 #     make_ratio_median_figure, ratio_sens_median, spread_labels,
 #     end_label_layers, e8_ab_plot, e8_ratio,
-#     make_f_plot, wtd_by_year, n_by_year, f4_panel
+#     make_f_plot, wtd_by_year, n_by_year, f4_panel, c1_panel, c2_panel
 
 #   From 9_figures/src/figure_main.R: get_legend_safe, tab1_make_ft
 #   From functions/data_utils.R: avg_gap
@@ -14,6 +14,8 @@
 #     make_single_sensitivity_figure, make_race_sensitivity_plot,
 #     make_c123_panel, make_ratio_sensitivity_plot
 #   From functions/table_helpers.R: fmt_money0
+#   From the simulation functions in functions/: run_many_sims_sums,
+#     results_from_sims_sums, extreme_indices_sums, gini_safe_simple, lorenz_df_safe
 
 
 library(here)
@@ -104,7 +106,7 @@ w_diff_black      <- w_race_all$r_hh_w_wealth_black   - w_race_all$r_cl_w_wealth
 w_diff_nonblack   <- w_race_all$r_hh_w_wealth_nonblack - w_race_all$r_cl_w_wealth_nonblack
 
 
-# Shared legend for D1–D6, E2–E7 and F4: colour = specification, linetype = unit
+# Shared legend for D1–D7, E2–E7 and F4: colour = specification, linetype = unit
 # The legend gets its own absolute height (measured from the legend grob) instead of a
 # fixed share of the figure, so it is never clipped at the bottom; if its natural width
 # exceeds max_width_in, each legend row wraps onto two lines so it is not clipped at the sides.
@@ -143,9 +145,141 @@ add_sens_legend <- function(fig, left_label, right_label, show_diff = TRUE,
   cowplot::ggdraw() + cowplot::draw_grob(g)
 }
 
-# ── Appendix C: Gini Sensitivity Analyses (C1–C7) ────────────────────────────
+# ── Appendix C: Simulating Gini Coefficients (C1–C2) ─────────────────────────
+# C1  The same nine households grouped into kin groups of 2, 3, and 4 households
+#     in three ways. Bars are kin groups stacked from their member households.
+# C2  Lorenz curves for the two most extreme of 100 simulated samples.
+# The kin group Gini is computed across kin group totals (sum of member households).
+# Simulation functions (run_many_sims_sums, results_from_sims_sums,
+# extreme_indices_sums, gini_safe_simple, lorenz_df_safe) come from functions/.
 
-# C1 — Race (Gini by race subgroup) ──────────────────────────────────────────
+# C1 — The same households grouped three ways ─────────────────────────────────
+c1_households <- c(1, 1, 2, 2, 3, 4, 6, 8, 12)   # indices below refer to this vector
+c1_groupings <- list(
+  "Households"                            = as.list(1:9),
+  "High-resource kin groups vary by size" = list(c(9, 1), c(8, 3, 2), c(7, 6, 5, 4)),
+  "High-resource kin groups are smaller"  = list(c(8, 9), c(5, 6, 7), c(1, 2, 3, 4)),
+  "High-resource kin groups are bigger"   = list(c(1, 2), c(3, 4, 5), c(6, 7, 8, 9)))
+
+# Gini of the unit totals in each panel (households, then the three kin group panels)
+c1_gini <- vapply(c1_groupings, function(grp)
+  gini_safe_simple(vapply(grp, function(i) sum(c1_households[i]), numeric(1))), numeric(1))
+
+c1_df <- purrr::imap_dfr(c1_groupings, function(grp, nm)
+  purrr::imap_dfr(grp, function(i, k) tibble::tibble(
+    panel = nm, bar = k, hh_id = i, value = c1_households[i],
+    n_hh = length(i), total = sum(c1_households[i]))))
+
+# Household shading: pale (fewest resources) to navy (most), as in the main figures
+c1_cols  <- grDevices::colorRampPalette(c("#DCE9F7", PALE_NAVY, NAVY))(length(c1_households))
+c1_ylim  <- c(0, max(c1_df$total) * 1.12)
+c1_txt   <- base_size / .pt   # geom_text size equivalent to base_size
+
+# One C1 panel: stacked bars, kin group totals above bars, Gini at top left
+# Used in: figure_appendix
+c1_panel <- function(nm) {
+  d    <- dplyr::filter(c1_df, panel == nm)
+  is_h <- nm == "Households"
+  d$x  <- if (is_h) factor(d$bar) else
+    factor(paste(d$n_hh, "HH"), levels = paste(sort(unique(d$n_hh)), "HH"))
+  p <- ggplot(d, aes(x, value, fill = factor(hh_id, levels = seq_along(c1_households)))) +
+    geom_col(width = 0.7, color = "white", linewidth = 0.6,
+             position = position_stack(reverse = TRUE)) +
+    geom_text(aes(label = value, color = hh_id >= 7),
+              position = position_stack(vjust = 0.5, reverse = TRUE),
+              family = base_family, size = c1_txt * 0.75) +
+    annotate("text", x = -Inf, y = Inf, hjust = -0.1, vjust = 1.3,
+             label = sprintf("Gini = %.2f", c1_gini[[nm]]),
+             family = base_family, size = c1_txt * 0.85) +
+    scale_fill_manual(values = c1_cols, guide = "none") +
+    scale_color_manual(values = c(`TRUE` = "white", `FALSE` = "black"), guide = "none") +
+    scale_y_continuous(limits = c1_ylim, expand = c(0, 0)) +
+    labs(x = NULL, y = "Resources") +
+    theme(panel.grid.major.x = element_blank(), panel.grid.minor = element_blank())
+  if (is_h) {
+    p + theme(axis.text.x = element_blank())
+  } else {
+    p + geom_text(data = dplyr::distinct(d, x, total), inherit.aes = FALSE,
+                  aes(x, total, label = total), vjust = -0.4, fontface = "bold",
+                  family = base_family, size = c1_txt * 0.75)
+  }
+}
+
+appendix_c1 <- cowplot::plot_grid(
+  plotlist = purrr::imap(names(c1_groupings), function(nm, k)
+    cowplot::plot_grid(make_sub_draw(sprintf("Panel %s: %s", LETTERS[k], nm)), c1_panel(nm),
+                       ncol = 1, rel_heights = c(0.08, 1))),
+  ncol = 2)
+if (SAVE_FILES) {
+  ggsave(here("9_figures", "output", "appendixC1.pdf"), appendix_c1, width = 14, height = 13)
+  message("Saved: appendixC1.pdf")
+}
+
+# C2 — Lorenz curves for the two most extreme simulations ─────────────────────
+# 100 samples of 52 households drawn from a lognormal(0, 1) distribution and
+# assigned at random to five kin groups of 1, 6, 10, 15, and 20 households.
+set.seed(123)
+c2_sims <- run_many_sims_sums(
+  n_sims = 100, n_clans = 5, hh_per_clan = 10,
+  dist = "lognormal", dist_params = list(meanlog = 0, sdlog = 1),
+  clan_size_scenario = "rich_big")   # kin group sizes 1, 6, 10, 15, 20
+c2_res <- results_from_sims_sums(c2_sims)
+c2_ext <- extreme_indices_sums(c2_res)
+
+# Scalars for the Appendix C text in the supplement
+c2_share_hh_higher <- 100 * mean(c2_res$diff_sums > 0)
+c2_median_diff     <- median(c2_res$diff_sums)
+c2_min             <- c2_res[c2_ext$idx_min_sums, ]   # kin group Gini furthest above household
+c2_max             <- c2_res[c2_ext$idx_max_sums, ]   # kin group Gini furthest below household
+
+c2_unit_cols <- c("Household" = NAVY, "Kin Group" = PALE_NAVY)
+c2_unit_ltys <- c("Household" = "solid", "Kin Group" = "dotted")
+
+# One C2 panel: household and kin group Lorenz curves for simulation i
+# Used in: figure_appendix
+c2_panel <- function(i) {
+  df <- c2_sims[[i]]$data
+  kg <- df %>% dplyr::group_by(clan) %>%
+    dplyr::summarise(val = sum(value, na.rm = TRUE), .groups = "drop") %>% dplyr::pull(val)
+  ld <- dplyr::bind_rows(lorenz_df_safe(df$value, "Household"),
+                         lorenz_df_safe(kg,       "Kin Group"))
+  ggplot(ld, aes(p, L, color = group, linetype = group)) +
+    geom_abline(intercept = 0, slope = 1, linewidth = 0.6, color = "grey55") +
+    geom_line(linewidth = 1.7) +
+    geom_point(data = ~ dplyr::filter(.x, group == "Kin Group"), size = 3.5, show.legend = FALSE) +
+    annotate("text", x = 0.02, y = 0.98, hjust = 0, vjust = 1, lineheight = 1.1,
+             family = base_family, size = c1_txt * 0.8,
+             label = sprintf("Household Gini = %.2f\nKin group Gini = %.2f",
+                             c2_res$gini_households[i], c2_res$gini_clan_sums[i])) +
+    scale_color_manual(values = c2_unit_cols, name = NULL) +
+    scale_linetype_manual(values = c2_unit_ltys, name = NULL) +
+    scale_x_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.25)) +
+    scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.25)) +
+    labs(x = "Cumulative Proportion of Units", y = "Cumulative Proportion of Resources") +
+    theme(legend.position = "none")
+}
+
+c2_legend <- get_legend_safe(
+  c2_panel(c2_ext$idx_min_sums) +
+    theme(legend.position = "bottom", legend.key.width = unit(1.5, "cm")))
+
+appendix_c2 <- cowplot::plot_grid(
+  cowplot::plot_grid(
+    cowplot::plot_grid(make_sub_draw("Panel A: Kin group Gini above household Gini"),
+                       c2_panel(c2_ext$idx_min_sums), ncol = 1, rel_heights = c(0.08, 1)),
+    cowplot::plot_grid(make_sub_draw("Panel B: Kin group Gini below household Gini"),
+                       c2_panel(c2_ext$idx_max_sums), ncol = 1, rel_heights = c(0.08, 1)),
+    nrow = 1),
+  c2_legend, ncol = 1, rel_heights = c(1, 0.08))
+if (SAVE_FILES) {
+  ggsave(here("9_figures", "output", "appendixC2.pdf"), appendix_c2, width = 14, height = 9)
+  message("Saved: appendixC2.pdf")
+}
+
+
+# ── Appendix D: Gini Sensitivity Analyses (D1–D7) ────────────────────────────
+
+# D7 — Race (Gini by race subgroup) ──────────────────────────────────────────
 shared_y_race <- {
   vals <- c(inc_race_yr$r_hh_w_inc_black,     inc_race_yr$r_cl_w_inc_black,
             inc_race_yr$r_hh_w_inc_nonblack,  inc_race_yr$r_cl_w_inc_nonblack,
@@ -190,7 +324,7 @@ if (SAVE_FILES) {
   message("Saved: appendixD7.pdf")
 }
 
-# C2 — Sample: single-household kin groups ────────────────────────────────────
+# D5 — Sample: single-household kin groups ────────────────────────────────────
 sensitivity_gini_c2 <- add_sens_legend(make_sensitivity_figure(
   make_sensitivity_plot(df = income_all,
     main_hh = "r_hh_w_inc", main_cl = "r_cl_w_inc",
@@ -208,7 +342,7 @@ if (SAVE_FILES) {
   message("Saved: appendixD5.pdf")
 }
 
-# C3 — Wealth without home equity ─────────────────────────────────────────────
+# D1 — Wealth without home equity ─────────────────────────────────────────────
 wealth_c3_df <- wealth_wh_all %>%
   left_join(
     wealth_nh_all %>% dplyr::select(year,
@@ -229,8 +363,22 @@ if (SAVE_FILES) {
   message("Saved: appendixD1.pdf")
 }
 
-# C4 — Negative values ────────────────────────────────────────────────────────
-sensitivity_gini_c4 <- add_sens_legend(make_sensitivity_figure(
+# D2 — Negative values ────────────────────────────────────────────────────────
+# Count and share of unit-years with negative income / wealth (Appendix D2 text).
+# Uses the negative-robust samples loaded in figure_main.R (neg_hh, neg_clans,
+# neg_hh_wealth, neg_clans_wealth). Shares are unweighted shares of unit-years
+# with a non-missing value.
+# Used in: figure_appendix
+neg_share <- function(x) {
+  x <- x[is.finite(x)]
+  list(n = sum(x < 0), pct = 100 * mean(x < 0))
+}
+d2_neg_inc_hh <- neg_share(neg_hh$inc_all)
+d2_neg_inc_cl <- neg_share(neg_clans$inc_all)
+d2_neg_w_hh   <- neg_share(neg_hh_wealth$wealth)
+d2_neg_w_cl   <- neg_share(neg_clans_wealth$wealth)
+
+sensitivity_gini_c4 <-add_sens_legend(make_sensitivity_figure(
   make_sensitivity_plot(df = income_all,
     main_hh = "r_hh_w_inc",   main_cl = "r_cl_w_inc",
     alt_hh  = "neg_r_hh_inc", alt_cl  = "neg_r_cl_inc",
@@ -247,7 +395,7 @@ if (SAVE_FILES) {
   message("Saved: appendixD2.pdf")
 }
 
-# C5 — Size standardization ───────────────────────────────────────────────────
+# D4 — Size standardization ───────────────────────────────────────────────────
 r_hh_raw    <- readRDS(here("3_households", "output", "robust_households.rds"))
 r_clans_raw <- readRDS(here("4_clans",      "output", "robust_clans.rds"))
 r_hh_w_raw  <- readRDS(here("3_households", "output", "robust_households_wealth.rds"))
@@ -297,7 +445,7 @@ if (SAVE_FILES) {
   message("Saved: appendixD4.pdf")
 }
 
-# C6 — Weighting ──────────────────────────────────────────────────────────────
+# D3 — Weighting ──────────────────────────────────────────────────────────────
 sensitivity_gini_c6 <- add_sens_legend(make_sensitivity_figure(
   make_sensitivity_plot(df = income_all,
     main_hh = "r_hh_w_inc",   main_cl = "r_cl_w_inc",
@@ -315,7 +463,7 @@ if (SAVE_FILES) {
   message("Saved: appendixD3.pdf")
 }
 
-# C7 — Clan age weighting ──────────────────────────────────────────────────────
+# D6 — Household and clan age weighting ───────────────────────────────────────
 # r_cl_agewt_inc / r_cl_agewt_wealth come from 6_calculate_gini, where clan
 # weight is downweighted for older clans:
 #   mean_clan_age    <- mean(r_clans$clan_age_mean, na.rm = TRUE)
@@ -361,7 +509,7 @@ if (SAVE_FILES) {
 }
 
 
-# ── Appendix Table A1: Characteristics by Year (1984 and 2023) ────────────────
+# ── Appendix Table F1: Characteristics by Year (1984 and 2023) ────────────────
 appendix_tab_a1_ft <- tab1_make_ft(
   as.character(tab1_years), as.character(tab1_years), paste0("y", tab1_years),
   "Appendix F1. Characteristics of Households and Kin Groups, 1984 and 2023")
@@ -375,7 +523,7 @@ if (SAVE_FILES) {
 }
 
 
-# ── Appendix D: Alternative Inequality Measures ───────────────────────────────
+# ── Appendix B: Alternative Inequality Measures ───────────────────────────────
 coef_colors <- c(
   "C1 (Bonferroni)" = PURPLE,
   "C2 (Gini)"       = NAVY,
@@ -442,7 +590,7 @@ if (SAVE_FILES) {
 }
 
 
-# ── Appendix E1 (formerly E7): Mean and Median Wealth Ratios ────────────────────────────
+# ── Appendix E1: Mean and Median Wealth Ratios ────────────────────────────
 appendix_e1_med_plot <- make_ratio_plot(
   wealth_ratios %>% select(year,
                            r_hh_w_ratio = r_hh_w_median_ratio,
@@ -485,28 +633,23 @@ appendix_e1_note <- sprintf(
   w_ratio_cl_pct, w_ratio_cl_first, w_ratio_cl_last,
   avg_w_ratio_gap)
 
+# Untitled, like the other appendix figures: the supplement Rmd supplies the heading
 appendix_e1 <- arrangeGrob(
-  textGrob(
-    "Appendix E1. Black / Non-Black Wealth Ratios: Households vs. Kin Groups",
-    x = unit(0, "npc"), just = "left",
-    gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)),
   arrangeGrob(
-    arrangeGrob(
-      textGrob("Panel A: Median wealth ratio",
-               x = unit(0, "npc"), just = "left",
-               gp = gpar(fontfamily = base_family, fontsize = sub_size)),
-      appendix_e1_med_plot, ncol = 1, heights = c(1, 12)),
-    arrangeGrob(
-      textGrob("Panel B: Mean wealth ratio",
-               x = unit(0, "npc"), just = "left",
-               gp = gpar(fontfamily = base_family, fontsize = sub_size)),
-      appendix_e1_mean_plot, ncol = 1, heights = c(1, 12)),
-    ncol = 2),
-  ncol = 1, heights = unit(c(0.5, 10.0), "inches"))
+    textGrob("Panel A: Median wealth ratio",
+             x = unit(0, "npc"), just = "left",
+             gp = gpar(fontfamily = base_family, fontsize = sub_size)),
+    appendix_e1_med_plot, ncol = 1, heights = c(1, 12)),
+  arrangeGrob(
+    textGrob("Panel B: Mean wealth ratio",
+             x = unit(0, "npc"), just = "left",
+             gp = gpar(fontfamily = base_family, fontsize = sub_size)),
+    appendix_e1_mean_plot, ncol = 1, heights = c(1, 12)),
+  ncol = 2)
 
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "appendixE1.pdf"),
-         appendix_e1, width = 14, height = 11)
+         appendix_e1, width = 14, height = 10.5)
   message("Saved: appendixE1.pdf")
 }
 

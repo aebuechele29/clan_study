@@ -1,7 +1,7 @@
 ---
 title: "Supplementary Information"
 bibliography: bibliography_clan.bib
-csl: council-of-science-editors-brackets.csl
+csl: nature.csl
 always_allow_html: true
 output:
   pdf_document:
@@ -10,11 +10,20 @@ output:
       - float
       - graphicx
       - codehigh
-      - ulem
       - siunitx
   word_document:
     number_sections: false
+    reference_docx: reference_nolines.docx
 header-includes:
+  - \usepackage[normalem]{ulem}
+  - \usepackage{titling}
+  - \setlength{\droptitle}{-4em}
+  - \pretitle{\begin{center}\LARGE\bfseries}
+  - \posttitle{\par\end{center}\vspace{0.4em}}
+  - \preauthor{}
+  - \postauthor{}
+  - \predate{}
+  - \postdate{}
   - \usepackage{tabularray}
   - \UseTblrLibrary{booktabs}
   - \UseTblrLibrary{siunitx}
@@ -62,14 +71,35 @@ fmt1 <- function(x) format(round(x, 1), nsmall = 1)
 fmt0 <- function(x) format(round(x, 0), big.mark = ",")
 fmtp <- function(x) paste0(format(round(x, 2), nsmall = 2), "%")
 
-# Helper for adding notes to figures in .docx and .pdf
-print_note <- function(txt) {
+# Helpers for figure/table titles and notes in .docx and .pdf (same as write.Rmd).
+# Titles: bold, normal size. Notes: italic, small.
+# Word uses the "Figure Title" (Times New Roman 12pt bold) and "Figure Note"
+# (Times New Roman 10pt italic) styles in reference_nolines.docx.
+print_caption <- function(txt, word_style, latex_font) {
+  txt <- gsub("$", "\\$", txt, fixed = TRUE)  # escape dollar signs so they are not read as math
   if (knitr::is_latex_output()) {
-    cat("\n\n\\begingroup\\itshape\\small\\par\n", txt, "\n\\endgroup\n\n")
+    # the text is passed through as raw LaTeX, so escape LaTeX special characters
+    # (an unescaped % would silently cut off the rest of the note)
+    for (ch in c("%", "&", "#", "_")) txt <- gsub(ch, paste0("\\", ch), txt, fixed = TRUE)
+    cat("\n\n\\begingroup\\noindent", latex_font, "\n", txt, "\n\\par\\endgroup\n\n", sep = "")
   } else {
-    # Word: blank lines ensure a new paragraph; txt wrapped in markdown italic
-    cat(paste0("\n\n*", txt, "*\n\n"))
+    cat("\n\n::: {custom-style=\"", word_style, "\"}\n", txt, "\n:::\n\n", sep = "")
   }
+}
+print_title <- function(txt) print_caption(txt, "Figure Title", "\\bfseries")
+print_note  <- function(txt) print_caption(txt, "Figure Note",  "\\itshape\\small")
+```
+
+```{r title-block, results="asis"}
+# Subtitle under "Supplementary Information": the paper title and authors
+si_paper   <- "Kin group Gini: Extended family and economic inequality in the U.S."
+si_authors <- "Doron Shiffer-Sebba, Amanda Buechele, Julia A. Behrman, Limor Gabay Egozi"
+
+if (knitr::is_latex_output()) {
+  cat("\n\n\\begin{center}\n{\\large\\itshape ", si_paper, "}\\\\[0.6em]\n",
+      "\\normalsize ", si_authors, "\n\\end{center}\n\\vspace{1em}\n\n", sep = "")
+} else {
+  cat("\n\n::: {custom-style=\"Author\"}\n*", si_paper, "*\\\n", si_authors, "\n:::\n\n", sep = "")
 }
 ```
 
@@ -113,16 +143,23 @@ b1 <- tibble(
   select(Year, FRED, `U.S. Census`, `Our Results (All HH)`) %>%
   mutate(across(-Year, ~ round(as.numeric(.x), 3)))
 
-flextable(b1) %>%
-  set_caption(caption = "Appendix A1. Comparison of income Gini coefficients",
-              autonum = FALSE) %>%
+ft_a1 <- flextable(b1) %>%
   set_header_labels(`Our Results (All HH)` = "Our Results\n(All HH)") %>%
   theme_vanilla() %>%
   bold(part = "header") %>%
   align(align = "center", part = "all") %>%
+  font(fontname = "Times New Roman", part = "all") %>%
   fontsize(size = 9, part = "all") %>%
   fontsize(size = 8, part = "body") %>%
   fit_to_width(max_width = 6.5)
+```
+
+```{r table-a1-title, results="asis"}
+print_title("Appendix A1. Comparison of income Gini coefficients")
+```
+
+```{r table-a1-print}
+ft_a1
 ```
 
 ```{r table-a2}
@@ -141,15 +178,22 @@ b2 <- tibble(
   ) %>%
   select(Year, SCF, PSID, `Our Results`)
 
-flextable(b2) %>%
-  set_caption(caption = "Appendix A2. Comparison of wealth Gini coefficients with external estimates",
-              autonum = FALSE) %>%
+ft_a2 <- flextable(b2) %>%
   theme_vanilla() %>%
   bold(part = "header") %>%
   align(align = "center", part = "all") %>%
+  font(fontname = "Times New Roman", part = "all") %>%
   fontsize(size = 9, part = "all") %>%
   fontsize(size = 8, part = "body") %>%
   fit_to_width(max_width = 6.5)
+```
+
+```{r table-a2-title, results="asis"}
+print_title("Appendix A2. Comparison of wealth Gini coefficients with external estimates")
+```
+
+```{r table-a2-print}
+ft_a2
 ```
 
 Appendix A compares Gini coefficients at the household level calculated for income and wealth with Gini coefficients from other researchers. Gini coefficients in Appendix A are calculated using the full sample of households in the PSID, rather than just the households who belong to a kin group with at least one other household (which are the results presented in the main paper).
@@ -169,46 +213,26 @@ Appendix B shows three alternative measures of inequality proposed by Aaberge [@
 \newpage
 
 # Appendix C: Simulating Gini Coefficients
-Appendix C illustrates extreme cases from simulated household and kin group data. The simulation demonstrates that kin group-level Gini coefficients are not necessarily lower than household-level Gini coefficients. The direction of the difference depends on the relationship between kin group size, the overall distribution of resources, and the selection of households into kin groups. C1 and C2 plot the minimum and maximum simulated differences between kin groups and households, respectively, while C3 plots the full range of possible values.
 
-```{r fig-c-sim}
-set.seed(123)
-sims   <- run_many_sims_sums(
-  n_sims = 100, n_clans = 5, hh_per_clan = 10,
-  dist = "lognormal", dist_params = list(meanlog = 0, sdlog = 1),
-  clan_size_scenario = "rich_big"
-)
-df_res <- results_from_sims_sums(sims)
-ext    <- extreme_indices_sums(df_res)
+Appendix C shows that a kin group-level Gini coefficient is not necessarily lower than a household-level Gini coefficient. The kin group Gini measures inequality between kin groups, comparing the sum of resources held by all households in each kin group. Whether that Gini is higher or lower than the household Gini depends on how high- and low-resource households are distributed across kin groups of different sizes. Appendix C1 illustrates this with a single set of households grouped into kin groups three ways. Appendix C2 uses simulated data to show the most extreme outcomes. 
+
+## Appendix C1: Illustrating Kin Group Gini Possibilities
+
+```{r fig-c1, fig.width=14, fig.height=13, out.width="100%", fig.align="center"}
+appendix_c1
 ```
 
-## Appendix C1: Case with lowest simulated kin group-household Gini difference
-
-```{r fig-c1, fig.width=6, fig.height=4.5, fig.align="center"}
-plot_lorenz_for_sim_sums(sims[[ext$idx_min_sums]])
-```
-
-Appendix C1 illustrates the minimum possible difference between kin group and household Gini coefficients in the simulated data. The area between the Lorenz curve and the 45-degree line of perfect equality is larger for kin groups than for households. This case demonstrates that Gini coefficients at the kin group level can exceed those of households.
+Appendix C1 holds nine households fixed, with units of resources (1, 1, 2, 2, 3, 4, 6, 8, and 12). Panel A shows these households on their own, with a Gini of `r sprintf("%.2f", c1_gini[1])`. In Panels B to D, the same households form three kin groups of 2, 3, and 4 households (HH), and only which households belong to which kin group changes. Each bar is a kin group, stacked with the households within it, and the kin group total is shown above it. In Panel B, high- and low-resource households are spread across kin groups of every size. Kin group totals are similar, and the kin group Gini falls to `r sprintf("%.2f", c1_gini[2])`. In Panel C, high-resource households form the smallest kin group. The larger kin groups' extra members partly offset their lower resources, and the kin group Gini (`r sprintf("%.2f", c1_gini[3])`), which remains below the household Gini. In Panel D, high-resource households form the largest kin group. Its total is high both because its members have more resources and because it has more members, so the kin group Gini (`r sprintf("%.2f", c1_gini[4])`) exceeds the household Gini. This example shows that, if high-resource households select into larger kin groups, then kin group inequality would be higher than household inequality. 
 
 \newpage
 
-## Appendix C2: Case with highest simulated kin group-household Gini difference
+## Appendix C2: Plotting Lorenz Curves for Extreme Cases in Simulated Data
 
-```{r fig-c2, fig.width=6, fig.height=4.5, fig.align="center"}
-plot_lorenz_for_sim_sums(sims[[ext$idx_max_sums]])
+```{r fig-c2, fig.width=14, fig.height=9, out.width="100%", fig.align="center"}
+appendix_c2
 ```
 
-Appendix C2 shows the maximum possible difference between kin group and household Gini coefficients in the simulated data. In this case, the area between the Lorenz curve and the 45-degree line of perfect equality is larger for households than kin groups.
-
-\newpage
-
-## Appendix C3: Summary of extreme cases
-
-```{r fig-c3, fig.width=6.5, fig.height=5, fig.align="center"}
-make_two_mekko_sums(sims, ext$idx_min_sums, ext$idx_max_sums)
-```
-
-Appendix C3 plots the difference between household and kin group Gini coefficients based on simulated data. Appendix C1 shows the minimum possible difference between kin group and household Gini coefficients (right side of C3) in the simulated data, while Appendix C2 shows the maximum possible difference (left side of C3). Curves show that Gini coefficients at the kin group level can exceed those of households. While it is more likely for Gini coefficients at the household level to exceed Gini coefficients at the kin group level, Appendix C3 illustrates that, whether this effect is observed depends on the combination of kin group size and the income or wealth distribution.
+Appendix C2 extends this illustration with simulated data. In each of 100 simulations, we draw resources for 52 households independently from a lognormal distribution and assign them at random to five kin groups of 1, 6, 10, 15, and 20 households. We then compute the household Gini across the 52 households and the kin group Gini across the five kin group totals. The household Gini is higher in `r round(c2_share_hh_higher)`% of simulations, with a median difference of `r sprintf("%.2f", c2_median_diff)`. Appendix C2 plots Lorenz curves for the two most extreme simulations. The further a curve is from the 45-degree line of perfect equality, the higher the Gini coefficient. Panel A resembles Panel D of Appendix C1. By chance, the larger kin groups drew higher-resource households, and the kin group Gini (`r sprintf("%.2f", c2_min$gini_clan_sums)`) exceeds the household Gini (`r sprintf("%.2f", c2_min$gini_households)`). Panel B resembles Panel B of Appendix C1. A small kin group drew several of the highest-resource households, which offsets its size, and kin group totals end up similar. Here the kin group Gini (`r sprintf("%.2f", c2_max$gini_clan_sums)`) is far below the household Gini (`r sprintf("%.2f", c2_max$gini_households)`).
 
 \newpage
 
@@ -234,7 +258,7 @@ Results presented in the main text include home equity for measures of wealth. A
 sensitivity_gini_c4
 ```
 
-Results presented in the main text set negative values for household or kin group income and wealth to zero. Appendix D2 shows Gini coefficients when negative values are retained (middle graphs), and reports the difference between Gini coefficients at the household and kin group levels (graphs on the right). Including negative values does not change estimated Gini coefficients at the household or kin group levels.
+Results presented in the main text set negative values for household or kin group income and wealth to zero. Appendix D2 shows Gini coefficients when negative values are retained (middle graphs), and reports the difference between Gini coefficients at the household and kin group levels (graphs on the right). Negative income is a relatively rare event occurring when debt from family businesses or farms exceeds income. In our data, only `r fmt0(d2_neg_inc_hh$n)` household-years and `r fmt0(d2_neg_inc_cl$n)` kin group-years report negative income (`r fmtp(d2_neg_inc_hh$pct)` of household-years and `r fmtp(d2_neg_inc_cl$pct)` of kin group-years). Having negative wealth is much more common: `r fmtp(d2_neg_w_hh$pct)` of household-years and `r fmtp(d2_neg_w_cl$pct)` of kin group-years report negative wealth. Overall, including negative values does not change estimated Gini coefficients at the household or kin group levels.
 
 \newpage
 

@@ -367,11 +367,17 @@ fig1_note <- sprintf(
   inc_gini_diff, w_gini_diff
 )
 
-fig1 <- arrangeGrob(
-  textGrob(
-    "Figure 1. Income and Wealth Inequality Over Time",
-    x = unit(0, "npc"), just = "left",
-    gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)),
+# Titles are kept as text so write.Rmd can print every figure/table title in the same style.
+# The *_body objects (no title) go in the manuscript; the titled versions are saved as standalone PDFs.
+# Used in: figure_main
+title_grob <- function(txt) {
+  textGrob(txt, x = unit(0, "npc"), just = "left",
+           gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size))
+}
+
+fig1_title <- "Figure 1. Income and Wealth Inequality Over Time"
+
+fig1_body <- arrangeGrob(
   arrangeGrob(
     arrangeGrob(
       textGrob("Panel A: Income inequality from 1969 to 2023",
@@ -385,7 +391,10 @@ fig1 <- arrangeGrob(
       fig1_w, ncol = 1, heights = c(1, 12)),
     ncol = 2),
   fig1_legend,
-  ncol = 1, heights = unit(c(0.5, 9.5, 0.7), "inches"))
+  ncol = 1, heights = unit(c(9.5, 0.7), "inches"))
+
+fig1 <- arrangeGrob(title_grob(fig1_title), fig1_body,
+                    ncol = 1, heights = unit(c(0.5, 10.2), "inches"))
 
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "figure1.pdf"), fig1, width = 14, height = 11)
@@ -439,10 +448,10 @@ neg_fig2 <- purrr::map(c(`1984` = 1984, `2023` = 2023), function(yr) list(
 fig2_note <- sprintf(
   paste0(
     "Note: Lorenz curves are estimated using PSID family and kin group weights. ",
-    "In 1984, median (mean) income was %s (%s) for households and %s (%s) for kin groups; ",
-    "in 2023, it was %s (%s) for households and %s (%s) for kin groups. ",
-    "Median (mean) wealth was %s (%s) for households and %s (%s) for kin groups in 1984, ",
-    "compared with %s (%s) and %s (%s), respectively, in 2023. ",
+    "In 1984, median (mean) income was %s (%s) for households and %s  (%s) for kin groups; ",
+    "in 2023, it was %s  (%s) for households and %s  (%s) for kin groups. ",
+    "Median (mean) wealth was %s  (%s) for households and %s  (%s) for kin groups in 1984, ",
+    "compared with %s  (%s) and %s  (%s), respectively, in 2023. ",
     "Wealth measures include home equity. ",
     "Negative income and wealth values are set to zero when constructing Lorenz curves ",
     "but retained when calculating the reported medians and means. ",
@@ -458,11 +467,9 @@ fig2_note <- sprintf(
   money(neg_fig2$`2023`$w_cl$med),   money(neg_fig2$`2023`$w_cl$mean)
 )
 
-fig2 <- arrangeGrob(
-  textGrob(
-    "Figure 2. Lorenz Curves at the Household and Kin Group Levels",
-    x = unit(0, "npc"), just = "left",
-    gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)),
+fig2_title <- "Figure 2. Lorenz Curves at the Household and Kin Group Levels"
+
+fig2_body <- arrangeGrob(
   arrangeGrob(
     arrangeGrob(
       textGrob("Panel A: Distribution of income in 1984 and 2023",
@@ -476,7 +483,10 @@ fig2 <- arrangeGrob(
       fig2_w, ncol = 1, heights = c(1, 12)),
     ncol = 2),
   fig2_legend,
-  ncol = 1, heights = unit(c(0.5, 7.8, 0.6), "inches"))
+  ncol = 1, heights = unit(c(7.8, 0.6), "inches"))
+
+fig2 <- arrangeGrob(title_grob(fig2_title), fig2_body,
+                    ncol = 1, heights = unit(c(0.5, 8.4), "inches"))
 
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "figure2.pdf"), fig2, width = 14, height = 9)
@@ -500,10 +510,10 @@ fig3_note <- sprintf(
   paste0(
     "Note: Lines show the ratio of Black to Non-Black wealth for households and kin groups. ",
     "Wealth measures include home equity and use weighted medians. ",
-    "Across all years, weighted median (mean) wealth is %s (%s) for Black households ",
-    "and %s (%s) for Non-Black households. ",
-    "For kin groups, the weighted median (mean) wealth is %s (%s) for Black kin groups ",
-    "and %s (%s) for Non-Black kin groups. ",
+    "Across all years, weighted median (mean) wealth is %s  (%s) for Black households ",
+    "and %s  (%s) for Non-Black households. ",
+    "For kin groups, the weighted median (mean) wealth is %s  (%s) for Black kin groups ",
+    "and %s  (%s) for Non-Black kin groups. ",
     "Negative wealth values are set to zero for calculating race ratios, ",
     "but are retained in the mean and median estimates reported here. ",
     "Estimates are weighted, adjusted for inflation, and expressed in 2023 dollars. ",
@@ -521,13 +531,12 @@ fig3_note <- sprintf(
   -avg_w_med_ratio_gap
 )
 
-fig3 <- arrangeGrob(
-  textGrob(
-    "Figure 3. Black / Non-Black Median Wealth Ratio: Households vs. Kin Groups",
-    x = unit(0, "npc"), just = "left",
-    gp = gpar(fontfamily = base_family, fontface = "bold", fontsize = title_size)),
-  fig3_med_plot,
-  ncol = 1, heights = unit(c(0.5, 10.0), "inches"))
+fig3_title <- "Figure 3. Black / Non-Black Median Wealth Ratio: Households vs. Kin Groups"
+
+fig3_body <- arrangeGrob(fig3_med_plot, ncol = 1, heights = unit(10.0, "inches"))
+
+fig3 <- arrangeGrob(title_grob(fig3_title), fig3_body,
+                    ncol = 1, heights = unit(c(0.5, 10.0), "inches"))
 
 if (SAVE_FILES) {
   ggsave(here("9_figures", "output", "figure3.pdf"), fig3, width = 14, height = 11)
@@ -674,8 +683,9 @@ tab1_note <- sprintf(
 tab1_border <- officer::fp_border(color = "black", width = 0.75)
 
 # Used in: figure_main, figure_appendix
-tab1_make_ft <- function(periods, labels, pkeys, caption,
-                         width = NULL, label_share = 0.4) {
+# caption = NULL / note = NULL omit the caption / footer note (write.Rmd prints them as text instead)
+tab1_make_ft <- function(periods, labels, pkeys, caption = NULL,
+                         width = NULL, label_share = 0.4, note = tab1_note) {
   col_keys <- paste0(rep(pkeys, each = 2), "_", c("hh", "kg"))
   df       <- tab1_make_df(periods, col_keys)
   n_row    <- which(df$label == "N (unit-years)")
@@ -695,12 +705,17 @@ tab1_make_ft <- function(periods, labels, pkeys, caption,
   flextable::align(j = 1,  align = "left",   part = "all") %>%
   flextable::align(j = -1, align = "center", part = "all") %>%
   flextable::font(fontname = "Times New Roman", part = "all") %>%
-  flextable::fontsize(size = 10, part = "all") %>%
-  flextable::add_footer_lines(tab1_note) %>%
-  flextable::fontsize(size = 9, part = "footer") %>%
-  flextable::font(fontname = "Times New Roman", part = "footer") %>%
-  flextable::set_caption(caption) %>%
-  flextable::autofit()
+  flextable::fontsize(size = 10, part = "all")
+
+  if (!is.null(note)) {
+    ft <- ft %>%
+      flextable::add_footer_lines(note) %>%
+      flextable::fontsize(size = 10, part = "footer") %>%
+      flextable::italic(part = "footer") %>%
+      flextable::font(fontname = "Times New Roman", part = "footer")
+  }
+  if (!is.null(caption)) ft <- flextable::set_caption(ft, caption)
+  ft <- flextable::autofit(ft)
 
   if (!is.null(width)) {
     ft <- ft %>%
@@ -712,13 +727,19 @@ tab1_make_ft <- function(periods, labels, pkeys, caption,
 }
 
 # Table 1 reports pooled all-years columns only; 1984/2023 columns go to the appendix table
+tab1_title <- "Table 1. Characteristics of Households and Kin Groups"
+
+# Manuscript version: title and note are printed as text by write.Rmd, like the figures
 tab1_ft <- tab1_make_ft("All years", "All years (1969–2023)", "yall",
-                        "Table 1. Characteristics of Households and Kin Groups",
-                        width = 6.5)
+                        caption = NULL, width = 6.5, note = NULL)
+
+# Standalone version keeps its caption and footer note
+tab1_ft_save <- tab1_make_ft("All years", "All years (1969–2023)", "yall",
+                             caption = tab1_title, width = 6.5)
 
 if (SAVE_FILES) {
   flextable::save_as_docx(
-    tab1_ft,
+    tab1_ft_save,
     path = here("9_figures", "output", "table1.docx"),
     pr_section = officer::prop_section(
       page_size = officer::page_size(orient = "landscape")))

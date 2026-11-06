@@ -1,10 +1,9 @@
 ---
-title: "Kin Group Gini: An Extended Family Approach to Income and Wealth Inequality in the U.S."
-author: "Doron Shiffer-Sebba, Amanda Buechele, Julia A. Behrman, Limor Gabay Egozi"
-date: "`r format(Sys.Date(), '%B %d, %Y')`"
+title: "Kin group Gini: Extended family and economic inequality in the U.S."
+author: "Doron Shiffer-Sebba^1,\\*^, Amanda Buechele^1^, Julia A. Behrman^1^, Limor Gabay Egozi^2^"
 keywords: ["put keywords here"]
 bibliography: bibliography_clan.bib
-csl: council-of-science-editors-brackets.csl
+csl: nature.csl
 always_allow_html: true
 output:
   pdf_document:
@@ -13,11 +12,21 @@ output:
       - float
       - graphicx
       - codehigh
-      - ulem
       - siunitx
   word_document:
     number_sections: false
+    reference_docx: reference_linenumbers.docx
 header-includes:
+  - \usepackage{lineno}
+  - \usepackage[normalem]{ulem}
+  - \usepackage{titling}
+  - \setlength{\droptitle}{-4em}
+  - \pretitle{\begin{center}\LARGE\bfseries}
+  - \posttitle{\par\end{center}\vspace{0.4em}}
+  - \preauthor{\begin{center}\large}
+  - \postauthor{\par\end{center}}
+  - \predate{}
+  - \postdate{}
   - \usepackage{tabularray}
   - \UseTblrLibrary{booktabs}
   - \UseTblrLibrary{siunitx}
@@ -65,16 +74,25 @@ fmt1 <- function(x) format(round(x, 1), nsmall = 1)
 fmt0 <- function(x) format(round(x, 0), big.mark = ",")
 fmtp <- function(x) paste0(format(round(x, 2), nsmall = 2), "%")
 
-# Helper for adding notes to figures in .docx and .pdf
-print_note <- function(txt) {
+# Helpers for figure/table titles and notes in .docx and .pdf.
+# Every figure and table title goes through print_title() and every note through
+# print_note(), so they are formatted identically.
+# Titles: bold, normal size. Notes: italic, small.
+# Word uses the "Figure Title" (Times New Roman 12pt bold) and "Figure Note"
+# (Times New Roman 10pt italic) styles in reference_linenumbers.docx.
+print_caption <- function(txt, word_style, latex_font) {
   txt <- gsub("$", "\\$", txt, fixed = TRUE)  # escape dollar signs so they are not read as math
   if (knitr::is_latex_output()) {
-    cat("\n\n\\begingroup\\itshape\\small\\par\n", txt, "\n\\endgroup\n\n")
+    # the text is passed through as raw LaTeX, so escape LaTeX special characters
+    # (an unescaped % would silently cut off the rest of the note)
+    for (ch in c("%", "&", "#", "_")) txt <- gsub(ch, paste0("\\", ch), txt, fixed = TRUE)
+    cat("\n\n\\begingroup\\noindent", latex_font, "\n", txt, "\n\\par\\endgroup\n\n", sep = "")
   } else {
-    # Word: blank lines ensure a new paragraph; txt wrapped in markdown italic
-    cat(paste0("\n\n*", txt, "*\n\n"))
+    cat("\n\n::: {custom-style=\"", word_style, "\"}\n", txt, "\n:::\n\n", sep = "")
   }
 }
+print_title <- function(txt) print_caption(txt, "Figure Title", "\\bfseries")
+print_note  <- function(txt) print_caption(txt, "Figure Note",  "\\itshape\\small")
 ```
 
 ```{r load}
@@ -86,12 +104,34 @@ source(here::here("9_figures", "src", "all_figures.R"))
 # All scalars are computed in figures.R and are available in the environment.
 ```
 
+```{r title-block, results="asis"}
+# Affiliations, corresponding author, and date, set as one centered block under the
+# author line. Line numbering starts after this block so the title page is unnumbered.
+affiliations <- c(
+  "^1^Department of Sociology, Northwestern University",
+  "^2^Department of Sociology and Anthropology, Bar-Ilan University",
+  "^\\*^Corresponding author: doron@northwestern.edu"
+)
+draft_date <- format(Sys.Date(), "%B %d, %Y")
+
+if (knitr::is_latex_output()) {
+  to_tex <- function(x) {
+    x <- gsub("\\*", "*", x, fixed = TRUE)                  # markdown \* -> plain *
+    gsub("\\^([^^]+)\\^", "\\\\textsuperscript{\\1}", x)    # ^1^ -> \textsuperscript{1}
+  }
+  cat("\n\n\\begin{center}\\small\n",
+      paste(to_tex(affiliations), collapse = "\\\\\n"),
+      "\\\\[1.2em]\n\\normalsize ", draft_date, "\n\\end{center}\n",
+      "\\vspace{1em}\n\\linenumbers\n\n", sep = "")
+} else {
+  cat("\n\n::: {custom-style=\"Affiliation\"}\n",
+      paste(affiliations, collapse = "\\\n"), "\n:::\n\n",
+      "::: {custom-style=\"Date\"}\n", draft_date, "\n:::\n\n", sep = "")
+}
+```
+
 # Abstract
 Most macro-level studies of inequality treat the household as the primary unit of analysis, focusing on disparities between households. As a result, despite increasing acknowledgment of the importance of extended family ties, far less is known about inequality between extended families. We examine income and wealth inequality in the United States using both households and intergenerational extended families—hereafter referred to as "kin groups." Using data from the Panel Study of Income Dynamics (PSID), we calculate Gini coefficients for income and wealth at the household and kin group levels from 1969 to 2023. We find that income and wealth inequality are high at both levels, with inequality 20-30 percent lower when measured at the kin group level than at the household level. Over time, wealth inequality has increased at similar rates across both units, whereas income inequality has grown more rapidly at the kin group level. Comparing Lorenz curves from 1984 and 2023, we show that wealth inequality varied more across units of analysis (households vs. kin groups) than over time, whereas income inequality varied more over time than across units. Finally, the median racial wealth gap between Black and non-Black kin groups is ten percentage points lower than the analogous gap between Black and non-Black households. These findings underscore the importance of considering both extended families and households when examining contemporary patterns of inequality in the United States.
-
-
-# Significance Statement
-Economic inequality in the United States is typically measured between households, leaving inequality between extended families largely unexplored. Using more than five decades of data from the Panel Study of Income Dynamics, we show that income and wealth inequality between intergenerational extended families are between 20-30 percent lower than inequality between households, a finding that holds across all survey years. However, income inequality between extended families has increased more rapidly than household income inequality over time. Together, these findings demonstrate the importance of considering both extended families and households when exploring contemporary patterns of inequality.
 
 # Introduction
 Income and wealth inequality have increased sharply in the United States from the 1960s to the present. This trend is evident in the Gini index, a widely used measure of inequality ranging from 0 (perfect equality) to 1 (perfect inequality). For instance, the U.S. household-level income Gini rose from 0.369 in 1967 to 0.418 in 2023 [@fred_gini_2025]. Similarly, the U.S. household-level wealth Gini increased from 0.79 to 0.85 from 1989 to 2019 [@barro_decline_2020; @kuhn_income_2025].
@@ -100,31 +140,50 @@ The Gini and other important measures of inequality, like the racial wealth gap,
 
 Yet this predominant focus on households overlooks the fact that households are embedded in larger kin networks that structure obligations, cooperation, and access to resources. Such ties advantage and constrain households, shaping resource accumulation beyond parent-child transmission. Indeed, a growing body of research suggests that social scientists have underestimated the importance of the extended family in studies of inequality [@killewald_wealth_2017; @mare_multigenerational_2011; @obrien_family_2024; @shiffer-sebba_keeping_2025]. Research on elites similarly highlights the importance of extended family networks in maintaining wealth across generations [@obrien_family_2024]. Such insights have prompted renewed attention to the role extended family members play in the transmission of (dis)advantage [@alburez-gutierrez_projections_2023]. Scholars show that individual extended family members such as grandparents, aunts, uncles, and cousins transfer resources, impacting individuals' socioeconomic status [@adermon_dynastic_2021; @hallsten_shadow_2023; @song_shared_2019], and that these resource flows often continue even when family members live geographically far apart [@song_shared_2019]. Yet despite these insights, most macro-level studies of inequality—such as those that calculate the Gini coefficient or estimate the racial wealth gap—continue to treat households, or occasionally individuals, as the primary unit of analysis. Consequently, scholars have documented patterns of inequality between households, but know little about inequality between extended families.
 
-Drawing on scholarship showing the importance of extended families, we ask: what does income and wealth inequality in the U.S. look like when examining intergenerational extended families—what we refer to as "kin groups." To ease interpretation, we compare kin group estimates to the dominant unit of analysis, households. In our empirical analyses, we use data from the Panel Study of Income Dynamics (PSID), a longitudinal survey that has followed a nationally representative sample of American households and their descendants since 1968.
+Drawing on scholarship showing the importance of extended families, we ask: what does income and wealth inequality in the U.S. look like when examining intergenerational extended families—what we refer to as "kin groups." To ease interpretation, we compare kin group estimates to the dominant unit of analysis, households. In our empirical analyses, we use data from the Panel Study of Income Dynamics (PSID), a longitudinal survey that has followed a nationally representative sample of American households and their descendants since 1968. We calculate household and kin-group Gini coefficients for both income and wealth, as well as the racial wealth gap, using all available PSID years up to 2023.
 
-We calculate household and kin-group Gini coefficients for both income and wealth, as well as the racial wealth gap, using all available PSID years up to 2023. The relationship between households and kin groups can be understood as an extension of the relationship between individuals and households. Individuals tend to form households with others who have similar socioeconomic characteristics through marital homogamy [@schwartz_trends_2005]. Resources are thus concentrated within households, increasing disparities between them. If analogous mechanisms sort households into kin groups, kin groups may represent an important—and underexamined—unit for understanding the concentration of economic resources.
+This extension of households to kin groups parallels a well-established comparison in inequality research: the relationship between individuals and households. Individuals tend to form households with others who have similar socioeconomic characteristics through marital homogamy [@schwartz_trends_2005]. Resources are thus concentrated within households, increasing disparities between them. If analogous mechanisms sort households into kin groups, kin groups may represent an important—and underexamined—unit for understanding the concentration of economic resources.
 
 
 # Results
 **Sample characteristics.** Table 1 reports descriptive characteristics of households and kin groups across the study period, providing context on relative unit size and composition before we turn to inequality estimates.
 
+\newpage
+
+```{r table1-title, results="asis"}
+print_title(tab1_title)
+```
+
 ```{r table1}
 tab1_ft
 ```
 
+```{r table1-note, results="asis"}
+print_note(tab1_note)
+```
+
+\newpage
+
 **Gini coefficients at the household and kin group levels.** Figure 1 depicts income and wealth inequality for all households and kin groups over time. Reflecting data availability in the PSID, Panel A plots income Gini coefficients from 1969 to 2023 and Panel B plots wealth Gini coefficients from 1984 to 2023. Figure 1 shows that inequality is substantial under both measurement approaches. Yet inequality levels depend on the unit of analysis. Wealth and income Ginis measured at the kin group level are roughly 70%-80% the levels of their respective Ginis measured at the household level, a pattern that holds over the study period. The average income Gini coefficient is `r fmt2(avg_inc_hh)` at the household level versus `r fmt2(avg_inc_cl)` at the kin group level. For wealth, the average Gini coefficient is `r fmt2(avg_w_hh)` at the household level versus `r fmt2(avg_w_cl)` at the kin group level.
 
-Placing kin group estimates alongside historical household benchmarks helps contextualize contemporary inequality. The most recent kin group income Gini (`r fmt2(inc_cl_2023)` in 2023) is only slightly lower than the household income Gini of the early 1970s (`r fmt2(inc_hh_early70s_mean)` on avg. from 1971-1973)—a level long considered a local minimum. Relatively high kin group inequality has similar Gini values to relatively low household inequality. Kin group *wealth* inequality, by contrast, has not approached historically observed household-level wealth inequality over the period we examine.
+Placing kin group estimates alongside historical household benchmarks helps contextualize contemporary inequality. The most recent kin group income Gini (`r fmt2(inc_cl_2023)` in 2023) is only slightly lower than the household income Gini of the early 1970s (`r fmt2(inc_hh_early70s_mean)` on avg. from 1971-73)—a period long considered as the height of economic equality. In other words, Gini values indicative of historically low income inequality at the household level are reflective of historically high income inequality between kin groups. Kin group *wealth* inequality, by contrast, has not approached historically observed household-level wealth inequality over the period we examine.
 
+\newpage
 
-```{r figure1, fig.width=14, fig.height=11}
+```{r figure1-title, results="asis"}
+print_title(fig1_title)
+```
+
+```{r figure1, fig.width=14, fig.height=10.2}
 grid.newpage()
-grid.draw(fig1)
+grid.draw(fig1_body)
 ```
 
 ```{r figure1-note, results="asis"}
 print_note(fig1_note)
 ```
+
+\newpage
 
 We find inequality is higher for wealth than for income at both kin group and household levels. This finding is consistent with prior research showing how wealth accumulates over time and generations, retaining the imprint of earlier opportunities and constraints in a way that income does not [@killewald_wealth_2017; @hallsten_grand_2017]. As such, wealth reflects long-run inequality and intergenerationally accumulated advantages and disadvantages.
 
@@ -138,40 +197,54 @@ Comparing the two panels, however, reveals two additional key differences betwee
 
 Second, differences between inequality measured across the two units are driven by different parts of the income and wealth distributions. In both 1984 and 2023, the kin group lines (dotted) separate from the household lines (solid) across the entire distribution for income (Panel A), but mostly in the middle of the distribution for wealth (Panel B). These differences, which are partially but not entirely generated by the greater prevalence of zero wealth than zero income, mean that the gap between household and kin group wealth inequality are driven by those at the middle of the wealth distribution, whereas the gap between household and kin group income inequality capture differences between units across the entire distribution—from those with the lowest incomes to those at the top of the income distribution captured by the PSID.
 
-```{r figure2, fig.width=14, fig.height=11}
+\newpage
+
+```{r figure2-title, results="asis"}
+print_title(fig2_title)
+```
+
+```{r figure2, fig.width=14, fig.height=8.4}
 grid.newpage()
-grid.draw(fig2)
+grid.draw(fig2_body)
 ```
 
 ```{r figure2-note, results="asis"}
 print_note(fig2_note)
 ```
 
+\newpage
 
 **The racial wealth gap at the household and kin group levels.** Figure 3 depicts the racial wealth gap using both households and kin groups. The gap is persistent and sizable regardless of the unit of analysis. The typical Black household holds `r fmt0(100 * w_med_ratio_hh_mean)` cents for every dollar of wealth held by the typical non-Black household across the survey period (ranging from `r fmt0(100 * w_med_ratio_hh_max)` cents in `r w_med_ratio_hh_max_yr` to `r fmt0(100 * w_med_ratio_hh_min)` cents in `r w_med_ratio_hh_min_yr`). The typical Black kin group holds `r fmt0(100 * w_med_ratio_cl_mean)` cents for every dollar held by the typical non-Black kin group (ranging from `r fmt0(100 * w_med_ratio_cl_max)` cents in `r w_med_ratio_cl_max_yr` to `r fmt0(100 * w_med_ratio_cl_min)` cents in `r w_med_ratio_cl_min_yr`). The ratio between Black and non-Black median wealth when measured at the kin group level is thus around ten percentage points lower than the equivalent ratio measured at the household level.
 
 These gaps largely persist throughout the 1984-2023 period, but fluctuate differently by unit of analysis. The kin group-level ratio declines before reversing around 2013. The household-level ratio, meanwhile, fluctuates more modestly and approaches its minimum in 2023.
 
-```{r figure3, fig.width=14, fig.height=11}
+\newpage
+
+```{r figure3-title, results="asis"}
+print_title(fig3_title)
+```
+
+```{r figure3, fig.width=14, fig.height=10}
 grid.newpage()
-grid.draw(fig3)
+grid.draw(fig3_body)
 ```
 
 ```{r figure3-note, results="asis"}
 print_note(fig3_note)
 ```
 
+\newpage
 
 # Discussion
 Our analyses explored what income and wealth inequality in the U.S. look like when examined not only at the household level but also at the level of intergenerational extended families. We found that income and wealth inequality appear high both when examining society as a collection of households (the standard in the literature) and when examining society as a collection of kin groups. For the most part, income and wealth inequality are 20-30 percent lower when measured at the kin group- rather than the household-level, as per Gini coefficients. Likewise, we find that the median racial wealth gap between Black and non-Black families is high and persistent, whether measured at the household or kin group levels. Kin group racial wealth gaps are roughly ten percentage points lower than household gaps between Black and non-Black households. In other words, extended families are somewhat more economically similar to one another, on average, than households, but economic inequality is still severe on the kin group level.
 
-Our analyses complement existing scholarship on income and wealth inequality, which typically measures inequality at the household level (or in some cases the individual level). Our goal is not to diminish the importance of households as units of analysis, but to demonstrate that examining multiple units—including both households and kin groups—yields a more complete understanding of inequality as a complex social phenomenon. In principle, inequality between households could be very high even if inequality between kin groups were low. In the United States over the past 55 years, however, we observe substantial inequality at the kin group level as well.
+Our analyses complement existing scholarship on income and wealth inequality, which typically measures inequality at the household level (or in some cases the individual level). Our goal is not to diminish the importance of households as units of analysis, but to demonstrate that examining multiple units—including both households and kin groups—yields a more complete understanding of inequality as a complex social phenomenon. In principle, inequality between households could be very high even if inequality between kin groups were low (Appendix C). In the United States over the past 55 years, however, we observe substantial inequality at the kin group level as well.
 
 The choice to examine both households and kin groups as analytical units matters because different historical periods may generate inequality at different levels of social organization, a pattern reflected in our findings. For example, our analyses showed that kin group-level income inequality increased more rapidly than household-level income inequality over the study period. By contrast, trends over time in household and kin group wealth inequality were similar. This divergence over time between income and wealth patterns across levels of analysis may reflect the cumulative nature of wealth, which is more durably concentrated within kinship networks [@obrien_family_2024; @adermon_dynastic_2021; @pfeffer_determinants_2017], or limitations of the PSID's coverage of the top of the wealth distribution, where much wealth inequality is generated. Together, these patterns reinforce the importance of examining inequality at multiple levels of social organization.
 
 The patterns documented in our paper should not be interpreted as evidence that inequality in the U.S. is somehow less severe than previously understood. Ultimately, inequality between households is nested in, and compounds with, inequality between kin groups. It is thus important to understand how the two, and for that matter individual-level inequality as well, interact to shape overall inequality. It is possible that families behave differently along the economic distribution, as our Lorenz curves suggest. If, for example, kin groups in the middle of the distribution have different motivations for accumulating wealth than those at the top, they may also spread resources differently within kin groups, across households [@rapp_economies_2025]. To fully understand patterns of inequality, we must examine interactions across levels.
 
-One possible mechanism shaping differences between household and kin group inequality, for both income and wealth, is intergenerational mobility. Mechanically, lower mobility between households produces greater homogeneity within kin groups; low mobility means descendants' households mimic the status of their ancestors, producing kin groups made up of similar households. Higher mobility would have the opposite effect. Persistently high inequality at both the household and kin group levels indicates that mobility has not been high.
+One possible mechanism shaping differences between household and kin group inequality, for both income and wealth, is intergenerational mobility. Mechanically, lower mobility between households produces greater homogeneity within kin groups; low mobility means descendants' households mimic the status of their ancestors, producing kin groups made up of similar households. Higher mobility would have the opposite effect. Persistently high inequality at both the household and kin group levels indicates that mobility has not been high. This finding conforms with existing estimates of low mobility in the United States (Chetty et al., 2014; Chetty et al., 2020).
 
 Additionally, high kin group inequality may further reduce mobility. If extended family members are important for upward mobility, high inequality across kin groups means that lower-resourced households have less access to higher-resourced households within their kin group. In other words, the prevalent concern that high inequality undermines intergenerational mobility [@corak_income_2013; @jerrim_income_2015; @ermisch_parents_2012] may operate on both the household and kin group levels, fueling future patterns of inequality.
 
@@ -181,9 +254,9 @@ Although our analyses focused on the macro level, they highlighted a clear need 
 # Methods
 **Data and sample.** We use the genealogical design of the Panel Study of Income Dynamics (PSID) to compare estimates of inequality when using households and kin groups as the unit of analysis. The PSID began in 1968, surveying families annually until 1997 and biennially thereafter. It follows descendants of the original sample across generations and maintains a nationally representative sample of individuals and households. PSID data produce estimates that mostly align with other national surveys [@insolera_overview_2021].
 
-The PSID facilitates two linked units of analysis: households and kin groups. Households consist of economically interdependent individuals living in the same dwelling, with one member reporting income and wealth data for all members. Household membership changes over time with transitions such as divorce or childbirth. The PSID does not uniquely identify households across years. Households can only be linked over time using the individuals within them. We refer to household observations as household-years.
+The PSID facilitates two linked units of analysis: households and kin groups.^[The PSID defines family units as people living together related by blood, marriage, or adoption, or unrelated individuals who are economically interdependent (sharing income and expenses). Both components - relatedness and economic integration - are required for an individual to be classified as a family unit member. In this study, we refer to PSID family units as households.] One member of a household reports income and wealth data for all members. Household membership changes over time with transitions such as divorce or childbirth. The PSID does not uniquely identify households across years. Households can only be linked over time using the individuals within them. We refer to household observations as household-years.
 
-In contrast, PSID kin groups can be identified over time. Kin groups include all descendants of households sampled in 1968, linked through a PSID-generated identifier, which we call a kin group identifier. Households added after 1968 receive their own kin group identifier upon entry, which uniquely identifies them and their future descendants. Once an individual in the PSID is assigned a kin group identifier through birth, marriage, or adoption, the individual belongs to the same kin group for all years they remain in the PSID sample. In practice, this means that kin groups are comprised of households linked by birth, marriage, and adoption spanning multiple generations and extended kin ties (grandparents, aunts, uncles, and cousins, and in some cases great-grandparents, great-uncles, second cousins, and so on). A small number of households (`r fmt0(n_mismatched)` household-years) contain couples from different kin groups, meaning two descendants of the original PSID sample married each other. These household-years were assigned to both kin groups.
+In contrast, PSID kin groups can be identified over time. Kin groups include all descendants of households sampled in 1968, linked through a PSID-generated identifier. Households added after 1968 receive their own kin group identifier upon entry, which uniquely identifies them and their future descendants. Once an individual in the PSID is assigned a kin group identifier through birth, marriage, or adoption, the individual belongs to the same kin group for all years they remain in the PSID sample. In practice, this means that kin groups are comprised of households linked by birth, marriage, and adoption spanning multiple generations and extended kin ties (grandparents, aunts, uncles, and cousins, and in some cases great-grandparents, great-uncles, second cousins, and so on). A small number of households (`r fmt0(n_mismatched)` household-years) contain couples from different kin groups, meaning two descendants of the original PSID sample married each other. These household-years were assigned to both kin groups.
 
 The PSID has collected income data since its inception but began collecting wealth data only in 1984. As a result, analytic samples differ: income analyses include `r fmt0(inc_hh_years)` household-years and `r fmt0(inc_cl_years)` kin group-years, representing `r fmt0(inc_uniq_clans)` unique kin groups. Wealth analyses include `r fmt0(w_hh_years)` household-years and `r fmt0(w_cl_years)` kin group-years, representing `r fmt0(w_uniq_clans)` unique kin groups.
 
@@ -226,41 +299,48 @@ $$
 
 *Robustness of racial disparities.* The household–kin group gap in inequality holds separately for Black and non-Black families (Appendix D7). For the racial wealth gap itself, results are robust across the same measurement and composition checks described above, with one exception: using mean rather than median wealth makes the household- and kin-group-level racial wealth gaps converge, because a small number of high-wealth Black households pull the household-level mean upward (Appendix E1). We report medians for this reason.
 
-How Black kin groups are defined could drive differences in observed racial wealth gaps at the kin group and household levels. Because kin groups span multiple households, they are more likely than individual households to include non-Black individuals. In `r e8_last_year`, `r scales::percent(e8_any_kg_last, 0.1)` of Black kin groups included at least one non-Black head or spouse, compared with `r scales::percent(e8_any_hh_last, 0.1)` of Black households with a non-Black spouse. However, accounting for the number of households within each kin group, the prevalence of non-Black heads or spouses is approximately `r scales::number(e8_perhh_kg_last, 0.001)` per household, similar to the rate observed among Black households. Thus, the greater prevalence of non-Black individuals in Black kin groups largely reflects their larger size rather than higher rates of interracial partnership within select kin groups.
-
-The racial wealth gap is also robust to alternative definitions of Black kin groups. In our main analyses, we classify kin groups as Black if more than half of the households within them are Black. However, the racial wealth gap remains about the same when using alternative thresholds (Appendix E8).
+How Black kin groups are defined could drive differences in observed racial wealth gaps between kin groups and households. Because kin groups span multiple households, they are more likely than individual households to include non-Black individuals. In `r e8_last_year`, `r scales::percent(e8_any_kg_last, 0.1)` of Black kin groups included at least one non-Black head or spouse, compared with `r scales::percent(e8_any_hh_last, 0.1)` of Black households. We find that the prevalence of non-Black individuals in Black kin groups does not drive lower racial wealth gaps at the kin group level. In our main analyses, we classify kin groups as Black if more than half of the households within them are Black. However, the racial wealth gap remains about the same at the kin group level if Black kin groups are defined using alternative thresholds (Appendix E8). In sum, lower racial wealth gaps at the kin group level are not driven by racial heterogeneity within Black kin groups.
 
 
 *Robustness to kin group size and age.* Kin groups grow larger and older over the study period. This partly reflects the PSID's genealogical design: because descendants only enter a kin group once they respond to the survey independently, kin groups are mechanically smaller and younger in the survey's early years, before descendants had left home or begun independent households. It also partly reflects genuine demographic change in American society — later home-leaving, declining fertility, and increasing longevity — which independently reduces household size and increases kin group size over time (Appendix F1, F2). We cannot fully disentangle survey design from demographic change as the source of these shifts, but we assess robustness to both.
 
 First, our main analyses standardize income and wealth by household and kin group size before calculating Gini coefficients. As a robustness check, we also estimate unstandardized results: inequality is higher without size standardization, and the household–kin group gap is smaller, but household-level Gini coefficients remain higher than kin-group-level Gini coefficients regardless of whether measures are size-adjusted (Appendix D4, E5).
 
-Second, because the U.S. population is aging generally, we apply an additional age weight — downweighting older households and kin groups relative to their share of the sample — to test whether the changing age structure of the United States drives our results. EEstimates when weighting to correct age  differences are substantively similar to our main results (Appendix D6, E7). It is likely that findings with and without age weights are consistent because the average age of households and kin groups has increased at roughly the same rate since 1990 (Appendix F3). Together, these checks indicate that differences in observed inequality between households and kin groups are not an artifact of changes in kin group size or age, whether those changes stem from survey design or broader demographic trends.
+Second, because the U.S. population is aging generally, we apply an additional age weight — downweighting older households and kin groups relative to their share of the sample — to test whether the changing age structure of the United States drives our results. Estimates when weighting to correct age differences are substantively similar to our main results (Appendix D6, E7). It is likely that findings with and without age weights are consistent because the average age of households and kin groups has increased at roughly the same rate since 1990 (Appendix F3). Together, these checks indicate that differences in observed inequality between households and kin groups are not an artifact of changes in kin group size or age, whether those changes stem from survey design or broader demographic trends.
 
 In our main analyses, household and kin group income and wealth ($x_h$ and $x_c$) are standardized by family size, and in the age-weighted sensitivity analysis each weight is further scaled by the ratio of the sample's mean age to the unit's mean age:
 
 $$
 \tilde{x}_h = \frac{x_h}{n_h}, \qquad
 \tilde{x}_c = \frac{1}{m_c} \sum_{h \in c} x_h, \qquad
-W_h^{\text{age}} = W_h \cdot \frac{\bar{a}_{H}}{a_h}, \qquad
-W_c^{\text{age}} = W_c \cdot \frac{\bar{a}_{C}}{a_c},
+W_h^{\text{age}} = W_h \cdot \frac{\bar{a}_{h}}{a_h}, \qquad
+W_c^{\text{age}} = W_c \cdot \frac{\bar{a}_{c}}{a_c},
 $$
 
-where $a_h$ is the average age of members of household $h$, $a_c$ is the average age of kin group $c$, and $\bar{a}_{H}$ and $\bar{a}_{C}$ are their respective sample means.
+where $a_h$ is the average age of members of household $h$, $a_c$ is the average age of kin group $c$, and $\bar{a}_{h}$ and $\bar{a}_{c}$ are their respective sample means.
 
-<!-- TODO: kin group size/age-over-time figure from v9 goes here (or in the appendix); object name needed -->
 
 *Robustness to single-household kin groups.* A related consequence of the PSID's genealogical design is that kin groups in the early survey years are more likely to consist of a single household, since descendants had not yet formed independent households of their own; the prevalence of single-household kin groups fell 75% between 1969 and 1980. Single-household kin groups can also arise later in the survey through nonresponse or attrition. However, we find that the number of kin groups including or excluding single-household kin groups remains stable after 1980 (see Appendix F4).
 
 Because household- and kin-group-level measures are identical by construction for single-household kin groups, including them in the analysis mechanically shrinks the household–kin group gap — not because inequality is genuinely more similar across units, but because a share of "kin groups" are, by definition, households. For this reason, our main analyses exclude single-household kin groups.
 
-As a robustness check, we report results with single-household kin groups included: the household–kin group gap narrows for both income and wealth, but is not eliminated (Appendix D5, E6). Single-household kin groups are most prevalent from 1969 to 1980. Because the PSID did not begin collecting wealth data until 1984, the prevalence of single-household kin groups during this period could affect only measures of income inequality, not wealth inequality. However, Figure 1 shows that the income-inequality gap between households and kin groups remains consistent from 1981–2023. We also re-estimate results excluding 1969–1980, the period in which single-household kin groups are most prevalent; overall trends remain similar regardless of whether this period is excluded.
+As a robustness check, we report results with single-household kin groups included: the household–kin group gap narrows for both income and wealth, but is not eliminated (Appendix D5, E6). Single-household kin groups are most prevalent from 1969 to 1980. Because the PSID did not begin collecting wealth data until 1984, the prevalence of single-household kin groups during this period could affect only measures of income inequality, not wealth inequality. However, Figure 1 shows that the income-inequality gap between households and kin groups remains consistent from 1981–2023.
 
 **Limitations.** The finding that inequality is 20-30\% lower at the kin group level than at the household level is robust across racial groups and alternative measurement choices, and does not appear to be driven by demographic changes in family size or age composition. Nevertheless, our analysis has several limitations. 
 
 First, our estimates are not representative of all kin groups in the United States. Rather, they are based on kin groups constructed from a sample of Black and white households that was nationally representative in 1968. Hispanic and Asian Americans, as well as recent immigrants, constitute substantial segments of the American population. Patterns of inequality at the kin group level may differ for these groups.
 
 Second, other factors may influence which kin groups are observable in the PSID. The PSID constructs kin groups by following descendants of households originally included in the survey. PSID-provided weights adjust for attrition at the individual level to account for individuals who leave the study or do not respond to survey outreach. To minimize attrition, the PSID sometimes provides incentives to kin group members who encourage other family members to participate in the survey. Consequently, attrition may not occur independently across members of the same kin group. It remains unclear whether individuals who attrit differ systematically from those who remain in the study in ways that affect the composition and characteristics of observable kin groups. Although individual-level weights form the basis for household and kin group weights, these may not fully account for potential selection into which kin groups are observable. Despite these limitations, our findings underscore the importance of considering kin groups as a unit of analysis when studying economic inequality.
+
+Supplementary Information is available for this paper.
+
+**Funding.** If the work in the paper is within scope of a grant and arose directly from a specific grant, funding should be declared in a separate funding statement.
+
+**Author contributions.** You must include a statement that specifies the individual contributions of each co-author. For example: "A.P.M. 'contributed' Y and Z; B.T.R. 'contributed' Y," etc. See our authorship policies for more details.
+
+**Competing interests.** The authors declare no competing interests.
+
+**Materials & Correspondence.** Indicate the author to whom correspondence and material requests should be addressed.
 
 
 # References
