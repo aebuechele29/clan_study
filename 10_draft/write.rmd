@@ -37,6 +37,9 @@ header-includes:
   - \floatplacement{figure}{H}
   - \usepackage{caption}
   - \captionsetup[table]{labelformat=empty}
+  # Footnotes use symbols because references are numbered. Start at the dagger
+  # because * marks the corresponding author (Word: see reference_linenumbers.docx).
+  - \renewcommand{\thefootnote}{\ifcase\value{footnote}\or\textdagger\or\textdaggerdbl\or\textsection\or\textparagraph\or\textbardbl\or\textdagger\textdagger\or\textdaggerdbl\textdaggerdbl\fi}
 knit: (function(input, ...) {
   rmarkdown::render(input, ..., output_format = "pdf_document",
     output_file = here::here("10_draft", "output", "write.pdf"));
@@ -148,8 +151,6 @@ This extension of households to kin groups parallels a well-established comparis
 # Results
 **Sample characteristics.** Table 1 reports descriptive characteristics of households and kin groups across the study period, providing context on relative unit size and composition before we turn to inequality estimates.
 
-\newpage
-
 ```{r table1-title, results="asis"}
 print_title(tab1_title)
 ```
@@ -162,13 +163,10 @@ tab1_ft
 print_note(tab1_note)
 ```
 
-\newpage
 
 **Gini coefficients at the household and kin group levels.** Figure 1 depicts income and wealth inequality for all households and kin groups over time. Reflecting data availability in the PSID, Panel A plots income Gini coefficients from 1969 to 2023 and Panel B plots wealth Gini coefficients from 1984 to 2023. Figure 1 shows that inequality is substantial under both measurement approaches. Yet inequality levels depend on the unit of analysis. Wealth and income Ginis measured at the kin group level are roughly 70%-80% the levels of their respective Ginis measured at the household level, a pattern that holds over the study period. The average income Gini coefficient is `r fmt2(avg_inc_hh)` at the household level versus `r fmt2(avg_inc_cl)` at the kin group level. For wealth, the average Gini coefficient is `r fmt2(avg_w_hh)` at the household level versus `r fmt2(avg_w_cl)` at the kin group level.
 
 Placing kin group estimates alongside historical household benchmarks helps contextualize contemporary inequality. The most recent kin group income Gini (`r fmt2(inc_cl_2023)` in 2023) is only slightly lower than the household income Gini of the early 1970s (`r fmt2(inc_hh_early70s_mean)` on avg. from 1971-73)—a period long considered as the height of economic equality. In other words, Gini values indicative of historically low income inequality at the household level are reflective of historically high income inequality between kin groups. Kin group *wealth* inequality, by contrast, has not approached historically observed household-level wealth inequality over the period we examine.
-
-\newpage
 
 ```{r figure1-title, results="asis"}
 print_title(fig1_title)
@@ -182,8 +180,6 @@ grid.draw(fig1_body)
 ```{r figure1-note, results="asis"}
 print_note(fig1_note)
 ```
-
-\newpage
 
 We find inequality is higher for wealth than for income at both kin group and household levels. This finding is consistent with prior research showing how wealth accumulates over time and generations, retaining the imprint of earlier opportunities and constraints in a way that income does not [@killewald_wealth_2017; @hallsten_grand_2017]. As such, wealth reflects long-run inequality and intergenerationally accumulated advantages and disadvantages.
 
@@ -212,8 +208,6 @@ grid.draw(fig2_body)
 print_note(fig2_note)
 ```
 
-\newpage
-
 **The racial wealth gap at the household and kin group levels.** Figure 3 depicts the racial wealth gap using both households and kin groups. The gap is persistent and sizable regardless of the unit of analysis. The typical Black household holds `r fmt0(100 * w_med_ratio_hh_mean)` cents for every dollar of wealth held by the typical non-Black household across the survey period (ranging from `r fmt0(100 * w_med_ratio_hh_max)` cents in `r w_med_ratio_hh_max_yr` to `r fmt0(100 * w_med_ratio_hh_min)` cents in `r w_med_ratio_hh_min_yr`). The typical Black kin group holds `r fmt0(100 * w_med_ratio_cl_mean)` cents for every dollar held by the typical non-Black kin group (ranging from `r fmt0(100 * w_med_ratio_cl_max)` cents in `r w_med_ratio_cl_max_yr` to `r fmt0(100 * w_med_ratio_cl_min)` cents in `r w_med_ratio_cl_min_yr`). The ratio between Black and non-Black median wealth when measured at the kin group level is thus around ten percentage points lower than the equivalent ratio measured at the household level.
 
 These gaps largely persist throughout the 1984-2023 period, but fluctuate differently by unit of analysis. The kin group-level ratio declines before reversing around 2013. The household-level ratio, meanwhile, fluctuates more modestly and approaches its minimum in 2023.
@@ -232,8 +226,6 @@ grid.draw(fig3_body)
 ```{r figure3-note, results="asis"}
 print_note(fig3_note)
 ```
-
-\newpage
 
 # Discussion
 Our analyses explored what income and wealth inequality in the U.S. look like when examined not only at the household level but also at the level of intergenerational extended families. We found that income and wealth inequality appear high both when examining society as a collection of households (the standard in the literature) and when examining society as a collection of kin groups. For the most part, income and wealth inequality are 20-30 percent lower when measured at the kin group- rather than the household-level, as per Gini coefficients. Likewise, we find that the median racial wealth gap between Black and non-Black families is high and persistent, whether measured at the household or kin group levels. Kin group racial wealth gaps are roughly ten percentage points lower than household gaps between Black and non-Black households. In other words, extended families are somewhat more economically similar to one another, on average, than households, but economic inequality is still severe on the kin group level.
