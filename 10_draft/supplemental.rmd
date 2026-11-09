@@ -34,6 +34,9 @@ header-includes:
   - \floatplacement{figure}{H}
   - \usepackage{caption}
   - \captionsetup[table]{labelformat=empty}
+  # rmarkdown adds \date{\vspace{-2.5em}} when there is no author, which pulls the
+  # first heading up into the title. Clear the date so the spacing stays normal.
+  - \AtBeginDocument{\date{}}
 knit: (function(input, ...) {
   rmarkdown::render(input, ..., output_format = "pdf_document",
     output_file = here::here("10_draft", "output", "supplemental.pdf"));
@@ -88,19 +91,6 @@ print_caption <- function(txt, word_style, latex_font) {
 }
 print_title <- function(txt) print_caption(txt, "Figure Title", "\\bfseries")
 print_note  <- function(txt) print_caption(txt, "Figure Note",  "\\itshape\\small")
-```
-
-```{r title-block, results="asis"}
-# Subtitle under "Supplementary Information": the paper title and authors
-si_paper   <- "Kin group Gini: Extended family and economic inequality in the U.S."
-si_authors <- "Doron Shiffer-Sebba, Amanda Buechele, Julia A. Behrman, Limor Gabay Egozi"
-
-if (knitr::is_latex_output()) {
-  cat("\n\n\\begin{center}\n{\\large\\itshape ", si_paper, "}\\\\[0.6em]\n",
-      "\\normalsize ", si_authors, "\n\\end{center}\n\\vspace{1em}\n\n", sep = "")
-} else {
-  cat("\n\n::: {custom-style=\"Author\"}\n*", si_paper, "*\\\n", si_authors, "\n:::\n\n", sep = "")
-}
 ```
 
 ```{r appendix-load}
@@ -240,8 +230,6 @@ Appendix C2 extends this illustration with simulated data. In each of 100 simula
 
 Across a range of specifications, estimated inequality using the Gini is lower when kin groups are used as the unit of analysis instead of households. This pattern is not driven by race, nor does it disappear when expanding the sample, excluding home equity in measures of wealth, including negative wealth values, standardizing by household size, or applying weights. For each specification, results are recalculated and displayed alongside the main results.
 
-\newpage
-
 ## Appendix D1: Sensitivity — Wealth With and Without Home Equity
 
 ```{r fig-d1, fig.width=14, fig.height=7, out.width="100%"}
@@ -320,8 +308,6 @@ Racial wealth gaps estimated using mean, rather than median, wealth are about th
 
 Across a range of specifications, estimated median racial wealth gaps are lower when kin groups are used as the unit of analysis instead of households. This pattern does not disappear when expanding the sample, excluding home equity in measures of wealth, including negative wealth values, standardizing by household size, or applying weights. For each specification, results are recalculated and displayed alongside the main results.
 
-
-\newpage
 
 ## Appendix E1: Mean and Median Wealth Ratios
 
