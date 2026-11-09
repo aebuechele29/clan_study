@@ -70,7 +70,7 @@ FIG_CODE := $(S9) $(FIG_MAIN) $(FIG_APPENDIX) $(F_ALL) $(F_DATA) $(F_GINI) \
 # ----------------
 RMD       := 10_draft/write.rmd
 SUPP_RMD  := 10_draft/supplemental.rmd
-CSL       := 10_draft/council-of-science-editors-brackets.csl
+CSL       := 10_draft/nature.csl
 BIB       := 10_draft/bibliography_clan.bib
 DRAFT_OUT := 10_draft/output
 
