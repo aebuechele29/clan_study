@@ -3,8 +3,12 @@
 # ============================================================
 # Run from the project root (the folder containing this file).
 #
+#   make setup        first time only: install R packages from renv.lock
+#                     and check that pandoc and LaTeX are available
 #   make              build everything: pipeline, figures, paper, supplement
 #   make help         list all targets
+#
+# Full replication instructions are in README.md
 #
 # Works with the make that ships with macOS (GNU make 3.81), Linux,
 # and Git Bash on Windows. It will NOT work in Command Prompt/PowerShell.
@@ -102,7 +106,6 @@ OUT4 := $(C)/clans.rds \
         $(H)/robust_households_wealth.rds $(H)/neg_robust_households_wealth.rds
 
 OUT5 := $(addprefix 5_summary/output/, \
-          summary_statistics.csv \
           inc_family_demo.csv w_family_demo.csv \
           inc_family_demo_full.csv w_family_demo_full.csv \
           income_quartiles.docx wealth_quartiles.docx)
@@ -111,7 +114,7 @@ OUT6 := $(addprefix 6_calculate_gini/output/, \
           income.csv wealth_nohouse.csv wealth_withhome.csv)
 
 OUT7 := $(addprefix 7_gini_by_race/output/, \
-          income_race.csv wealth_nohouse_race.csv \
+          income_race.csv wealth_nohouse_race.csv wealth_withhome_race.csv \
           income_race_ratios.csv wealth_nohouse_race_ratios.csv \
           wealth_withhome_race_ratios.csv)
 
@@ -120,22 +123,16 @@ OUT8 := $(addprefix 8_nuclear_family/output/, \
 
 OUT9 := $(addprefix 9_figures/output/, \
           figure1.pdf figure2.pdf figure3.pdf table1.docx \
-          appendixB.pdf \
+          appendixB.pdf appendixC1.pdf appendixC2.pdf \
           appendixD1.pdf appendixD2.pdf appendixD3.pdf appendixD4.pdf \
           appendixD5.pdf appendixD6.pdf appendixD7.pdf \
           appendixE1.pdf appendixE2.pdf appendixE3.pdf appendixE4.pdf \
-          appendixE5.pdf appendixE6.pdf appendixE7.pdf \
+          appendixE5.pdf appendixE6.pdf appendixE7.pdf appendixE8.pdf \
           appendixF2.pdf appendixF3.pdf appendixF4.pdf \
           appendix_tableF1.docx)
 
 PAPER_OUT := $(DRAFT_OUT)/write.pdf $(DRAFT_OUT)/write.docx
 SUPP_OUT  := $(DRAFT_OUT)/supplemental.pdf $(DRAFT_OUT)/supplemental.docx
-
-# NOTE: figure_appendix.R reads 7_gini_by_race/output/wealth_withhome_race.csv,
-# but gini_by_race.R does not currently write that file (it builds
-# wh_by_year_race but never saves it). Until it does, the existing copy is
-# treated as a required input and is never deleted by `make veryclean`.
-LEGACY_INPUTS := 7_gini_by_race/output/wealth_withhome_race.csv
 
 # ----------------
 # Helpers
@@ -167,7 +164,7 @@ endef
 # ----------------
 .PHONY: all pipeline figures paper supplemental help \
         build-panel clean-panel households clans summary gini gini-race nuclear-family \
-        check-data check-legacy clean clean-figures veryclean
+        setup check-data clean clean-figures veryclean
 
 all: figures paper supplemental
 
@@ -206,8 +203,18 @@ redo-%:
 	@rm -f $(STAMP)/$(STEP_$*)
 	@$(MAKE) --no-print-directory $(STAMP)/$(STEP_$*)
 
+# One-time setup: install the exact package versions in renv.lock, then
+# report the tools the paper needs (pandoc for rmarkdown, LaTeX for PDF).
+setup:
+	@echo "==> Restoring R packages from renv.lock (the first run can take a while)"
+	@$(R) -e "renv::restore(prompt = FALSE)"
+	@echo ""
+	@echo "==> Checking tools"
+	@$(R) -e "lock <- renv::lockfile_read('renv.lock'); cat('R in use:     ', as.character(getRversion()), '\n'); cat('R in renv.lock:', lock[['R']][['Version']], '\n'); cat('pandoc:       ', if (rmarkdown::pandoc_available()) as.character(rmarkdown::pandoc_version()) else 'NOT FOUND (see README.md)', '\n'); cat('pdflatex:     ', if (nzchar(Sys.which('pdflatex'))) Sys.which('pdflatex') else 'NOT FOUND (see README.md)', '\n')"
+
 help:
 	@echo "Targets:"
+	@echo "  make setup           first time only: install R packages from renv.lock"
 	@echo "  make                 everything (figures, paper, supplemental)"
 	@echo "  make pipeline        steps 1-8 (data through nuclear-family results)"
 	@echo "  make figures         step 9: figures and tables in 9_figures/output"
@@ -230,19 +237,27 @@ check-data:
 	@echo "==> Checking required inputs"
 	@if [ -z "$(PSID_DO)" ];  then echo "ERROR: no .do file in 0_data/fam_ind/ (place your PSID extract there)";  exit 1; fi
 	@if [ -z "$(PSID_TXT)" ]; then echo "ERROR: no .txt file in 0_data/fam_ind/ (place your PSID extract there)"; exit 1; fi
+	@if [ $(words $(PSID_DO)) -ne 1 ] || [ $(words $(PSID_TXT)) -ne 1 ]; then \
+	  echo "ERROR: 0_data/fam_ind/ must hold exactly one .do and one .txt file (the PSID extract)."; \
+	  echo "       Found: $(notdir $(PSID_DO) $(PSID_TXT))"; exit 1; fi
 	@for f in $(PSID_XLSX) $(CPI_XLSX) $(FUNCS) $(SCRIPTS) $(RMD) $(SUPP_RMD) $(CSL) $(BIB); do \
 	  if [ ! -f "$$f" ]; then echo "ERROR: missing required file: $$f"; exit 1; fi; \
 	done
 	@echo "    all inputs present"
 
-check-legacy:
-	@for f in $(LEGACY_INPUTS); do \
-	  if [ ! -f "$$f" ]; then \
-	    echo "ERROR: $$f is missing."; \
-	    echo "       figure_appendix.R reads it, but gini_by_race.R does not write it."; \
-	    exit 1; \
-	  fi; \
-	done
+# Raw-data files are prerequisites of the steps that read them. If one is
+# missing, stop with a clear message instead of make's generic "No rule to
+# make target". (When the file exists this rule never runs.)
+$(PSID_XLSX):
+	@echo "ERROR: missing $@"
+	@echo "       This is the PSID cross-year index. Download psid.xlsx from the PSID"
+	@echo "       website and place it at $@ (see README.md, 'Data')."
+	@exit 1
+
+$(CPI_XLSX):
+	@echo "ERROR: missing $@"
+	@echo "       This is the CPI series used to adjust for inflation (see README.md, 'Data')."
+	@exit 1
 
 $(STAMP):
 	@mkdir -p $(STAMP)
@@ -312,7 +327,7 @@ $(STAMP)/8_nuclear_family: $(STAMP)/4_clans $(S8) $(F_ALL) $(F_GINI) | check-dat
 ANALYSIS := $(STAMP)/4_clans $(STAMP)/5_summary $(STAMP)/6_calculate_gini \
             $(STAMP)/7_gini_by_race $(STAMP)/8_nuclear_family
 
-$(STAMP)/9_figures: $(ANALYSIS) $(FIG_CODE) | check-data check-legacy $(STAMP)
+$(STAMP)/9_figures: $(ANALYSIS) $(FIG_CODE) | check-data $(STAMP)
 	@mkdir -p 9_figures/output
 	$(call run_step,Step 9: figures and tables,$(S9))
 	$(call check_outputs,$(OUT9))
@@ -325,7 +340,7 @@ $(STAMP)/9_figures: $(ANALYSIS) $(FIG_CODE) | check-data check-legacy $(STAMP)
 # write.rmd sources all_figures.R itself, so it needs the same inputs as
 # the figures step rather than the figure files.
 # ----------------
-$(STAMP)/paper: $(ANALYSIS) $(FIG_CODE) $(RMD) $(CSL) $(BIB) | check-data check-legacy $(STAMP)
+$(STAMP)/paper: $(ANALYSIS) $(FIG_CODE) $(RMD) $(CSL) $(BIB) | check-data $(STAMP)
 	@mkdir -p $(DRAFT_OUT)
 	@echo ""
 	@echo "==> Rendering paper"
@@ -334,7 +349,7 @@ $(STAMP)/paper: $(ANALYSIS) $(FIG_CODE) $(RMD) $(CSL) $(BIB) | check-data check-
 	@touch $@
 	@echo "==> Wrote: $(PAPER_OUT)"
 
-$(STAMP)/supplemental: $(ANALYSIS) $(FIG_CODE) $(F_SIMS) $(SUPP_RMD) $(CSL) $(BIB) | check-data check-legacy $(STAMP)
+$(STAMP)/supplemental: $(ANALYSIS) $(FIG_CODE) $(F_SIMS) $(SUPP_RMD) $(CSL) $(BIB) | check-data $(STAMP)
 	@mkdir -p $(DRAFT_OUT)
 	@echo ""
 	@echo "==> Rendering supplemental information"

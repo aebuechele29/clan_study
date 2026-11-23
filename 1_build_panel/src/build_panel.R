@@ -2,38 +2,25 @@
 #   Defined in this script: extract_psid_vartables, remove_y, rename_variable,
 #     create_sublist, extract_psid_data
 
-setwd("/Users/amanda/Desktop/clan_project")
-
-# Activate virtual environment -------------------------------------------
-if (file.exists("renv/activate.R")) source("renv/activate.R")
-options(renv.config.auto.snapshot = TRUE)
-renv::settings$snapshot.type("implicit")
+# Run from the project root, e.g. `make build-panel` (see README.md).
+# The project .Rprofile activates renv, and packages come from renv.lock via
+# renv::restore(). This script does not install packages or change the lockfile.
 
 # Load required libraries -------------------------------------------------
-if (!require("pacman")) install.packages("pacman", repos = "http://cran.us.r-project.org")
-
-packages <- c(
-  "tidyverse","dplyr","purrr","data.table","openxlsx","psidR","here","readxl",
-  "gridExtra","ggplot2","scales","lme4","performance","knitr","kableExtra",
-  "patchwork","ineq","showtext","tibble","tidyr","survey","acid","convey",
-  "rlang","gt","flextable","officer","cowplot","reldist", "rvg"
-)
-
-packages <- unique(packages) 
-pacman::p_load(char = packages)
-
-# Updates the lock file
-renv::snapshot(prompt = FALSE)
-renv::status()
+library(here)
+library(tidyverse)
+library(openxlsx)
+library(psidR)     # getNamesPSID()
+# easyPSID (GitHub: BrianAronson/easyPSID) is called below as easyPSID::
 
 here::i_am("1_build_panel/src/build_panel.R")
 
 # Load the CWF Finder File ------------------------------------------------
-  # This file indexes variable names across years, provided by the PSID
+# This file indexes variable names across years, provided by the PSID
 cwf <- openxlsx::read.xlsx(here("0_data", "psid.xlsx"))
 
 # Load PSID Data ----------------------------------------------------------
-  # This data is downloaded from the PSID website using the cross-year selection tool
+# This data is downloaded from the PSID website using the cross-year selection tool
 file.remove(list.files(here("1_build_panel", "output"), pattern = "\\.rds$", full.names = TRUE)) # Output directory needs to be empty
 input_dir <- here("0_data", "fam_ind")
 output_dir <- here("1_build_panel", "output")
@@ -51,11 +38,11 @@ psid_data <- readRDS(psid_file)
 # Used in: build_panel
 extract_psid_vartables <- function(var_object) {
   tmp <- getNamesPSID(var_object[["var"]], cwf, years = NULL)
-
+  
   if (grepl("sample|stratum|cluster", var_object[["varname"]])) {
     tmp <- tmp %>% fill(variable, .direction = "up")
   }
-
+  
   var_object[["df"]] <- tmp
   var_object
 }
@@ -99,23 +86,23 @@ vars <- list(
   # list(name = "ind_relation_b", varname = "married_pair", var = "ER30005"), # Married pairs indicator for constructing head_id and spouse_id
   # list(name = "fam_interview", varname = "interview", var = "V99"), # 1968 Interview Number [all years]
   list(name = "ind_sequence", varname = "sequence", var = "ER30021"), # Family interview respondent's relation to head [all years]
-
-    # INDIVIDUAL DEMOGRAPHICS -------------------------------------------------
+  
+  # INDIVIDUAL DEMOGRAPHICS -------------------------------------------------
   list(name = "ind_age", varname = "age", var = "ER30004"), # Age of individual [all years]
   # list(name = "ind_death", varname = "yod", var = "ER32050"), # Year of death [all years]
   # list(name = "ind_male", varname = "male", var = "ER32000"), # Time invariant - gender [all years]
   # list(name = "ind_edu", varname = "edu", var = "ER30010"), # Years of education [1968-2021]
   # list(name = "ind_children", varname = "children", var = "ER32022"), # Number of children [all years]
-
-    # INDIVIDUAL WEIGHTS ------------------------------------------------------
+  
+  # INDIVIDUAL WEIGHTS ------------------------------------------------------
   # list(name = "ind_cross_weight", varname = "ind_cross_weight", var = "ER12224"), # Cross-sectional weight [1997-2019]
   # list(name = "ind_weight", varname = "ind_weight", var = "ER12084"), # Longitudinal Combined Core [1997-2021]
   # list(name = "ind_cross_weight2", varname = "ind_cross_weight2", var = "ER33438"), # Individual Cross-Sectional Weight [1997-2021]
   # list(name = "ind_weight2", varname = "ind_weight2", var = "ER33430"), # Individual Weight [1997-2021]
   list(name = "ind_stratum", varname = "stratum", var = "ER31996"), # Sampling Strata [all years]
   list(name = "ind_cluster", varname = "cluster", var = "ER31997"), # Sampling cluster [all years]
-
-
+  
+  
   # INCOME ------------------------------------------------------------------
   list(name = "fam_income1", varname = "inc_all", var = "V81"), # Total family income [all years]
   list(name = "fam_income2", varname = "inc_tax_hs", var = "V76"), # Total taxable income, head and spouse [all years]
@@ -136,7 +123,7 @@ vars <- list(
   # list(name = "fam_other_assets", varname = "wealth_other", var = "S115"), # Bonds, insurance, and other collectible values [all wealth supplement years]
   # list(name = "fam_student_loans", varname = "student_loans", var = "ER48945"), # Student loan value [2011 - 2021]
   list(name = "fam_home_equity", varname = "wealth_home", var = "S120"), # Home equity value [all wealth supplement years]
-
+  
   
   # FAMILY CHARACTERISTICS --------------------------------------------------
   # list(name = "fam_sex", varname = "head_sex", var = "V119"), # Sex of Household Head [all years]
@@ -156,7 +143,7 @@ vars <- list(
   list(name = "fam_wife3race", varname = "race3_wife", var = "ER3885"), # Race of household "wife" 3 [1994-2023]
   list(name = "fam_wife4race", varname = "race4_wife", var = "ER11763"), # Race of household "wife" 4 [1997-2023]
   
- # FAMILY WEIGHTS -----------------------------------------------------------
+  # FAMILY WEIGHTS -----------------------------------------------------------
   list(name = "fam_longweight1", varname = "fam_longweight_68_92", var = "V439"), # Longitudinal family weight [1968-1989]
   list(name = "fam_longweight2", varname = "fam_longweight_93_96", var = "V23361"), # Longitudinal family weight [1993-1996]
   list(name = "fam_longweight3", varname = "fam_longweight_97_23", var = "ER12084") # Longitudinal family weight [1997-2023]
@@ -224,5 +211,8 @@ saveRDS(psid_data, here("1_build_panel", "output", "build.rds"))
 
 # Clean Up Temporary Files --------------------------------------------------
 rm(cwf, all_vars, vars, vartable_list)
+
+
+
 
 
