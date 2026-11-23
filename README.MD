@@ -81,9 +81,12 @@ About 2 minutes on a normal desktop computer.
 
 ## 3. Demo and Instructions for use
 
-These steps run the code on PSID data.
+These steps run the code on PSID data. 
 
-### Step 1: Get the PSID data
+### Step 1: Download code and data structure
+Download all scripts and the file structure via Github. First, go to https://github.com/aebuechele29/clan_study.git and click the blue "<>Code" button on the top right. Second, click "Download Zip."
+
+### Step 2: Get the PSID data
 
 The PSID's Conditions of Use do not allow us to share the data, including extracts and files derived from them. Anyone can get the same data for online:
 
