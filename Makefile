@@ -1,5 +1,5 @@
 # ============================================================
-# Makefile for clan_project
+# Makefile 
 # ============================================================
 # Run from the project root (the folder containing this file).
 #
