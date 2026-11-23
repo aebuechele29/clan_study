@@ -2,10 +2,6 @@
 #   Defined in this script: extract_psid_vartables, remove_y, rename_variable,
 #     create_sublist, extract_psid_data
 
-# Run from the project root, e.g. `make build-panel` (see README.md).
-# The project .Rprofile activates renv, and packages come from renv.lock via
-# renv::restore(). This script does not install packages or change the lockfile.
-
 # Load required libraries -------------------------------------------------
 library(here)
 library(tidyverse)
@@ -22,7 +18,7 @@ cwf <- openxlsx::read.xlsx(here("0_data", "psid.xlsx"))
 # Load PSID Data ----------------------------------------------------------
 # This data is downloaded from the PSID website using the cross-year selection tool
 file.remove(list.files(here("1_build_panel", "output"), pattern = "\\.rds$", full.names = TRUE)) # Output directory needs to be empty
-input_dir <- here("0_data", "fam_ind")
+input_dir <- here("0_data", "raw")
 output_dir <- here("1_build_panel", "output")
 
 easyPSID::convert_to_rds(
@@ -83,22 +79,10 @@ vars <- list(
   # IDENTIFIERS -------------------------------------------------------------
   list(name = "ind_sample", varname = "sample", var = "ER32006"), # Sample
   list(name = "ind_relation", varname = "relation", var = "ER30003"), # Individual relation to head [all years]
-  # list(name = "ind_relation_b", varname = "married_pair", var = "ER30005"), # Married pairs indicator for constructing head_id and spouse_id
-  # list(name = "fam_interview", varname = "interview", var = "V99"), # 1968 Interview Number [all years]
   list(name = "ind_sequence", varname = "sequence", var = "ER30021"), # Family interview respondent's relation to head [all years]
   
   # INDIVIDUAL DEMOGRAPHICS -------------------------------------------------
   list(name = "ind_age", varname = "age", var = "ER30004"), # Age of individual [all years]
-  # list(name = "ind_death", varname = "yod", var = "ER32050"), # Year of death [all years]
-  # list(name = "ind_male", varname = "male", var = "ER32000"), # Time invariant - gender [all years]
-  # list(name = "ind_edu", varname = "edu", var = "ER30010"), # Years of education [1968-2021]
-  # list(name = "ind_children", varname = "children", var = "ER32022"), # Number of children [all years]
-  
-  # INDIVIDUAL WEIGHTS ------------------------------------------------------
-  # list(name = "ind_cross_weight", varname = "ind_cross_weight", var = "ER12224"), # Cross-sectional weight [1997-2019]
-  # list(name = "ind_weight", varname = "ind_weight", var = "ER12084"), # Longitudinal Combined Core [1997-2021]
-  # list(name = "ind_cross_weight2", varname = "ind_cross_weight2", var = "ER33438"), # Individual Cross-Sectional Weight [1997-2021]
-  # list(name = "ind_weight2", varname = "ind_weight2", var = "ER33430"), # Individual Weight [1997-2021]
   list(name = "ind_stratum", varname = "stratum", var = "ER31996"), # Sampling Strata [all years]
   list(name = "ind_cluster", varname = "cluster", var = "ER31997"), # Sampling cluster [all years]
   
@@ -114,24 +98,12 @@ vars <- list(
   # WEALTH ------------------------------------------------------------------
   list(name = "fam_wealth_nohouse", varname = "wealth_nohouse", var = "S116"), # Family imputed wealth excluding house equity [all wealth supplement years]
   list(name = "fam_wealth", varname = "wealth", var = "S117"), # Family imputed wealth including house equity [all wealth supplement years]
-  # list(name = "fam_farmbus", varname = "wealth_farmbus", var = "S103"), # Imputed Value of farm and business assets [all wealth supplement years]
-  # list(name = "fam_checking", varname = "wealth_checking", var = "S105"), # Imputed value of checking and savings [1984-2017]
-  # list(name = "fam_debt", varname = "wealth_debt", var = "S107"), # Imputed Debt value [all wealth supplement years]
-  # list(name = "fam_real_estate", varname = "wealth_re", var = "S109"), # Imputed real estate value, excluding home [1984-2011]
-  # list(name = "fam_stocks", varname = "wealth_stocks", var = "S111"), # Imputed stock values [all wealth supplement years]
-  # list(name = "fam_vehicle", varname = "wealth_vehicles", var = "S113"), # Vehicle value [all wealth supplement years]
-  # list(name = "fam_other_assets", varname = "wealth_other", var = "S115"), # Bonds, insurance, and other collectible values [all wealth supplement years]
-  # list(name = "fam_student_loans", varname = "student_loans", var = "ER48945"), # Student loan value [2011 - 2021]
   list(name = "fam_home_equity", varname = "wealth_home", var = "S120"), # Home equity value [all wealth supplement years]
   
   
   # FAMILY CHARACTERISTICS --------------------------------------------------
-  # list(name = "fam_sex", varname = "head_sex", var = "V119"), # Sex of Household Head [all years]
   list(name = "fam_numfu", varname = "numfu", var = "V115"), # Number of People in Family Unit [all years]
   list(name = "fam_num", varname = "fam_id", var = "V3"), # Family Number [all years]
-  # list(name = "fam_house", varname = "house_status", var = "V103"), # Housing Status [all years]
-  # list(name = "fam_homevalue", varname = "home_value", var = "V5"), # Home Value [all years]
-  # list(name = "fam_state", varname = "state", var = "V93"), # State of Residence [all years]
   
   # FAMILY RACE -------------------------------------------------------------
   list(name = "fam_headrace", varname = "race1_head", var = "V181"), # Race of household head [1968-2021]
@@ -166,8 +138,6 @@ all_vars <- vartable_list %>%
   reduce(inner_join, by = "year") 
 
 # BUILD PANEL ---------------------------------------------------------------------------
-# Define Function to Build Individual and Family Panel ---------------------------
-# Used in: build_panel
 extract_psid_data <- function(psid_data, mapping, id_vars = c("ER30000", "ER30001", "ER30002")) {
   year_list <- unique(mapping$year)
   result_list <- purrr::map(year_list, function(yr) {
