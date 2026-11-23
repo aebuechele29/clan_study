@@ -245,18 +245,16 @@ check-data:
 	done
 	@echo "    all inputs present"
 
-# Raw-data files are prerequisites of the steps that read them. If one is
-# missing, stop with a clear message instead of make's generic "No rule to
-# make target". (When the file exists this rule never runs.)
 $(PSID_XLSX):
 	@echo "ERROR: missing $@"
-	@echo "       This is the PSID cross-year index. Download psid.xlsx from the PSID"
-	@echo "       website and place it at $@ (see README.md, 'Data')."
+	@echo "       This PSID cross-year index is included in the GitHub repository."
+	@echo "       Download the repository again (see README.md, 'Step 1: Get the PSID data')."
 	@exit 1
 
 $(CPI_XLSX):
 	@echo "ERROR: missing $@"
-	@echo "       This is the CPI series used to adjust for inflation (see README.md, 'Data')."
+	@echo "       This CPI file is included in the GitHub repository."
+	@echo "       Download the repository again (see README.md, 'Step 1: Get the PSID data')."
 	@exit 1
 
 $(STAMP):
