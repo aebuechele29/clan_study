@@ -1,5 +1,19 @@
-0_data/fam_ind
-1_build_panel/output
-2_clean_panel/output
+0_data/raw
 .DS_Store
 .vscode
+
+# Build stamps: machine-specific
+.make/
+
+# Person- and household-level files derived from PSID data. PSID's Conditions of Use do not allow sharing these; they are rebuilt by `make`.
+1_build_panel/output/
+2_clean_panel/output/
+3_households/output/*.rds
+4_clans/output/*.rds
+
+# R / editor / Office junk
+.Rhistory
+.Rproj.user/
+Rplots.pdf
+~$*
+*/output/.done

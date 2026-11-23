@@ -32,8 +32,8 @@ STAMP := .make
 # Raw data
 # (PSID extract filenames vary by user; matched on extension)
 # ----------------
-PSID_DO   := $(wildcard 0_data/fam_ind/*.do)
-PSID_TXT  := $(wildcard 0_data/fam_ind/*.txt)
+PSID_DO   := $(wildcard 0_data/raw/*.do)
+PSID_TXT  := $(wildcard 0_data/raw/*.txt)
 PSID_XLSX := 0_data/psid.xlsx
 CPI_XLSX  := 0_data/cpi/cpi.xlsx
 
@@ -235,10 +235,10 @@ help:
 # ----------------
 check-data:
 	@echo "==> Checking required inputs"
-	@if [ -z "$(PSID_DO)" ];  then echo "ERROR: no .do file in 0_data/fam_ind/ (place your PSID extract there)";  exit 1; fi
-	@if [ -z "$(PSID_TXT)" ]; then echo "ERROR: no .txt file in 0_data/fam_ind/ (place your PSID extract there)"; exit 1; fi
+	@if [ -z "$(PSID_DO)" ];  then echo "ERROR: no .do file in 0_data/raw/ (place your PSID extract there)";  exit 1; fi
+	@if [ -z "$(PSID_TXT)" ]; then echo "ERROR: no .txt file in 0_data/raw/ (place your PSID extract there)"; exit 1; fi
 	@if [ $(words $(PSID_DO)) -ne 1 ] || [ $(words $(PSID_TXT)) -ne 1 ]; then \
-	  echo "ERROR: 0_data/fam_ind/ must hold exactly one .do and one .txt file (the PSID extract)."; \
+	  echo "ERROR: 0_data/raw/ must hold exactly one .do and one .txt file (the PSID extract)."; \
 	  echo "       Found: $(notdir $(PSID_DO) $(PSID_TXT))"; exit 1; fi
 	@for f in $(PSID_XLSX) $(CPI_XLSX) $(FUNCS) $(SCRIPTS) $(RMD) $(SUPP_RMD) $(CSL) $(BIB); do \
 	  if [ ! -f "$$f" ]; then echo "ERROR: missing required file: $$f"; exit 1; fi; \
