@@ -4,9 +4,9 @@ This repository contains the R source code that produces every result, figure, a
 
 1. [System requirements](#1-system-requirements)
 2. [Installation guide](#2-installation-guide)
-3. [Demo, Instructions for Use, and Reproduction](#3-demo-instructions-)
-4. [Troubleshooting](#7-troubleshooting)
-5. [Additional information](#6-additional-information)
+3. [Demo, Instructions for Use, and Reproduction](#3-demo-instructions-for-use-and-reproduction)
+4. [Troubleshooting](#4-troubleshooting)
+5. [Additional information](#5-additional-information)
 
 ---
 
