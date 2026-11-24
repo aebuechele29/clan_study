@@ -194,6 +194,8 @@ The code's functionality is described in the **Methods sectiont**, in these subs
 
 Panel Study of Income Dynamics, public use dataset. Produced and distributed by the Survey Research Center, Institute for Social Research, University of Michigan, Ann Arbor, MI (2026).
 
+---
+
 ## 7. Troubleshooting
 
 ### `make setup` fails while installing a package
