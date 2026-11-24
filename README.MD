@@ -8,6 +8,7 @@ This repository contains the R source code that produces every result, figure, a
 4. [Instructions for use](#4-instructions-for-use)
 5. [Reproduction instructions](#5-reproduction-instructions)
 6. [Additional information](#6-additional-information)
+7. [Troubleshooting] (#7-troubleshooting)
 
 ---
 
@@ -192,3 +193,33 @@ The code's functionality is described in the **Methods sectiont**, in these subs
 ### Data citation
 
 Panel Study of Income Dynamics, public use dataset. Produced and distributed by the Survey Research Center, Institute for Social Research, University of Michigan, Ann Arbor, MI (2026).
+
+## 7. Troubleshooting
+
+### `make setup` fails while installing a package
+
+`make setup` installs the exact package versions listed in `renv.lock`. Some of
+them may need to be compiled on your computer, which requires a compiler and a
+few system libraries. The error message usually names what is missing. Install
+the tools for your system below, then run `make setup` again. renv keeps the
+packages it already installed and picks up where it stopped.
+
+- **Windows:** install [Rtools](https://cran.r-project.org/bin/windows/Rtools/)
+  for your version of R (Rtools44 for R 4.4).
+- **macOS:** install Apple's command-line tools with `xcode-select --install`,
+  and the gfortran compiler from <https://mac.r-project.org/tools/>. If the error names a missing library, install it with Homebrew, e.g.
+  `brew install harfbuzz fribidi`.
+
+### `make setup` says packages do not match `renv.lock`
+
+At least one installed package is a different version from the one recorded.
+Run `renv::status()` in R from the project folder to see which ones, then
+`renv::restore()` to try again. You can still run `make`, but you are not using
+the tested environment, and results may differ slightly.
+
+### A package will not install at all
+
+As a last resort, install the current version from R in the project folder with
+`renv::install("packagename")`. The pipeline will run, but `make setup` will
+keep reporting the mismatch. If you report a replication problem, please
+mention which package you substituted.
