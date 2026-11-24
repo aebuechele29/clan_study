@@ -8,7 +8,7 @@ This repository contains the R source code that produces every result, figure, a
 4. [Instructions for use](#4-instructions-for-use)
 5. [Reproduction instructions](#5-reproduction-instructions)
 6. [Additional information](#6-additional-information)
-7. [Troubleshooting] (#7-troubleshooting)
+7. [Troubleshooting](#7-troubleshooting)
 
 ---
 
