@@ -134,6 +134,21 @@ OUT9 := $(addprefix 9_figures/output/, \
 PAPER_OUT := $(DRAFT_OUT)/write.pdf $(DRAFT_OUT)/write.docx
 SUPP_OUT  := $(DRAFT_OUT)/supplemental.pdf $(DRAFT_OUT)/supplemental.docx
 
+# If a step's outputs are missing (e.g. a fresh copy of the project),
+# forget that it ran so it reruns.
+drop_stale = $(if $(wildcard $(STAMP)/$(1)),$(if $(filter-out $(wildcard $(2)),$(2)),$(info ==> $(1): outputs missing, will rerun)$(shell rm -f $(STAMP)/$(1))))
+$(call drop_stale,1_build_panel,$(OUT1))
+$(call drop_stale,2_clean_panel,$(OUT2))
+$(call drop_stale,3_households,$(OUT3))
+$(call drop_stale,4_clans,$(OUT4))
+$(call drop_stale,5_summary,$(OUT5))
+$(call drop_stale,6_calculate_gini,$(OUT6))
+$(call drop_stale,7_gini_by_race,$(OUT7))
+$(call drop_stale,8_nuclear_family,$(OUT8))
+$(call drop_stale,9_figures,$(OUT9))
+$(call drop_stale,paper,$(PAPER_OUT))
+$(call drop_stale,supplemental,$(SUPP_OUT))
+
 # ----------------
 # Helpers
 # ----------------
