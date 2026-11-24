@@ -4,11 +4,9 @@ This repository contains the R source code that produces every result, figure, a
 
 1. [System requirements](#1-system-requirements)
 2. [Installation guide](#2-installation-guide)
-3. [Demo](#3-demo)
-4. [Instructions for use](#4-instructions-for-use)
-5. [Reproduction instructions](#5-reproduction-instructions)
-6. [Additional information](#6-additional-information)
-7. [Troubleshooting](#7-troubleshooting)
+3. [Demo, Instructions for Use, and Reproduction](#3-demo-instructions-)
+4. [Troubleshooting](#7-troubleshooting)
+5. [Additional information](#6-additional-information)
 
 ---
 
@@ -80,7 +78,7 @@ About 2 minutes on a normal desktop computer.
 
 ---
 
-## 3. Demo and Instructions for use
+## 3. Demo, Instructions for Use, and Reproduction
 
 These steps run the code on PSID data. 
 
@@ -101,7 +99,7 @@ Two more input files are already included in the repository:
 - `0_data/psid.xlsx`: the PSID cross-year variable index, from the PSID website. It maps each variable to its name in every survey year. If you use a newer extract, replace it with the current version. (Click on the Excel link at https://simba.isr.umich.edu/DC/i.aspx)
 - `0_data/cpi/cpi.xlsx`: the Consumer Price Index (U.S. Bureau of Labor Statistics, CPI-U, all items, U.S. city average, annual averages, series CUUR0000SA0). All dollar amounts are converted to 2023 dollars.
 
-### Step 2: Run the pipeline
+### Step 3: Run the pipeline
 
 From the top folder of the repository:
 
@@ -112,6 +110,10 @@ make
 `make` prints a line such as `==> Step 4: kin groups (clans)` as each step starts. If a step fails to create a file it should, `make` stops and names the missing file. Results go in each step's `output/` folder. The manuscript and supplement go in `10_draft/output/`.
 
 The full pipeline should take about 5 minutes to run.
+
+Every number quoted in the text is calculated when the manuscript renders, not typed by hand. The only output that will differ from the submitted version is the date on the title page. The one random step, the simulation in Appendix C2, uses a fixed seed (`set.seed(123)`).
+
+Our extract was downloaded on 2026-09-23. The PSID sometimes re-releases files with corrections, so a later download may give slightly different numbers.
 
 ### What each step does
 
@@ -141,21 +143,6 @@ Step 6 runs before step 5, because the summary statistics use the Gini results. 
 
 `make` only reruns steps whose code or inputs have changed. Do not use parallel make (`make -j`), because several steps write to the same folders.
 
-### Troubleshooting
-
-| Problem | Fix |
-|---|---|
-| `there is no package called ...` | Run `make setup`. |
-| `pandoc ... not found` | Install pandoc (Installation guide, step 3). |
-| LaTeX error about a missing `.sty` file | Install TinyTeX (Installation guide, step 4). |
-| `0_data/fam_ind/ must hold exactly one .do and one .txt file` | Remove any other files from that folder. |
-| Step 1 or 2 fails with a missing-column error | The extract is missing variables. Step 1 skips missing variables without warning, so the error appears later. Check the extract against `0_data_info/psid_variables.txt`. |
-
-
-Every number quoted in the text is calculated when the manuscript renders, not typed by hand. The only output that will differ from the submitted version is the date on the title page. The one random step, the simulation in Appendix C2, uses a fixed seed (`set.seed(123)`).
-
-Our extract was downloaded on 2026-09-23. The PSID sometimes re-releases files with corrections, so a later download may give slightly different numbers.
-
 ### Where each result is produced
 
 Figures and tables are saved in `9_figures/output/`. Main-text exhibits come from `9_figures/src/figure_main.R` and appendix exhibits from `9_figures/src/figure_appendix.R`.
@@ -176,11 +163,28 @@ Figures and tables are saved in `9_figures/output/`. Main-text exhibits come fro
 
 ---
 
-## 6. Additional information
+## 4. Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| `there is no package called ...` | Run `make setup`. |
+| `make setup` fails while installing a package | The package has to be compiled, and your computer is missing a compiler or library (see below). Install it, then run `make setup` again. It picks up where it stopped. |
+| `make setup` says packages do not match `renv.lock` | In R, run `renv::status()` to see which packages differ, then `renv::restore()`. `make` still runs, but results may differ slightly from the tested setup. |
+| A package still will not install | As a last resort, run `renv::install("packagename")` in R to install the current version. If you report a replication problem, mention which package you replaced. |
+| `pandoc ... not found` | Install pandoc (Installation guide, step 3). |
+| LaTeX error about a missing `.sty` file | Install TinyTeX (Installation guide, step 4). |
+| `0_data/raw/ must hold exactly one .do and one .txt file` | Remove any other files from that folder. |
+
+**Tools for compiling packages.** The error message usually names what is missing.
+
+- **Windows:** [Rtools](https://cran.r-project.org/bin/windows/Rtools/) for your version of R (Rtools44 for R 4.4).
+- **macOS:** run `xcode-select --install`, and install gfortran from <https://mac.r-project.org/tools/>. If a library is missing, install it with Homebrew, e.g. `brew install harfbuzz fribidi`.
+
+## 5. Additional information
 
 ### License
 
-`TO FILL: e.g. MIT License (approved by the Open Source Initiative). Add the license text in a LICENSE file.`
+See LICENSE.txt
 
 ### Code repository
 
@@ -188,40 +192,10 @@ https://github.com/aebuechele29/clan_study
 
 ### Description of the code's functionality
 
-The code's functionality is described in the **Methods sectiont**, in these subsections: *Data and sample*, *Measures of income and wealth*, *Measures of race*, *Indexing inequality with the Gini coefficient*, *The racial wealth gap*, *Weighting strategy*, and *Sensitivity analyses*. 
+The code's functionality is described in the **Methods section**.
 
 ### Data citation
 
 Panel Study of Income Dynamics, public use dataset. Produced and distributed by the Survey Research Center, Institute for Social Research, University of Michigan, Ann Arbor, MI (2026).
 
 ---
-
-## 7. Troubleshooting
-
-### `make setup` fails while installing a package
-
-`make setup` installs the exact package versions listed in `renv.lock`. Some of
-them may need to be compiled on your computer, which requires a compiler and a
-few system libraries. The error message usually names what is missing. Install
-the tools for your system below, then run `make setup` again. renv keeps the
-packages it already installed and picks up where it stopped.
-
-- **Windows:** install [Rtools](https://cran.r-project.org/bin/windows/Rtools/)
-  for your version of R (Rtools44 for R 4.4).
-- **macOS:** install Apple's command-line tools with `xcode-select --install`,
-  and the gfortran compiler from <https://mac.r-project.org/tools/>. If the error names a missing library, install it with Homebrew, e.g.
-  `brew install harfbuzz fribidi`.
-
-### `make setup` says packages do not match `renv.lock`
-
-At least one installed package is a different version from the one recorded.
-Run `renv::status()` in R from the project folder to see which ones, then
-`renv::restore()` to try again. You can still run `make`, but you are not using
-the tested environment, and results may differ slightly.
-
-### A package will not install at all
-
-As a last resort, install the current version from R in the project folder with
-`renv::install("packagename")`. The pipeline will run, but `make setup` will
-keep reporting the mismatch. If you report a replication problem, please
-mention which package you substituted.
