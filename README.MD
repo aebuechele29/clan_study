@@ -36,7 +36,7 @@ This repository contains the R source code that produces every result, figure, a
 |---|---|---|---|---|
 | convey | 1.0.1 | | officer | 0.6.10 |
 | cowplot | 1.1.3 | | openxlsx | 4.2.8 |
-| data.table | 1.18.2.1 | | psidR | (see note) |
+| data.table | 1.18.2.1 | | psidR | 2.3 |
 | dplyr | 1.1.4 | | purrr | 1.0.4 |
 | easyPSID (GitHub) | 0.1.1 | | readr | 2.1.5 |
 | flextable | 0.9.9 | | rlang | 1.1.7 |
@@ -45,7 +45,7 @@ This repository contains the R source code that produces every result, figure, a
 | here | 1.0.1 | | survey | 4.4-2 |
 | ineq | 0.2-13 | | tibble | 3.2.1 |
 | knitr | 1.50 | | tidyr | 1.3.1 |
-| | | | tidyverse | 2.0.0 |
+| Matrix | 1.7-1 | | tidyverse | 2.0.0 |
 
 ### Hardware
 

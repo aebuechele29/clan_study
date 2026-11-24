@@ -208,6 +208,7 @@ redo-%:
 setup:
 	@echo "==> Restoring R packages from renv.lock (the first run can take a while)"
 	@$(R) -e "renv::restore(prompt = FALSE)"
+	@$(R) -e "s <- renv::status(); if (!isTRUE(s[['synchronized']])) stop('Package environment is not synchronized with renv.lock')"
 	@echo ""
 	@echo "==> Checking tools"
 	@$(R) -e "lock <- renv::lockfile_read('renv.lock'); cat('R in use:     ', as.character(getRversion()), '\n'); cat('R in renv.lock:', lock[['R']][['Version']], '\n'); cat('pandoc:       ', if (rmarkdown::pandoc_available()) as.character(rmarkdown::pandoc_version()) else 'NOT FOUND (see README.md)', '\n'); cat('pdflatex:     ', if (nzchar(Sys.which('pdflatex'))) Sys.which('pdflatex') else 'NOT FOUND (see README.md)', '\n')"
